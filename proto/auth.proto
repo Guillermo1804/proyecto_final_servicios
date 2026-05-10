@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package auth;
+
+option java_multiple_files = true;
+option java_package = "com.agm.auth";
+
+// =============================================
+// MS-1: Auth & Users — Servicio gRPC
+// Puerto: 50051
+// =============================================
+// Este servicio es consumido por TODOS los demás MS
+// para validar tokens JWT y verificar roles.
+
+service AuthService {
+  // Valida un JWT y retorna los claims del usuario
+  rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+
+  // Obtiene el perfil de un usuario por su ID
+  rpc GetUserById (GetUserByIdRequest) returns (UserProfile);
+
+  // Verifica si un usuario tiene un rol específico
+  rpc CheckRole (CheckRoleRequest) returns (CheckRoleResponse);
+
+  // Crea un nuevo usuario (usado por MS-3 al importar docentes/alumnos)
+  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse);
+}
+
+// ---------- ValidateToken ----------
+
+message ValidateTokenRequest {
+  string token = 1;   // JWT access token (sin "Bearer ")
+}
+
+message ValidateTokenResponse {
+  bool valid = 1;
+  int32 user_id = 2;
+  string email = 3;
+  string nombre = 4;
+  string rol = 5;       // "admin", "docente", "alumno"
+}
+
+// ---------- GetUserById ----------
+
+message GetUserByIdRequest {
+  int32 user_id = 1;
+}
+
+message UserProfile {
+  int32 id = 1;
+  string email = 2;
+  string nombre = 3;
+  string rol = 4;
+  bool activo = 5;
+}
+
+// ---------- CheckRole ----------
+
+message CheckRoleRequest {
+  int32 user_id = 1;
+  string role = 2;     // Rol esperado: "admin", "docente", "alumno"
+}
+
+message CheckRoleResponse {
+  bool has_role = 1;
+}
+
+// ---------- CreateUser ----------
+
+message CreateUserRequest {
+  string email = 1;
+  string nombre = 2;
+  string rol = 3;        // "docente" o "alumno"
+  string password = 4;   // Contraseña temporal (UUID generado por MS-3)
+}
+
+message CreateUserResponse {
+  bool success = 1;
+  int32 user_id = 2;     // ID del usuario creado
+  string message = 3;    // Mensaje de error si success=false
+}

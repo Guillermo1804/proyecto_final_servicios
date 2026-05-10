@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package asistencias;
+
+option java_multiple_files = true;
+option java_package = "com.agm.asistencias";
+
+// =============================================
+// MS-5: Asistencias QR — Servicio gRPC
+// Puerto: 50055
+// =============================================
+// Consumido por MS-7 para generar reportes de asistencia.
+
+service AsistenciasService {
+  // Obtiene el historial de asistencias de un alumno en una materia
+  rpc GetAsistenciaAlumno (GetAsistenciaAlumnoRequest) returns (AsistenciaAlumnoResponse);
+
+  // Obtiene estadísticas generales de asistencia de una materia
+  rpc GetEstadisticasAsistencia (GetEstadisticasAsistenciaRequest) returns (EstadisticasAsistenciaResponse);
+}
+
+// ---------- GetAsistenciaAlumno ----------
+
+message GetAsistenciaAlumnoRequest {
+  int32 alumno_id = 1;
+  int32 materia_id = 2;
+}
+
+message RegistroAsistencia {
+  string fecha = 1;              // ISO date: "2026-05-10"
+  string estado = 2;             // "presente", "retardo", "ausente"
+  string hora_registro = 3;     // "10:05:23"
+}
+
+message AsistenciaAlumnoResponse {
+  int32 alumno_id = 1;
+  int32 materia_id = 2;
+  int32 total_sesiones = 3;
+  int32 presentes = 4;
+  int32 retardos = 5;
+  int32 ausentes = 6;
+  double porcentaje_asistencia = 7;
+  repeated RegistroAsistencia registros = 8;
+}
+
+// ---------- GetEstadisticasAsistencia ----------
+
+message GetEstadisticasAsistenciaRequest {
+  int32 materia_id = 1;
+}
+
+message AsistenciaAlumnoResumen {
+  int32 alumno_id = 1;
+  string matricula = 2;
+  string nombre = 3;
+  int32 presentes = 4;
+  int32 retardos = 5;
+  int32 ausentes = 6;
+  double porcentaje = 7;
+}
+
+message EstadisticasAsistenciaResponse {
+  int32 materia_id = 1;
+  int32 total_sesiones = 2;
+  double porcentaje_asistencia_grupal = 3;
+  repeated AsistenciaAlumnoResumen alumnos = 4;
+}

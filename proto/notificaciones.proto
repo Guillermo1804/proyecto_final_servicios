@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package notificaciones;
+
+option java_multiple_files = true;
+option java_package = "com.agm.notificaciones";
+
+// =============================================
+// MS-6: Notificaciones — Servicio gRPC
+// Puerto: 50056
+// =============================================
+// Consumido por MS-1, MS-3 y MS-4 para enviar correos.
+
+service NotificacionesService {
+  // Envía correo de bienvenida al alumno con su clave de acceso
+  rpc SendBienvenida (SendBienvenidaRequest) returns (SendResponse);
+
+  // Notifica al docente que un alumno solicitó baja
+  rpc SendBajaNotif (SendBajaRequest) returns (SendResponse);
+
+  // Notifica a todos los alumnos que la materia fue cerrada
+  rpc SendCierreMateria (SendCierreMateriaRequest) returns (SendResponse);
+
+  // Envía correo de restablecimiento de contraseña
+  rpc SendResetPassword (SendResetPasswordRequest) returns (SendResponse);
+}
+
+// ---------- Respuesta común ----------
+
+message SendResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ---------- SendBienvenida ----------
+
+message SendBienvenidaRequest {
+  int32 alumno_id = 1;
+  int32 materia_id = 2;
+  string clave_acceso = 3;    // Contraseña temporal generada
+}
+
+// ---------- SendBajaNotif ----------
+
+message SendBajaRequest {
+  int32 alumno_id = 1;
+  int32 docente_id = 2;       // usuario_id del docente
+  int32 materia_id = 3;
+}
+
+// ---------- SendCierreMateria ----------
+
+message SendCierreMateriaRequest {
+  int32 materia_id = 1;
+}
+
+// ---------- SendResetPassword ----------
+
+message SendResetPasswordRequest {
+  string email = 1;
+  string token = 2;
+  string reset_url = 3;       // URL completa del frontend con el token
+}

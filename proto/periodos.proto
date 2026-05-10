@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package periodos;
+
+option java_multiple_files = true;
+option java_package = "com.agm.periodos";
+
+// =============================================
+// MS-2: Periodos & Materias — Servicio gRPC
+// Puerto: 50052
+// =============================================
+// Consumido por MS-3, MS-4, MS-6, MS-7 para obtener
+// datos de materias y el periodo activo.
+
+service PeriodosService {
+  // Obtiene los datos de una materia por su ID
+  rpc GetMateriaById (GetMateriaByIdRequest) returns (MateriaInfo);
+
+  // Obtiene todas las materias asignadas a un docente (por docente_id)
+  rpc GetMateriasByDocente (GetMateriasByDocenteRequest) returns (MateriasListResponse);
+
+  // Obtiene el periodo actualmente activo
+  rpc GetPeriodoActivo (Empty) returns (PeriodoInfo);
+}
+
+message Empty {}
+
+// ---------- GetMateriaById ----------
+
+message GetMateriaByIdRequest {
+  int32 materia_id = 1;
+}
+
+message MateriaInfo {
+  int32 id = 1;
+  string nrc = 2;
+  string nombre = 3;
+  string seccion = 4;
+  string clave = 5;
+  string docente_nombre = 6;
+  int32 docente_id = 7;
+  string horario = 8;
+  int32 periodo_id = 9;
+  string periodo_nombre = 10;
+}
+
+// ---------- GetMateriasByDocente ----------
+
+message GetMateriasByDocenteRequest {
+  int32 docente_id = 1;
+}
+
+message MateriasListResponse {
+  repeated MateriaInfo materias = 1;
+}
+
+// ---------- GetPeriodoActivo ----------
+
+message PeriodoInfo {
+  int32 id = 1;
+  string nombre = 2;
+  string fecha_inicio = 3;   // formato ISO: "2026-02-01"
+  string fecha_fin = 4;
+  string plan_estudios = 5;
+  bool activo = 6;
+}

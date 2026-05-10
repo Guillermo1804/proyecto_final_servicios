@@ -1,0 +1,265 @@
+version: '3.8'
+
+# =============================================
+# AGM — docker-compose.yml
+# Levanta los 7 microservicios + 7 MySQL + Redis
+# Uso: docker-compose up --build
+# =============================================
+
+services:
+
+  # ============================================
+  # BASES DE DATOS
+  # ============================================
+
+  db-auth:
+    image: mysql:8.0
+    container_name: agm-db-auth
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: agm_auth_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_auth_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agm-network
+
+  db-periodos:
+    image: mysql:8.0
+    container_name: agm-db-periodos
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: agm_periodos_db
+    ports:
+      - "3308:3306"
+    volumes:
+      - db_periodos_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agm-network
+
+  db-alumnos:
+    image: mysql:8.0
+    container_name: agm-db-alumnos
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: agm_alumnos_db
+    ports:
+      - "3309:3306"
+    volumes:
+      - db_alumnos_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agm-network
+
+  db-calificaciones:
+    image: mysql:8.0
+    container_name: agm-db-calificaciones
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: agm_calificaciones_db
+    ports:
+      - "3310:3306"
+    volumes:
+      - db_calificaciones_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agm-network
+
+  db-asistencias:
+    image: mysql:8.0
+    container_name: agm-db-asistencias
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: agm_asistencias_db
+    ports:
+      - "3311:3306"
+    volumes:
+      - db_asistencias_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agm-network
+
+  db-notificaciones:
+    image: mysql:8.0
+    container_name: agm-db-notificaciones
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: agm_notificaciones_db
+    ports:
+      - "3312:3306"
+    volumes:
+      - db_notificaciones_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agm-network
+
+  db-reportes:
+    image: mysql:8.0
+    container_name: agm-db-reportes
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: agm_reportes_db
+    ports:
+      - "3313:3306"
+    volumes:
+      - db_reportes_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agm-network
+
+  # Redis para MS-5 (sesiones QR en vivo)
+  redis:
+    image: redis:7-alpine
+    container_name: agm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - agm-network
+
+  # ============================================
+  # MICROSERVICIOS
+  # ============================================
+
+  ms-auth:
+    build: ./ms-auth
+    container_name: agm-ms-auth
+    env_file: ./ms-auth/.env
+    ports:
+      - "8001:8001"
+      - "50051:50051"
+    depends_on:
+      db-auth:
+        condition: service_healthy
+    networks:
+      - agm-network
+
+  ms-periodos:
+    build: ./ms-periodos
+    container_name: agm-ms-periodos
+    env_file: ./ms-periodos/.env
+    ports:
+      - "8002:8002"
+      - "50052:50052"
+    depends_on:
+      db-periodos:
+        condition: service_healthy
+    networks:
+      - agm-network
+
+  ms-alumnos:
+    build: ./ms-alumnos
+    container_name: agm-ms-alumnos
+    env_file: ./ms-alumnos/.env
+    ports:
+      - "8003:8003"
+      - "50053:50053"
+    depends_on:
+      db-alumnos:
+        condition: service_healthy
+    networks:
+      - agm-network
+
+  ms-calificaciones:
+    build: ./ms-calificaciones
+    container_name: agm-ms-calificaciones
+    env_file: ./ms-calificaciones/.env
+    ports:
+      - "8004:8004"
+      - "50054:50054"
+    depends_on:
+      db-calificaciones:
+        condition: service_healthy
+    networks:
+      - agm-network
+
+  ms-asistencias:
+    build: ./ms-asistencias
+    container_name: agm-ms-asistencias
+    env_file: ./ms-asistencias/.env
+    ports:
+      - "8005:8005"
+      - "50055:50055"
+    depends_on:
+      db-asistencias:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - agm-network
+
+  ms-notificaciones:
+    build: ./ms-notificaciones
+    container_name: agm-ms-notificaciones
+    env_file: ./ms-notificaciones/.env
+    ports:
+      - "8006:8006"
+      - "50056:50056"
+    depends_on:
+      db-notificaciones:
+        condition: service_healthy
+    networks:
+      - agm-network
+
+  ms-reportes:
+    build: ./ms-reportes
+    container_name: agm-ms-reportes
+    env_file: ./ms-reportes/.env
+    ports:
+      - "8007:8007"
+      - "50057:50057"
+    depends_on:
+      db-reportes:
+        condition: service_healthy
+    networks:
+      - agm-network
+
+# ============================================
+# VOLUMES & NETWORKS
+# ============================================
+
+volumes:
+  db_auth_data:
+  db_periodos_data:
+  db_alumnos_data:
+  db_calificaciones_data:
+  db_asistencias_data:
+  db_notificaciones_data:
+  db_reportes_data:
+  redis_data:
+
+networks:
+  agm-network:
+    driver: bridge

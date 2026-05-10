@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package reportes;
+
+option java_multiple_files = true;
+option java_package = "com.agm.reportes";
+
+// =============================================
+// MS-7: Reportes & Estadísticas — Servicio gRPC
+// Puerto: 50057
+// =============================================
+
+service ReportesService {
+  // Genera un reporte en formato PDF o Excel y retorna los bytes del archivo
+  rpc GenerateReport (GenerateReportRequest) returns (ReportResponse);
+
+  // Obtiene el historial de estadísticas de un docente por periodo
+  rpc GetHistorialDocente (GetHistorialDocenteRequest) returns (HistorialDocenteResponse);
+}
+
+// ---------- GenerateReport ----------
+
+message GenerateReportRequest {
+  string tipo = 1;           // "calificaciones" o "asistencias"
+  int32 materia_id = 2;
+  string formato = 3;        // "pdf" o "xlsx"
+}
+
+message ReportResponse {
+  bool success = 1;
+  bytes archivo = 2;         // Bytes del archivo generado
+  string filename = 3;       // Nombre sugerido del archivo
+  string content_type = 4;   // MIME type
+}
+
+// ---------- GetHistorialDocente ----------
+
+message GetHistorialDocenteRequest {
+  int32 docente_id = 1;
+}
+
+message StatsPeriodo {
+  string periodo_nombre = 1;
+  int32 periodo_id = 2;
+  string materia_nombre = 3;
+  int32 materia_id = 4;
+  int32 total_alumnos = 5;
+  int32 aprobados = 6;
+  int32 reprobados = 7;
+  double promedio_grupal = 8;
+  double porcentaje_asistencia = 9;
+}
+
+message HistorialDocenteResponse {
+  int32 docente_id = 1;
+  repeated StatsPeriodo periodos = 2;
+}

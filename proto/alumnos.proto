@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package alumnos;
+
+option java_multiple_files = true;
+option java_package = "com.agm.alumnos";
+
+// =============================================
+// MS-3: Docentes & Alumnos — Servicio gRPC
+// Puerto: 50053
+// =============================================
+// Consumido por MS-4, MS-5, MS-6, MS-7 para obtener
+// datos de alumnos y docentes.
+
+service AlumnosService {
+  // Obtiene todos los alumnos activos de una materia
+  rpc GetAlumnosByMateria (GetAlumnosByMateriaRequest) returns (AlumnosListResponse);
+
+  // Obtiene los datos de un alumno por su ID
+  rpc GetAlumnoById (GetAlumnoByIdRequest) returns (AlumnoInfo);
+
+  // Verifica si un alumno está inscrito y activo en una materia
+  rpc IsAlumnoEnMateria (IsAlumnoEnMateriaRequest) returns (IsAlumnoEnMateriaResponse);
+
+  // Obtiene los datos de un docente por su usuario_id
+  rpc GetDocenteByUsuarioId (GetDocenteByUsuarioIdRequest) returns (DocenteInfo);
+}
+
+// ---------- GetAlumnosByMateria ----------
+
+message GetAlumnosByMateriaRequest {
+  int32 materia_id = 1;
+}
+
+message AlumnoInfo {
+  int32 id = 1;
+  int32 usuario_id = 2;
+  string matricula = 3;
+  string nombre = 4;
+  string email = 5;
+  string tipo_formacion = 6;
+}
+
+message AlumnosListResponse {
+  repeated AlumnoInfo alumnos = 1;
+}
+
+// ---------- GetAlumnoById ----------
+
+message GetAlumnoByIdRequest {
+  int32 alumno_id = 1;
+}
+
+// ---------- IsAlumnoEnMateria ----------
+
+message IsAlumnoEnMateriaRequest {
+  int32 alumno_id = 1;
+  int32 materia_id = 2;
+}
+
+message IsAlumnoEnMateriaResponse {
+  bool inscrito = 1;   // true SOLO si activo=true Y baja_solicitada=false
+}
+
+// ---------- GetDocenteByUsuarioId ----------
+
+message GetDocenteByUsuarioIdRequest {
+  int32 usuario_id = 1;
+}
+
+message DocenteInfo {
+  int32 id = 1;
+  int32 usuario_id = 2;
+  string nombre = 3;
+  string email_institucional = 4;
+  string cubiculo = 5;
+}

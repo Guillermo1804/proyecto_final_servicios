@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package calificaciones;
+
+option java_multiple_files = true;
+option java_package = "com.agm.calificaciones";
+
+// =============================================
+// MS-4: Calificaciones & Ponderaciones — Servicio gRPC
+// Puerto: 50054
+// =============================================
+// Consumido por MS-7 para generar reportes y estadísticas.
+
+service CalificacionesService {
+  // Obtiene el concentrado completo de una materia
+  rpc GetConcentrado (GetConcentradoRequest) returns (ConcentradoResponse);
+
+  // Obtiene el promedio ponderado de un alumno en una materia
+  rpc GetPromedioAlumno (GetPromedioAlumnoRequest) returns (PromedioResponse);
+
+  // Obtiene estadísticas generales de una materia
+  rpc GetEstadisticasMateria (GetEstadisticasMateriaRequest) returns (EstadisticasMateriaResponse);
+}
+
+// ---------- GetConcentrado ----------
+
+message GetConcentradoRequest {
+  int32 materia_id = 1;
+}
+
+message AlumnoCalificacion {
+  int32 alumno_id = 1;
+  string matricula = 2;
+  string nombre = 3;
+  repeated CalificacionActividad calificaciones = 4;
+  double promedio_real = 5;       // Ej: 7.65
+  int32 promedio_redondeado = 6;  // Ej: 8 (porque 0.65 >= 0.5)
+}
+
+message CalificacionActividad {
+  int32 actividad_id = 1;
+  string actividad_nombre = 2;
+  string categoria = 3;          // Nombre de la ponderación
+  double calificacion = 4;
+}
+
+message ConcentradoResponse {
+  int32 materia_id = 1;
+  repeated CategoriaConcentrado categorias = 2;
+  repeated AlumnoCalificacion alumnos = 3;
+}
+
+message CategoriaConcentrado {
+  string nombre = 1;
+  double porcentaje = 2;
+  repeated ActividadInfo actividades = 3;
+}
+
+message ActividadInfo {
+  int32 id = 1;
+  string nombre = 2;
+}
+
+// ---------- GetPromedioAlumno ----------
+
+message GetPromedioAlumnoRequest {
+  int32 alumno_id = 1;
+  int32 materia_id = 2;
+}
+
+message PromedioResponse {
+  double promedio_real = 1;
+  int32 promedio_redondeado = 2;
+}
+
+// ---------- GetEstadisticasMateria ----------
+
+message GetEstadisticasMateriaRequest {
+  int32 materia_id = 1;
+}
+
+message EstadisticasMateriaResponse {
+  int32 total_alumnos = 1;
+  int32 aprobados = 2;           // promedio redondeado >= 6
+  int32 reprobados = 3;          // promedio redondeado < 6
+  double promedio_grupal = 4;
+  double calificacion_maxima = 5;
+  double calificacion_minima = 6;
+}
