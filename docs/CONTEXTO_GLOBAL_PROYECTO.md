@@ -77,7 +77,7 @@ asistencias por QR, notificaciones por correo y reportes exportables.
 |----|--------|-------------|-------------|---------------|-----------------|
 | MS-1 | Auth & Users | 8001 | 50051 | `agm_auth_db` | Login JWT, RBAC, gestión de usuarios |
 | MS-2 | Periodos & Materias | 8002 | 50052 | `agm_periodos_db` | CRUD periodos, importación PDF materias |
-| MS-3 | Docentes & Alumnos | 8003 | 50053 | `agm_alumnos_db` | Importación PDF docentes, Excel alumnos, bajas |
+| MS-3 | Docentes & Alumnos | 8003 | 50053 | `agm_alumnos_db` | Importación PDF docentes, Excel alumnos, bajas. **Cuenta con BD pre-cargada de 43K trabajadores BUAP** (ver `test-data/`) |
 | MS-4 | Calificaciones | 8004 | 50054 | `agm_calificaciones_db` | Ponderaciones, actividades, promedios |
 | MS-5 | Asistencias QR | 8005 | 50055 | `agm_asistencias_db` + Redis | Sesiones QR, anti-replay, presente/retardo |
 | MS-6 | Notificaciones | 8006 | 50056 | `agm_notificaciones_db` | Correos transaccionales (SMTP) |

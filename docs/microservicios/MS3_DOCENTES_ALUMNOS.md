@@ -45,6 +45,44 @@ pandas>=2.2
 - `fecha_baja` (DateTimeField, null)
 - **unique_together**: `['alumno', 'materia_id']`
 
+## Datos Pre-cargados: Base de Datos de Trabajadores BUAP
+
+> **IMPORTANTE**: El equipo cuenta con una base de datos real de **43,025 trabajadores** de la BUAP
+> (13,157 con email). Esta BD se puede usar para pre-cargar docentes sin necesidad de importar PDF.
+
+### Archivos disponibles en `test-data/`
+| Archivo | Formato | Registros | Uso |
+|---------|---------|-----------|-----|
+| `buap_trabajadores.db` | SQLite | 43,025 | BD original, consultas con Python |
+| `trabajadores_buap.csv` | CSV | 43,025 | Universal, abrir en Excel |
+| `seed_docentes_mysql.sql` | SQL (MySQL) | 13,157 | INSERT directo a MySQL: `mysql -u root -p agm_alumnos_db < seed_docentes_mysql.sql` |
+| `export_trabajadores.py` | Python | — | Script para regenerar CSV y SQL desde la BD |
+
+### Estructura de los datos
+| Campo BD | Tipo | Ejemplo |
+|----------|------|---------|
+| `matricula` | INTEGER | 100000004 |
+| `paterno` | TEXT | PEREZ |
+| `materno` | TEXT | BONILLA |
+| `nombre` | TEXT | EVELIA |
+| `email` | TEXT | evelia.perez@correo.buap.mx |
+
+### Cómo usarla
+**Opción 1 — Seed SQL directo (recomendado para arranque rápido):**
+```bash
+# Después de correr migraciones de MS-3
+mysql -u root -p agm_alumnos_db < test-data/seed_docentes_mysql.sql
+```
+
+**Opción 2 — Management command de Django:**
+Crear un command `python manage.py seed_docentes` que lea el CSV y cree los registros.
+
+**Opción 3 — Mantener también el import PDF** (requerido por la spec):
+El endpoint `POST /docentes/importar` sigue siendo necesario para la evaluación,
+pero los datos pre-cargados sirven para tener docentes desde el día 1 sin esperar el parsing.
+
+---
+
 ## Endpoints REST
 
 ### Docentes
@@ -53,6 +91,11 @@ pandas>=2.2
   - Por cada docente nuevo: gRPC a MS-1 `CreateUser(email, nombre, rol='docente', password=uuid)`
   - Guardar en BD local con usuario_id
   - Manejar duplicados por email
+
+- `POST /docentes/seed` — Auth: admin. **Endpoint adicional** para cargar docentes desde el CSV/SQLite pre-existente.
+  - Lee `test-data/trabajadores_buap.csv` o recibe el CSV como upload
+  - Crea usuarios en MS-1 y docentes en BD local
+  - Útil para inicialización rápida del sistema
 
 - `GET /docentes` — Auth: admin. Paginado con búsqueda.
 - `GET /docentes/:id` — Auth: admin o el propio docente
