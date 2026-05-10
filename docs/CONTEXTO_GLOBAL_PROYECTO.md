@@ -77,7 +77,7 @@ asistencias por QR, notificaciones por correo y reportes exportables.
 |----|--------|-------------|-------------|---------------|-----------------|
 | MS-1 | Auth & Users | 8001 | 50051 | `agm_auth_db` | Login JWT, RBAC, gestión de usuarios |
 | MS-2 | Periodos & Materias | 8002 | 50052 | `agm_periodos_db` | CRUD periodos, importación PDF materias |
-| MS-3 | Docentes & Alumnos | 8003 | 50053 | `agm_alumnos_db` | Importación PDF docentes, Excel alumnos, bajas. **Cuenta con BD pre-cargada de 43K trabajadores BUAP** (ver `test-data/`) |
+| MS-3 | Docentes & Alumnos | 8003 | 50053 | `agm_alumnos_db` | Importación PDF docentes, Excel alumnos, bajas. **Cuenta con BD pre-cargada de 43K trabajadores + 318K alumnos BUAP** (ver `test-data/`). Datos con encoding UTF-8 verificado |
 | MS-4 | Calificaciones | 8004 | 50054 | `agm_calificaciones_db` | Ponderaciones, actividades, promedios |
 | MS-5 | Asistencias QR | 8005 | 50055 | `agm_asistencias_db` + Redis | Sesiones QR, anti-replay, presente/retardo |
 | MS-6 | Notificaciones | 8006 | 50056 | `agm_notificaciones_db` | Correos transaccionales (SMTP) |
@@ -252,6 +252,7 @@ DB_PORT=3306
 DB_NAME=agm_xxxxx_db
 DB_USER=root
 DB_PASSWORD=root_password
+DB_CHARSET=utf8mb4
 
 # Puertos
 REST_PORT=800X
@@ -260,6 +261,38 @@ GRPC_PORT=5005X
 # gRPC de otros MS (solo los que este MS necesita)
 MS_AUTH_GRPC_HOST=ms-auth
 MS_AUTH_GRPC_PORT=50051
+```
+
+### 6.10 Encoding (IMPORTANTE para español)
+Las bases de datos contienen nombres con acentos (á, é, í, ó, ú), ñ y ü.
+Todos los MS deben usar `utf8mb4` para evitar corrupción de caracteres.
+
+**En `settings.py`:**
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT', cast=int),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+}
+```
+
+**En Docker:** Los contenedores MySQL ya están configurados con:
+```yaml
+command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+```
+
+**Al importar seeds SQL:**
+```bash
+mysql -u root -proot_password --default-character-set=utf8mb4 agm_alumnos_db < seed_docentes_mysql.sql
 ```
 
 ---

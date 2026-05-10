@@ -15,6 +15,7 @@ services:
   db-auth:
     image: mysql:8.0
     container_name: agm-db-auth
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: agm_auth_db
@@ -33,6 +34,7 @@ services:
   db-periodos:
     image: mysql:8.0
     container_name: agm-db-periodos
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: agm_periodos_db
@@ -51,6 +53,7 @@ services:
   db-alumnos:
     image: mysql:8.0
     container_name: agm-db-alumnos
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: agm_alumnos_db
@@ -69,6 +72,7 @@ services:
   db-calificaciones:
     image: mysql:8.0
     container_name: agm-db-calificaciones
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: agm_calificaciones_db
@@ -87,6 +91,7 @@ services:
   db-asistencias:
     image: mysql:8.0
     container_name: agm-db-asistencias
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: agm_asistencias_db
@@ -105,6 +110,7 @@ services:
   db-notificaciones:
     image: mysql:8.0
     container_name: agm-db-notificaciones
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: agm_notificaciones_db
@@ -123,6 +129,7 @@ services:
   db-reportes:
     image: mysql:8.0
     container_name: agm-db-reportes
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: agm_reportes_db
