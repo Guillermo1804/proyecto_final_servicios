@@ -45,41 +45,46 @@ pandas>=2.2
 - `fecha_baja` (DateTimeField, null)
 - **unique_together**: `['alumno', 'materia_id']`
 
-## Datos Pre-cargados: Base de Datos de Trabajadores BUAP
+## Datos Pre-cargados: Bases de Datos BUAP
 
-> **IMPORTANTE**: El equipo cuenta con una base de datos real de **43,025 trabajadores** de la BUAP
-> (13,157 con email). Esta BD se puede usar para pre-cargar docentes sin necesidad de importar PDF.
+> **IMPORTANTE**: El equipo cuenta con bases de datos reales de la BUAP:
+> - **43,025 trabajadores** (13,157 con email) → para pre-cargar docentes
+> - **318,374 alumnos** (316,807 con email) → para pre-cargar alumnos
 
-### Archivos disponibles en `test-data/`
+### Archivos de DOCENTES en `test-data/`
 | Archivo | Formato | Registros | Uso |
 |---------|---------|-----------|-----|
 | `buap_trabajadores.db` | SQLite | 43,025 | BD original, consultas con Python |
 | `trabajadores_buap.csv` | CSV | 43,025 | Universal, abrir en Excel |
-| `seed_docentes_mysql.sql` | SQL (MySQL) | 13,157 | INSERT directo a MySQL: `mysql -u root -p agm_alumnos_db < seed_docentes_mysql.sql` |
-| `export_trabajadores.py` | Python | — | Script para regenerar CSV y SQL desde la BD |
+| `seed_docentes_mysql.sql` | SQL (MySQL) | 13,157 | INSERT directo a MySQL |
+| `export_trabajadores.py` | Python | — | Script para regenerar CSV y SQL |
 
-### Estructura de los datos
-| Campo BD | Tipo | Ejemplo |
-|----------|------|---------|
-| `matricula` | INTEGER | 100000004 |
-| `paterno` | TEXT | PEREZ |
-| `materno` | TEXT | BONILLA |
-| `nombre` | TEXT | EVELIA |
-| `email` | TEXT | evelia.perez@correo.buap.mx |
+### Archivos de ALUMNOS en `test-data/`
+| Archivo | Formato | Registros | Uso |
+|---------|---------|-----------|-----|
+| `buap_alumnos.db` | SQLite | 318,374 | BD original, consultas con Python |
+| `alumnos_buap.csv` | CSV | 318,374 | Universal, abrir en Excel |
+| `seed_alumnos_mysql.sql` | SQL (MySQL) | 316,807 | INSERT directo a MySQL (bloques de 1000) |
+| `export_alumnos.py` | Python | — | Script para regenerar CSV y SQL |
 
-### Cómo usarla
-**Opción 1 — Seed SQL directo (recomendado para arranque rápido):**
+### Estructura de los datos (igual para ambas BDs)
+| Campo BD | Tipo | Ejemplo (docente) | Ejemplo (alumno) |
+|----------|------|-------|-------|
+| `matricula` | INTEGER | 100000004 | 202000000 |
+| `paterno` | TEXT | PEREZ | SOSA |
+| `materno` | TEXT | BONILLA | JUAREZ |
+| `nombre` | TEXT | EVELIA | MARISOL |
+| `email` | TEXT | evelia.perez@correo.buap.mx | marisol.sosaj@alumno.buap.mx |
+
+### Cómo usarlas
 ```bash
 # Después de correr migraciones de MS-3
 mysql -u root -p agm_alumnos_db < test-data/seed_docentes_mysql.sql
+mysql -u root -p agm_alumnos_db < test-data/seed_alumnos_mysql.sql
 ```
 
-**Opción 2 — Management command de Django:**
-Crear un command `python manage.py seed_docentes` que lea el CSV y cree los registros.
-
-**Opción 3 — Mantener también el import PDF** (requerido por la spec):
-El endpoint `POST /docentes/importar` sigue siendo necesario para la evaluación,
-pero los datos pre-cargados sirven para tener docentes desde el día 1 sin esperar el parsing.
+> **Nota**: Los endpoints de importación (PDF para docentes, Excel para alumnos) siguen siendo
+> necesarios para la evaluación. Los datos pre-cargados sirven para tener datos desde el día 1.
 
 ---
 
