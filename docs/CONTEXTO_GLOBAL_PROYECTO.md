@@ -279,8 +279,8 @@ MS_AUTH_GRPC_PORT=50051
 ### Local (Desarrollo)
 ```bash
 # Clonar repo
-git clone https://github.com/EQUIPO/agm-backend.git
-cd agm-backend
+git clone https://github.com/Guillermo1804/proyecto_final_servicios.git
+cd proyecto_final_servicios
 
 # Copiar .env.example a .env en cada MS
 # Completar variables

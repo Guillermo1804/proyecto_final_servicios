@@ -15,10 +15,12 @@ AGM es una plataforma académica digital que permite a la Facultad de Ciencias d
 
 | Nombre | Rol | Microservicios | Contacto |
 |--------|-----|----------------|----------|
-| **[Nombre 1]** | Líder / Arquitecto / DevOps | Infraestructura + MS-1 Auth | correo@buap.mx |
-| **[Nombre 2]** | Desarrollador Backend | MS-2 Periodos + MS-3 Alumnos | correo@buap.mx |
-| **[Nombre 3]** | Desarrollador Backend | MS-4 Calificaciones + MS-5 Asistencias QR | correo@buap.mx |
-| **[Nombre 4]** | Desarrollador Backend + QA | MS-6 Notificaciones + MS-7 Reportes + Docs | correo@buap.mx |
+| **[Persona 1]** | Líder / Arquitecto / DevOps | Infraestructura + MS-1 Auth | _(completar)_ |
+| **[Persona 2]** | Desarrollador Backend | MS-2 Periodos + MS-3 Alumnos | _(completar)_ |
+| **[Persona 3]** | Desarrollador Backend | MS-4 Calificaciones + MS-5 Asistencias QR | _(completar)_ |
+| **[Persona 4]** | Desarrollador Backend + QA | MS-6 Notificaciones + MS-7 Reportes + Docs | _(completar)_ |
+
+> ⚠️ **TODO**: Completar nombres reales y correos del equipo
 
 ---
 
@@ -82,8 +84,8 @@ agm-backend/
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/EQUIPO/agm-backend.git
-cd agm-backend
+git clone https://github.com/Guillermo1804/proyecto_final_servicios.git
+cd proyecto_final_servicios
 
 # 2. Copiar .env.example a .env en cada microservicio
 for dir in ms-auth ms-periodos ms-alumnos ms-calificaciones ms-asistencias ms-notificaciones ms-reportes; do

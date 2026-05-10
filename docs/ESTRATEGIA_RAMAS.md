@@ -51,7 +51,7 @@ refactor(ms-calificaciones): separar lógica de promedio
 ```bash
 # Crear repo (ya hecho)
 git init
-git remote add origin https://github.com/EQUIPO/agm-backend.git
+git remote add origin https://github.com/Guillermo1804/proyecto_final_servicios.git
 
 # Crear rama develop
 git checkout -b develop
