@@ -56,31 +56,56 @@ AGM es una plataforma académica digital que permite a la Facultad de Ciencias d
 ## 📁 Estructura del Repositorio
 
 ```
-agm-backend/
-├── ms-auth/                 # MS-1: Autenticación JWT y gestión de usuarios
-├── ms-periodos/             # MS-2: Periodos académicos e importación de materias
-├── ms-alumnos/              # MS-3: Docentes, alumnos e inscripciones
-├── ms-calificaciones/       # MS-4: Ponderaciones, actividades y calificaciones
-├── ms-asistencias/          # MS-5: Sesiones QR y registro de asistencia
-├── ms-notificaciones/       # MS-6: Correos transaccionales
-├── ms-reportes/             # MS-7: Reportes Excel/PDF y estadísticas
-├── proto/                   # Archivos .proto compartidos (contratos gRPC)
-├── frontend/                # Angular 20 SPA (punto extra)
-├── docs/                    # Documentación del proyecto
-├── docker-compose.yml       # Levanta todo el sistema con un comando
+proyecto_final_servicios/
+├── ms-auth/
+├── ms-periodos/
+├── ms-alumnos/
+├── ms-calificaciones/
+├── ms-asistencias/
+├── ms-notificaciones/
+├── ms-reportes/
+├── proto/
+├── frontend/
+├── docker/
+│   └── nginx/
+│       └── default.conf      # API Gateway: prefijos → microservicios
+├── docs/
+├── docker-compose.yml
 ├── .gitignore
 └── README.md
 ```
 
 ---
 
-## 🚀 Instalación Local
+## 🚀 Instalación Local (Docker)
 
 ### Prerrequisitos
-- Docker 24+ y Docker Compose v2+
+- Docker 24+ con el plugin **Docker Compose V2** (`docker compose version`)
 - Git
+- En cada carpeta `ms-*` debe existir un **`Dockerfile`** (el repositorio ya incluye uno por microservicio) y **`entrypoint.sh`**. Si falta algún archivo, `docker compose build` fallará.
+
+### Variables y red Docker
+- Compose exige el archivo **`ms-*/.env`** (no solo `.env.example`). Cópialo antes de levantar los contenedores.
+- Dentro de la red `agm-network`, cada microservicio debe usar como **`DB_HOST`** el nombre del servicio de base de datos (por ejemplo `db-auth` para MS-1), **`DB_PORT=3306`** y las credenciales alineadas con `docker-compose.yml` (`DB_USER` / `DB_PASSWORD` como en tu `.env.example`).
+- Los hosts de gRPC hacia otros MS deben ser los **nombres de servicio** (`ms-auth`, `ms-periodos`, etc.), no `localhost`.
+- **Redis** (MS-5): servicio `redis`, puerto interno `6379`; revisa `ms-asistencias/.env.example` para la URL o host/puerto que use el proyecto.
+
+### Puertos MySQL publicados en el host (opcional)
+Solo si conectas un cliente MySQL **desde tu máquina** a las BDs: el puerto **dentro** de Docker sigue siendo 3306; en el host están mapeados así:
+
+| Servicio Compose | Base de datos       | URL típica desde el host   |
+|------------------|---------------------|-----------------------------|
+| `db-auth`        | `agm_auth_db`       | `127.0.0.1:3307` (→3306)   |
+| `db-periodos`    | `agm_periodos_db`   | `127.0.0.1:3308`           |
+| `db-alumnos`     | `agm_alumnos_db`    | `127.0.0.1:3309`           |
+| `db-calificaciones` | `agm_calificaciones_db` | `127.0.0.1:3310`      |
+| `db-asistencias` | `agm_asistencias_db`| `127.0.0.1:3311`           |
+| `db-notificaciones` | `agm_notificaciones_db` | `127.0.0.1:3312`      |
+| `db-reportes`    | `agm_reportes_db`   | `127.0.0.1:3313`           |
 
 ### Pasos
+
+**Bash (Linux / macOS / Git Bash)**
 
 ```bash
 # 1. Clonar el repositorio
@@ -89,23 +114,47 @@ cd proyecto_final_servicios
 
 # 2. Copiar .env.example a .env en cada microservicio
 for dir in ms-auth ms-periodos ms-alumnos ms-calificaciones ms-asistencias ms-notificaciones ms-reportes; do
-  cp $dir/.env.example $dir/.env
+  cp "$dir/.env.example" "$dir/.env"
 done
 
-# 3. Completar las variables de entorno en cada .env
+# 3. Revisar / completar variables en cada .env (JWT, SMTP, hosts gRPC, etc.)
 
-# 4. Levantar todo el sistema
-docker-compose up --build
-
-# 5. Acceder a los servicios:
-# MS-1 Auth:           http://localhost:8001
-# MS-2 Periodos:       http://localhost:8002
-# MS-3 Alumnos:        http://localhost:8003
-# MS-4 Calificaciones: http://localhost:8004
-# MS-5 Asistencias:    http://localhost:8005
-# MS-6 Notificaciones: http://localhost:8006
-# MS-7 Reportes:       http://localhost:8007
+# 4. Levantar todo (Compose V2)
+docker compose up --build
+# equivalente legacy: docker-compose up --build
 ```
+
+**PowerShell (Windows)**
+
+```powershell
+foreach ($d in 'ms-auth','ms-periodos','ms-alumnos','ms-calificaciones','ms-asistencias','ms-notificaciones','ms-reportes') {
+  Copy-Item "$d\.env.example" "$d\.env"
+}
+docker compose up --build
+```
+
+### Arranque y dependencias entre MS
+`depends_on` garantiza que cada MS espere **su** MySQL (y MS-5 además a Redis). **No** ordena el arranque entre microservicios que se llaman por gRPC: si un servicio falla al inicio porque otro aún no escucha en gRPC, suele bastar un reinicio del contenedor afectado o añadir reintentos en el cliente gRPC (recomendado en producción).
+
+### API Gateway (Nginx)
+Tras `docker compose up`, el **punto de entrada único** para REST es **http://localhost:8080** (servicio `nginx`, mapeo `8080:80`). La configuración vive en `docker/nginx/default.conf` (prefijos `/auth/`, `/periodos/`, `/materias/`, `/docentes/`, `/alumnos/`, rutas de calificaciones, asistencias, notificaciones y reportes).
+
+Los microservicios siguen publicados **directamente** en **8001–8007** para depuración, **Django Admin** (`/admin/`) y herramientas que apunten a un puerto concreto. **gRPC** (50051–50057) solo entre contenedores; no pasa por Nginx.
+
+### URLs locales tras `docker compose up`
+
+| Entrada | URL |
+|--------|-----|
+| **API Gateway (Nginx)** | http://localhost:8080 |
+| MS-1 Auth | http://localhost:8001 |
+| MS-2 Periodos | http://localhost:8002 |
+| MS-3 Alumnos | http://localhost:8003 |
+| MS-4 Calificaciones | http://localhost:8004 |
+| MS-5 Asistencias | http://localhost:8005 |
+| MS-6 Notificaciones | http://localhost:8006 |
+| MS-7 Reportes | http://localhost:8007 |
+
+Django Admin en cada MS: `http://localhost:800X/admin/` (no enrutado por el gateway).
 
 ---
 

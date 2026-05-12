@@ -1,6 +1,8 @@
 # 🌐 AGM – Contexto Global del Proyecto
 > Este documento es el contexto maestro. Cualquier IA que lea esto debe entender la arquitectura completa
 > del sistema antes de generar código para cualquier microservicio individual.
+>
+> **Stack fijo:** Django 5 + DRF en **los 7 MS**, **MySQL 8** (`agm_auth_db`, `agm_periodos_db`, `agm_alumnos_db`, `agm_calificaciones_db`, `agm_asistencias_db`, `agm_notificaciones_db`, `agm_reportes_db`), **Redis** solo en MS-5, **Nginx** como gateway. El backlog (`docs/backlog_AGM_completo.md`) y el enunciado extendido (`docs/Proyecto_Final_SW_AGM.md`) siguen esta línea.
 
 ---
 
@@ -32,16 +34,15 @@ asistencias por QR, notificaciones por correo y reportes exportables.
                        │
         ┌──────────────┼──────────────┐
         ▼              ▼              ▼
-   ┌─────────┐   ┌─────────┐   ┌─────────┐
-   │  MS-1   │   │  MS-2   │   │  MS-3   │   ...MS-4, MS-5, MS-6, MS-7
-   │  Auth   │   │Periodos │   │Alumnos  │
-   │ :8001   │   │ :8002   │   │ :8003   │
-   │gRPC:    │   │gRPC:    │   │gRPC:    │
-   │ 50051   │   │ 50052   │   │ 50053   │
-   │         │   │         │   │         │
-   │ MySQL   │   │ MySQL   │   │ MySQL   │
-   │agm_auth │   │agm_per  │   │agm_alu  │
-   └─────────┘   └─────────┘   └─────────┘
+   ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+   │     MS-1      │   │     MS-2      │   │     MS-3      │   ...MS-4…MS-7
+   │     Auth      │   │   Periodos    │   │    Alumnos    │
+   │    :8001      │   │    :8002      │   │    :8003      │
+   │   gRPC:       │   │   gRPC:       │   │   gRPC:       │
+   │   50051       │   │   50052       │   │   50053       │
+   │    MySQL      │   │    MySQL      │   │    MySQL      │
+   │ agm_auth_db   │   │agm_periodos_db│   │ agm_alumnos_db│
+   └───────────────┘   └───────────────┘   └───────────────┘
         ▲              ▲              ▲
         └──────gRPC────┴──────gRPC────┘
 ```
@@ -310,16 +311,23 @@ mysql -u root -proot_password --default-character-set=utf8mb4 agm_alumnos_db < s
 ## 8. Despliegue
 
 ### Local (Desarrollo)
+
+El archivo `docker-compose.yml` en la raíz define **siete servicios MySQL 8** (`db-auth` … `db-reportes`, bases `agm_*_db`), **Redis** para MS-5 y los **siete microservicios** con `depends_on` + `healthcheck` en las BDs.
+
+**Dentro de la red Docker:** en cada `.env`, `DB_HOST` debe ser el **nombre del servicio** de MySQL (p. ej. `db-auth`), `DB_PORT=3306`. Para depurar desde el **host** con un cliente MySQL, los puertos publicados van del **3307 al 3313** (mapeo a `3306` en el contenedor; ver comentarios en `docker-compose.yml`).
+
+**API Gateway Nginx:** servicio `nginx` en el compose, **http://localhost:8080** → enrutamiento a cada MS según prefijo (`docker/nginx/default.conf`). Los REST también siguen en **8001–8007**; **gRPC** entre MS en **50051–50057** (red interna, sin pasar por Nginx).
+
 ```bash
 # Clonar repo
 git clone https://github.com/Guillermo1804/proyecto_final_servicios.git
 cd proyecto_final_servicios
 
-# Copiar .env.example a .env en cada MS
-# Completar variables
+# Copiar .env.example a .env en cada MS y completar variables
 
-# Levantar todo
-docker-compose up --build
+# Levantar todo (Compose V2 recomendado)
+docker compose up --build
+# o: docker-compose up --build
 ```
 
 ### Producción (Railway/Render)

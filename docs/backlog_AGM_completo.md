@@ -1,6 +1,8 @@
 # 📋 Backlog Completo de Issues – Sistema AGM (Academic Grade Management)
 > Proyecto Final – Servicios Web | BUAP – FCC
-> Stack: Django REST Framework (Backend) · Angular 20 (Frontend – Punto Extra) · gRPC · Docker
+> Stack: **Django 5 + DRF en los 7 MS** · **MySQL 8** (una BD por MS; Redis solo MS-5) · gRPC · Docker · Angular 20 (Frontend – Punto Extra)
+>
+> **Alineación:** Este backlog sigue `docs/CONTEXTO_GLOBAL_PROYECTO.md` (sin mezcla de motores ni frameworks por microservicio).
 
 ---
 
@@ -66,21 +68,21 @@
 - **Descripción:** Crear archivo en la raíz para levantar todo el sistema con un único comando.
 - **Tareas:**
   - [ ] Definir un servicio en `docker-compose.yml` por cada microservicio (7 en total)
-  - [ ] Definir contenedores de base de datos separados:
-    - `db-auth` (PostgreSQL para MS-1)
-    - `db-periodos` (PostgreSQL para MS-2)
-    - `db-alumnos` (PostgreSQL para MS-3)
-    - `db-calificaciones` (PostgreSQL o MongoDB para MS-4)
-    - `db-asistencias` (PostgreSQL para MS-5) + `redis` (para sesiones en vivo)
-    - `db-notificaciones` (MongoDB o PostgreSQL para MS-6)
-    - `db-reportes` (PostgreSQL para MS-7)
+  - [ ] Definir contenedores de base de datos separados (imagen `mysql:8.0`, `utf8mb4`, un esquema por servicio):
+    - `db-auth` → base `agm_auth_db` (MS-1)
+    - `db-periodos` → `agm_periodos_db` (MS-2)
+    - `db-alumnos` → `agm_alumnos_db` (MS-3)
+    - `db-calificaciones` → `agm_calificaciones_db` (MS-4)
+    - `db-asistencias` → `agm_asistencias_db` (MS-5) + contenedor `redis` (sesiones en vivo)
+    - `db-notificaciones` → `agm_notificaciones_db` (MS-6)
+    - `db-reportes` → `agm_reportes_db` (MS-7)
   - [ ] Configurar red Docker interna (`bridge`) para comunicación entre contenedores por nombre de servicio
   - [ ] Definir `volumes` persistentes para cada base de datos
   - [ ] Leer variables de entorno desde archivos `.env` por servicio usando `env_file`
   - [ ] Configurar `depends_on` para que cada microservicio espere a su base de datos
   - [ ] Agregar `healthcheck` a los contenedores de bases de datos
-  - [ ] Probar que `docker-compose up --build` levanta todo el sistema correctamente
-- **Criterio de aceptación:** Un solo `docker-compose up --build` levanta los 7 MS + sus BDs sin errores.
+  - [ ] Probar que `docker compose up --build` (o `docker-compose up --build`) levanta todo el sistema correctamente
+- **Criterio de aceptación:** Un solo `docker compose up --build` levanta los 7 MS + sus BDs sin errores.
 
 ---
 
@@ -90,14 +92,18 @@
 - **Tareas:**
   - [ ] Crear `.env.example` en cada carpeta `/ms-*` con todas las variables requeridas, por ejemplo:
     ```env
-    # .env.example para ms-auth
+    # .env.example para ms-auth (ver también CONTEXTO_GLOBAL sección 6.9)
     SECRET_KEY=your-secret-key-here
     DEBUG=False
-    DATABASE_URL=postgresql://user:password@db-auth:5432/agm_auth_db
-    JWT_SECRET_KEY=your-jwt-secret
-    GRPC_PORT=50051
-    REST_PORT=8001
     ALLOWED_HOSTS=*
+    DB_HOST=db-auth
+    DB_PORT=3306
+    DB_NAME=agm_auth_db
+    DB_USER=root
+    DB_PASSWORD=change-me
+    DB_CHARSET=utf8mb4
+    REST_PORT=8001
+    GRPC_PORT=50051
     ```
   - [ ] Asegurarse de que los `.env` reales **nunca** se suban al repositorio (verificar `.gitignore`)
   - [ ] Documentar en el README cómo copiar `.env.example` a `.env` y completar los valores
@@ -121,7 +127,7 @@
 - **Prioridad:** 🔴 Crítica
 - **Descripción:** Desplegar todos los microservicios en un entorno de nube con URLs públicas y HTTPS.
 - **Tareas:**
-  - [ ] Elegir plataforma de despliegue (Railway recomendado por soporte a Docker y PostgreSQL gestionado)
+  - [ ] Elegir plataforma de despliegue (Railway / Render / Fly.io: Docker + **MySQL** gestionado o contenedor MySQL 8)
   - [ ] Crear proyecto en la plataforma cloud y conectar repositorio GitHub
   - [ ] Desplegar cada microservicio como servicio independiente
   - [ ] Configurar bases de datos gestionadas (o contenedores) en la plataforma
@@ -136,7 +142,7 @@
 - **Prioridad:** 🟡 Media
 - **Descripción:** Implementar un punto de entrada único para el cliente que enrute peticiones a cada microservicio.
 - **Tareas:**
-  - [ ] Decidir entre Nginx como proxy reverso o un microservicio propio en Express.js/Django
+  - [ ] Implementar **Nginx** como API Gateway / proxy reverso (punto de entrada único; ver `CONTEXTO_GLOBAL_PROYECTO.md`)
   - [ ] Configurar rutas de enrutamiento: `/auth/*` → MS-1, `/periodos/*` → MS-2, etc.
   - [ ] Agregar el gateway al `docker-compose.yml`
   - [ ] Configurar CORS en el gateway (en lugar de en cada MS individualmente si se centraliza)
@@ -161,7 +167,7 @@
   - [ ] Usar `syntax = "proto3"` en todos los archivos
   - [ ] Definir mensajes de request y response correctamente tipados para cada RPC
   - [ ] Versionar todos los `.proto` en la carpeta `/proto` del repositorio
-- **Criterio de aceptación:** 7 archivos `.proto` presentes en `/proto`, sintácticamente válidos (se puede verificar con `protoc --check`).
+- **Criterio de aceptación:** 7 archivos `.proto` presentes en `/proto`, sintácticamente válidos (compilar con `grpc_tools.protoc` / `protoc` sin errores).
 
 ---
 
@@ -215,9 +221,9 @@
 - **Descripción:** Inicializar el proyecto Django para el microservicio de autenticación.
 - **Tareas:**
   - [ ] Crear proyecto Django en `/ms-auth/` con `django-admin startproject config .`
-  - [ ] Instalar dependencias: `djangorestframework`, `djangorestframework-simplejwt`, `psycopg2-binary`, `django-cors-headers`, `grpcio`, `grpcio-tools`, `python-decouple`
-  - [ ] Configurar `settings.py`: base de datos PostgreSQL (desde variable de entorno), apps instaladas, REST_FRAMEWORK con autenticación JWT
-  - [ ] Configurar base de datos `agm_auth_db` (PostgreSQL)
+  - [ ] Instalar dependencias: `djangorestframework`, `djangorestframework-simplejwt`, `mysqlclient`, `django-cors-headers`, `grpcio`, `grpcio-tools`, `python-decouple`
+  - [ ] Configurar `settings.py`: **MySQL 8** (`ENGINE=django.db.backends.mysql`, `utf8mb4`), apps instaladas, REST_FRAMEWORK con autenticación JWT
+  - [ ] Configurar base de datos `agm_auth_db` (MySQL, contenedor `db-auth` o equivalente)
   - [ ] Crear modelo de usuario personalizado (`AbstractBaseUser`) con campos: `email`, `password`, `rol` (admin/docente/alumno), `nombre`, `activo`
   - [ ] Crear y aplicar migraciones iniciales
   - [ ] Configurar `Dockerfile` y verificar que corra con `gunicorn`
@@ -317,7 +323,7 @@
 - **Tareas:**
   - [ ] Inicializar proyecto Django en `/ms-periodos/`
   - [ ] Dependencias adicionales: `pdfplumber` o `pypdf2` + `pdfminer.six` (para parsing de PDF)
-  - [ ] Configurar base de datos `agm_periodos_db` (PostgreSQL)
+  - [ ] Configurar base de datos `agm_periodos_db` (MySQL 8)
   - [ ] Crear modelos: `Periodo` (nombre, fecha_inicio, fecha_fin, plan_estudios, activo) y `Materia` (nrc, nombre, seccion, clave, docente_id, horario, periodo)
   - [ ] Crear y aplicar migraciones
 - **Criterio de aceptación:** El MS levanta y se conecta a su base de datos.
@@ -417,7 +423,7 @@
 - **Tareas:**
   - [ ] Inicializar proyecto Django en `/ms-alumnos/`
   - [ ] Dependencias: `openpyxl`, `pandas`, `pdfplumber`, `grpcio`, `grpcio-tools`
-  - [ ] Configurar base de datos `agm_alumnos_db` (PostgreSQL)
+  - [ ] Configurar base de datos `agm_alumnos_db` (MySQL 8)
   - [ ] Crear modelos:
     - `Docente`: nombre, email_institucional, cubiculo, usuario_id (referencia a MS-1)
     - `Alumno`: matricula, nombre, email, tipo_formacion, materia_id, activo, fecha_baja
@@ -529,7 +535,7 @@
 - **Tareas:**
   - [ ] Inicializar proyecto Django en `/ms-calificaciones/`
   - [ ] Dependencias: `openpyxl`, `grpcio`, `grpcio-tools`
-  - [ ] Configurar base de datos `agm_calificaciones_db` (PostgreSQL)
+  - [ ] Configurar base de datos `agm_calificaciones_db` (MySQL 8)
   - [ ] Crear modelos:
     - `Ponderacion`: materia_id, nombre_categoria (ej. "Exámenes"), porcentaje
     - `Actividad`: ponderacion (FK), nombre, descripcion, fecha
@@ -641,11 +647,11 @@
 - **Tareas:**
   - [ ] Inicializar proyecto Django en `/ms-asistencias/`
   - [ ] Dependencias: `redis`, `django-redis`, `grpcio`, `grpcio-tools`, `cryptography` (para cifrado del QR)
-  - [ ] Configurar BD: `agm_asistencias_db` (PostgreSQL) + Redis (para sesiones en vivo)
+  - [ ] Configurar BD: `agm_asistencias_db` (MySQL 8) + Redis (para sesiones en vivo)
   - [ ] Crear modelos:
     - `SesionAsistencia`: materia_id, docente_id, inicio, fin, activa
     - `RegistroAsistencia`: sesion (FK), alumno_id, timestamp_registro, estado (Presente/Retardo)
-- **Criterio de aceptación:** El MS levanta, se conecta a PostgreSQL y a Redis.
+- **Criterio de aceptación:** El MS levanta, se conecta a **MySQL** y a Redis.
 
 ---
 
@@ -653,11 +659,11 @@
 - **Prioridad:** 🔴 Crítica
 - **Tareas:**
   - [ ] `POST /sesiones/iniciar` → el docente abre una sesión para una materia:
-    - Crear sesión en PostgreSQL
+    - Crear sesión en MySQL (`agm_asistencias_db`)
     - Almacenar en Redis: `sesion:{sesion_id}` con TTL de 600 segundos (10 minutos)
     - Solo puede haber una sesión activa por materia a la vez
   - [ ] `DELETE /sesiones/:id/cerrar` → el docente cierra manualmente la sesión antes de que expire
-  - [ ] Cierre automático por Redis TTL (cuando el TTL expira, la sesión se marca como inactiva en PostgreSQL via un worker o signal)
+  - [ ] Cierre automático por Redis TTL (cuando el TTL expira, la sesión se marca como inactiva en MySQL mediante worker, signal o tarea periódica)
   - [ ] `GET /sesiones/:materiaId/activa` → consultar si hay sesión activa para esa materia
 - **Criterio de aceptación:** Las sesiones duran máximo 10 minutos y se cierran automáticamente.
 
@@ -687,7 +693,7 @@
     - Calcular estado según tiempo transcurrido desde inicio de sesión:
       - `Presente`: registro en los primeros 5 minutos
       - `Retardo`: registro entre 5 y 10 minutos
-    - Registrar asistencia en PostgreSQL
+    - Registrar asistencia en MySQL
     - Marcar el token como usado en Redis
   - [ ] Retornar 400 si el QR es inválido, expirado, ya fue usado o la sesión ya cerró
 - **Criterio de aceptación:** Anti-replay funciona. El estado Presente/Retardo se calcula correctamente.
@@ -739,7 +745,7 @@
 - **Tareas:**
   - [ ] Inicializar proyecto Django en `/ms-notificaciones/`
   - [ ] Dependencias: `sendgrid` o `django-ses` o configurar SMTP con Gmail, `grpcio`, `grpcio-tools`
-  - [ ] Configurar BD: `agm_notificaciones_db` (MongoDB con `djongo` o PostgreSQL)
+  - [ ] Configurar BD: `agm_notificaciones_db` (MySQL 8; historial de correos en tablas Django)
   - [ ] Crear modelo `HistorialCorreo`: tipo, destinatario_email, asunto, enviado_en, exitoso, error_msg
   - [ ] Configurar credenciales SMTP desde variables de entorno
 - **Criterio de aceptación:** El MS levanta y puede enviar un correo de prueba.
@@ -808,7 +814,7 @@
 - **Tareas:**
   - [ ] Inicializar proyecto Django en `/ms-reportes/`
   - [ ] Dependencias: `openpyxl` (Excel), `reportlab` o `WeasyPrint` (PDF), `grpcio`, `grpcio-tools`
-  - [ ] Configurar BD: `agm_reportes_db` (PostgreSQL con vistas materializadas)
+  - [ ] Configurar BD: `agm_reportes_db` (MySQL 8; opcional: tablas de caché / vistas para agregados pesados)
 - **Criterio de aceptación:** El MS levanta y se conecta a su base de datos.
 
 ---
@@ -1023,7 +1029,7 @@
     1. Clonar repositorio
     2. Copiar `.env.example` a `.env` en cada MS
     3. Completar variables de entorno
-    4. `docker-compose up --build`
+    4. `docker compose up --build` (o `docker-compose up --build`)
   - [ ] URLs de producción de cada microservicio (tabla)
   - [ ] URL del video demostrativo en YouTube
   - [ ] Estructura del repositorio explicada
@@ -1100,7 +1106,7 @@
 - **Descripción:** Verificación final antes de la presentación.
 - **Tareas:**
   - [ ] Verificar que los 7 MS están desplegados y accesibles por HTTPS
-  - [ ] Verificar que `docker-compose up --build` funciona en una máquina limpia
+  - [ ] Verificar que `docker compose up --build` (o `docker-compose up --build`) funciona en una máquina limpia
   - [ ] Verificar que el repositorio tiene **más de 20 commits** con historial distribuido durante el semestre
   - [ ] Verificar que NO hay credenciales hardcodeadas en el código (ni contraseñas, ni API keys, ni secrets)
   - [ ] Verificar que todos los `.env.example` están presentes

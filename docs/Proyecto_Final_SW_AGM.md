@@ -11,11 +11,13 @@
 | **Docentes propietarios** | Luis Yael Méndez Sánchez / Gustavo Emilio Mendoza Olguín |
 | **Asignatura** | Servicios Web |
 | **Tipo de entregable** | Proyecto Final – Evaluación Integradora (30% de calificación final) |
-| **Tecnología Backend** | Libre elección por microservicio (Django REST / FastAPI / Express.js / NestJS / Spring Boot) |
+| **Tecnología Backend** | **Este repositorio:** Django 5 + Django REST Framework en **los 7 microservicios**. El enunciado del curso admite otras tecnologías por servicio; aquí se estandarizó para un solo stack operativo. |
 | **Comunicación entre MS** | gRPC (obligatorio entre microservicios) + REST (hacia el cliente) |
-| **Arquitectura** | Microservicios independientes con BD propia cada uno |
+| **Arquitectura** | Microservicios independientes con **MySQL 8** dedicado por servicio (`agm_*_db`), sin acceso cruzado a BDs ajenas |
 | **Frontend** | Angular 20 — PUNTO EXTRA: Actividad opcional para +1 punto sobre calificación final |
 | **Integrantes por equipo** | Máximo 6 personas |
+
+> **Implementación concreta (`proyecto_final_servicios`):** API Gateway **Nginx**, backend **Django 5 + DRF** en MS-1…MS-7, **MySQL 8** + `utf8mb4` por microservicio, **Redis** solo en MS-5 (asistencias), contratos **gRPC** en `/proto`, despliegue con **Docker** / **docker-compose**. Guía única: `docs/CONTEXTO_GLOBAL_PROYECTO.md` y `docs/microservicios/MS*.md`.
 
 ---
 
@@ -67,7 +69,7 @@ El proyecto se centra en el diseño e implementación del backend como núcleo d
 
 4. **Automatizar la importación de datos académicos** procesando archivos PDF de programación académica oficial y archivos Excel/CSV de listas de alumnos dentro del microservicio correspondiente, normalizando y persistiendo la información sin intervención manual del administrador.
 
-5. **Modelar la base de datos de cada microservicio de forma independiente**, eligiendo el motor más adecuado a la naturaleza de sus datos (relacional o no relacional) y documentando el esquema completo con diccionario de datos en el Manual Técnico.
+5. **Modelar la base de datos de cada microservicio de forma independiente**, con esquema propio en **MySQL 8** (relacional) y documentando el modelo completo con diccionario de datos en el Manual Técnico.
 
 6. **Desplegar todos los microservicios en un entorno de nube pública** mediante contenedores Docker, garantizando que cada servicio sea accesible con URL pública y HTTPS, reproducible localmente con un único comando `docker-compose`.
 
@@ -87,8 +89,8 @@ El proyecto se centra en el diseño e implementación del backend como núcleo d
 
 - El backend **DEBE** implementarse bajo arquitectura de microservicios. No se aceptará un monolito único.
 - La comunicación entre microservicios **DEBE** realizarse mediante gRPC usando archivos de definición `.proto`. La comunicación hacia el cliente externo (navegador o herramienta de pruebas) puede ser REST/HTTP.
-- Cada microservicio **DEBE** tener su propia base de datos. Aunque todos usen el mismo motor (ej. PostgreSQL), cada servicio debe tener su esquema o instancia separada, sin acceder directamente a la BD de otro servicio.
-- La tecnología de backend por microservicio es libre (ver propuestas en sección 5.4.4). El equipo debe justificar su elección en el Manual Técnico.
+- Cada microservicio **DEBE** tener su propia base de datos. Puede usarse el mismo motor en todos (en **este repositorio:** MySQL 8, una base `agm_*_db` por MS), siempre con instancia o esquema separado, sin acceder directamente a la BD de otro servicio.
+- La tecnología de backend puede ser libre por equipo según el criterio docente; **en este proyecto** se unificó **Django 5 + DRF** en los siete servicios (sección 5.4.4). La justificación técnica queda en el Manual Técnico y en `CONTEXTO_GLOBAL_PROYECTO.md`.
 - El frontend en Angular 20 es **OPCIONAL** y otorga un punto extra sobre la calificación final del semestre. Se describe en la sección 5.5.
 
 ### 4.3 Control de Versiones
@@ -206,17 +208,17 @@ Estadísticas de asistencias y entregas a nivel individual (alumno) y grupal (ma
 
 Principio clave de aislamiento de datos: si el MS-4 (Calificaciones) necesita el nombre de un alumno, no accede a la BD del MS-3 (Alumnos). En cambio, realiza una llamada gRPC `GetAlumnoById(alumnoId)` al MS-3, quien responde con los datos solicitados.
 
-| Microservicio | BD recomendada | Motor sugerido | Justificación |
+| Microservicio | Motor (este repositorio) | Nombre de base de datos | Justificación breve |
 |---|---|---|---|
-| MS-1 Auth & Users | Relacional | PostgreSQL | Las relaciones usuario-rol son bien estructuradas; necesita transacciones ACID para el manejo seguro de credenciales. |
-| MS-2 Periodos & Materias | Relacional | PostgreSQL / MySQL | Relaciones complejas entre periodos, planes de estudio y materias con integridad referencial. |
-| MS-3 Docentes & Alumnos | Relacional | PostgreSQL / MySQL | Relaciones claras entre docentes, alumnos y materias. Búsquedas frecuentes por NRC o matrícula. |
-| MS-4 Calificaciones | Relacional o documental | PostgreSQL / MongoDB | Las ponderaciones y actividades varían por materia; MongoDB ofrece flexibilidad para estructuras variables por docente. |
-| MS-5 Asistencias QR | Relacional + caché | PostgreSQL + Redis | Las sesiones activas de asistencia son datos volátiles de corta duración, ideales para Redis. Los registros históricos van en PostgreSQL. |
-| MS-6 Notificaciones | Documental o relacional | MongoDB / PostgreSQL | Historial de correos enviados con estructura flexible (distintos templates y parámetros). |
-| MS-7 Reportes & Stats | Relacional analítica | PostgreSQL | Consultas de agregación complejas sobre datos históricos; PostgreSQL con vistas materializadas es óptimo. |
+| MS-1 Auth & Users | MySQL 8 | `agm_auth_db` | ACID, usuarios/roles/JWT; ORM Django. |
+| MS-2 Periodos & Materias | MySQL 8 | `agm_periodos_db` | Periodos, materias, NRC; integridad referencial local. |
+| MS-3 Docentes & Alumnos | MySQL 8 | `agm_alumnos_db` | Docentes, alumnos, inscripciones; seeds BUAP (`test-data/`). |
+| MS-4 Calificaciones | MySQL 8 | `agm_calificaciones_db` | Ponderaciones, actividades, calificaciones; modelo relacional con Django. |
+| MS-5 Asistencias QR | MySQL 8 + Redis | `agm_asistencias_db` + caché | Histórico en MySQL; sesiones y anti-replay en Redis. |
+| MS-6 Notificaciones | MySQL 8 | `agm_notificaciones_db` | Historial de correos y plantillas en tablas Django. |
+| MS-7 Reportes & Stats | MySQL 8 | `agm_reportes_db` | Metadatos/cachés opcionales; datos de negocio vía gRPC desde otros MS. |
 
-> **Nota:** aunque dos microservicios usen el mismo motor, deben tener bases de datos separadas con nombres distintos (ej. `agm_auth_db`, `agm_periodos_db`, `agm_alumnos_db`).
+> **Nota:** cada microservicio usa **solo** su base `agm_*_db`; los nombres anteriores son los oficiales del proyecto. No hay acceso cruzado a la BD de otro MS.
 
 #### 5.4.3 Comunicación entre Microservicios con gRPC
 
@@ -225,20 +227,20 @@ gRPC es el protocolo **obligatorio** para la comunicación interna entre microse
 El equipo debe crear **un archivo `.proto` por cada microservicio** que expone métodos gRPC hacia otros. Estos archivos deben estar versionados en el repositorio (carpeta `/proto` en la raíz). Consideraciones técnicas clave:
 
 - **Definición de servicios:** cada archivo `.proto` define un `service` con sus `rpc` (procedimientos remotos), los mensajes de entrada (request) y salida (response).
-- **Generación de código:** a partir del `.proto` se genera automáticamente el código cliente y servidor en el lenguaje elegido (Python con `grpcio-tools`, JavaScript/TypeScript con `@grpc/grpc-js` y `@grpc/proto-loader`, Java con el plugin de Maven/Gradle).
+- **Generación de código:** en este repositorio, **Python** con `grpcio-tools` en cada MS; otros lenguajes (p. ej. `@grpc/grpc-js`, Java) aplican solo si el equipo cambiara de stack.
 - **Comunicación unidireccional y streaming:** para la mayoría de las operaciones es suficiente el RPC unario (una solicitud, una respuesta). Para asistencias en tiempo real se puede explorar el streaming del servidor (server-side streaming).
 - **Manejo de errores:** gRPC usa códigos de estado propios (`OK`, `NOT_FOUND`, `PERMISSION_DENIED`, `INTERNAL`) que deben manejarse correctamente.
 - **Puertos:** cada microservicio debe tener un puerto dedicado para su servidor gRPC (diferente al puerto REST). Por convención se recomienda el rango `50051–50057`.
 
 #### 5.4.4 Propuesta de Tecnologías para el Backend
 
-| Tecnología | Lenguaje | Ventajas para este proyecto | Microservicios recomendados |
-|---|---|---|---|
-| Django REST Framework | Python | ORM robusto, admin integrado, excelente para APIs con lógica compleja, gran soporte para procesamiento de archivos PDF/Excel | MS-1, MS-2, MS-3, MS-4 |
-| FastAPI | Python | Alto rendimiento asíncrono, documentación OpenAPI automática, integración nativa con `grpcio`, ideal para servicios de alta concurrencia | MS-5, MS-6, MS-7 |
-| Express.js / NestJS | JavaScript / TypeScript | Ecosistema npm amplio, `@grpc/grpc-js` bien documentado, Nodemailer para notificaciones, NestJS tiene módulos gRPC nativos | MS-1, MS-5, MS-6 |
-| Spring Boot | Java | Soporte nativo para gRPC con `grpc-spring-boot-starter`, escalabilidad empresarial, ideal para servicios con lógica compleja y datos críticos | MS-2, MS-4 |
-| Laravel (API) | PHP | Rápido de implementar para CRUDs, Eloquent ORM, buena opción si el equipo tiene experiencia previa en PHP | MS-3, MS-4 |
+| Tecnología | Alcance en este repositorio | Ventajas |
+|---|---|---|
+| **Django 5 + Django REST Framework** | **MS-1 a MS-7** (todos los microservicios) | Un solo stack: ORM, migraciones, admin, validaciones, PDF/Excel (`pdfplumber`, `openpyxl`), `grpcio` / `grpcio-tools` para servidores y clientes gRPC, despliegue homogéneo. |
+| **MySQL 8** | Una instancia o contenedor de BD **por** microservicio (`agm_*_db`), charset `utf8mb4` | Transacciones ACID, familiaridad del equipo, alineado con seeds SQL de `test-data/`. |
+| **Redis 7.x** | Solo **MS-5** (sesiones QR, anti-replay, TTL) | Baja latencia para estado efímero sin tocar la BD de otros MS. |
+
+> Otras tecnologías (FastAPI, Node, Spring, etc.) son válidas en otros equipos si el criterio docente lo permite; **este documento y el backlog** describen la implementación unificada en Django + MySQL del repositorio `proyecto_final_servicios`.
 
 #### 5.4.5 Estándares de Diseño de la API REST Externa
 
@@ -248,7 +250,7 @@ El equipo debe crear **un archivo `.proto` por cada microservicio** que expone m
 - **Paginación** en todos los endpoints que retornen listas: parámetros `?page=1&limit=10`.
 - **Validación de todos los datos de entrada** en el backend, independientemente de si hay frontend o no.
 - **Documentación** con Swagger/OpenAPI o colección Postman exportada, incluida en el Manual Técnico y en el repositorio.
-- **API Gateway** (opcional pero recomendado): un componente central que actúa como punto de entrada único para el cliente. Puede implementarse con Nginx como proxy reverso o con un microservicio propio en Express.js.
+- **API Gateway** (recomendado): punto de entrada único para el cliente. **En este repositorio:** **Nginx** como proxy reverso (rutas `/auth/*`, `/periodos/*`, etc., según `CONTEXTO_GLOBAL_PROYECTO.md`).
 
 #### 5.4.6 Despliegue del Backend en la Nube
 
@@ -261,7 +263,7 @@ Plataformas de despliegue recomendadas:
 
 | Plataforma | Tipo | Ventajas | Plan gratuito |
 |---|---|---|---|
-| **Railway** | PaaS (Backend + BD) | Despliegue directo desde GitHub, soporte Docker, PostgreSQL administrado incluido, ideal para múltiples microservicios | Sí (con límites) |
+| **Railway** | PaaS (Backend + BD) | Docker desde GitHub; compatible con **MySQL** gestionado o contenedor MySQL 8 | Sí (con límites) |
 | **Render** | PaaS (Backend + BD) | Despliegue automático desde GitHub, soporta Docker, servicios web y bases de datos administradas | Sí (con sleep) |
 | **Fly.io** | Containers | Despliegue de contenedores Docker, buena latencia global, control total del entorno de red | Sí (limitado) |
 | **AWS / GCP / Azure** | Cloud completo | Máxima flexibilidad, créditos educativos disponibles | Créditos educativos |
