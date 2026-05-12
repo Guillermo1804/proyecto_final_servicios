@@ -95,13 +95,13 @@ Solo si conectas un cliente MySQL **desde tu máquina** a las BDs: el puerto **d
 
 | Servicio Compose | Base de datos       | URL típica desde el host   |
 |------------------|---------------------|-----------------------------|
-| `db-auth`        | `agm_auth_db`       | `127.0.0.1:3307` (→3306)   |
-| `db-periodos`    | `agm_periodos_db`   | `127.0.0.1:3308`           |
-| `db-alumnos`     | `agm_alumnos_db`    | `127.0.0.1:3309`           |
-| `db-calificaciones` | `agm_calificaciones_db` | `127.0.0.1:3310`      |
-| `db-asistencias` | `agm_asistencias_db`| `127.0.0.1:3311`           |
-| `db-notificaciones` | `agm_notificaciones_db` | `127.0.0.1:3312`      |
-| `db-reportes`    | `agm_reportes_db`   | `127.0.0.1:3313`           |
+| `db-auth`        | `agm_auth_db`       | `127.0.0.1:13307` (→3306)  |
+| `db-periodos`    | `agm_periodos_db`   | `127.0.0.1:13308`          |
+| `db-alumnos`     | `agm_alumnos_db`    | `127.0.0.1:13309`          |
+| `db-calificaciones` | `agm_calificaciones_db` | `127.0.0.1:13310`     |
+| `db-asistencias` | `agm_asistencias_db`| `127.0.0.1:13311`          |
+| `db-notificaciones` | `agm_notificaciones_db` | `127.0.0.1:13312`     |
+| `db-reportes`    | `agm_reportes_db`   | `127.0.0.1:13313`          |
 
 ### Pasos
 

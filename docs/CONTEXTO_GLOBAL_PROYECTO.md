@@ -314,7 +314,7 @@ mysql -u root -proot_password --default-character-set=utf8mb4 agm_alumnos_db < s
 
 El archivo `docker-compose.yml` en la raíz define **siete servicios MySQL 8** (`db-auth` … `db-reportes`, bases `agm_*_db`), **Redis** para MS-5 y los **siete microservicios** con `depends_on` + `healthcheck` en las BDs.
 
-**Dentro de la red Docker:** en cada `.env`, `DB_HOST` debe ser el **nombre del servicio** de MySQL (p. ej. `db-auth`), `DB_PORT=3306`. Para depurar desde el **host** con un cliente MySQL, los puertos publicados van del **3307 al 3313** (mapeo a `3306` en el contenedor; ver comentarios en `docker-compose.yml`).
+**Dentro de la red Docker:** en cada `.env`, `DB_HOST` debe ser el **nombre del servicio** de MySQL (p. ej. `db-auth`), `DB_PORT=3306`. Para depurar desde el **host** con un cliente MySQL, los puertos publicados van del **13307 al 13313** (mapeo a `3306` en el contenedor; ver `docker-compose.yml`), así se evita chocar con otros MySQL típicos en 3307.
 
 **API Gateway Nginx:** servicio `nginx` en el compose, **http://localhost:8080** → enrutamiento a cada MS según prefijo (`docker/nginx/default.conf`). Los REST también siguen en **8001–8007**; **gRPC** entre MS en **50051–50057** (red interna, sin pasar por Nginx).
 

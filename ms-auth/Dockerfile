@@ -18,7 +18,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN chmod +x entrypoint.sh
+# Windows: entrypoint.sh suele tener CRLF; en Linux rompe el shebang ("no such file or directory")
+RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 
 EXPOSE 8001 50051
 
