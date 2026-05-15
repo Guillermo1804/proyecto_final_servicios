@@ -1,0 +1,157 @@
+<div class="detalle-materia-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+
+      <span class="group-badge">
+        <i class="bi bi-people"></i>
+        Grupo: ENG-302
+      </span>
+
+      <h2>Cálculo Diferencial</h2>
+
+      <p>
+        Lunes, Miércoles y Viernes | 08:00-10:00 AM
+      </p>
+
+<div class="actions-row">
+
+  <button class="attendance-btn"
+  routerLink="/docente/asistencias">
+    <i class="bi bi-calendar-check"></i>
+    Pasar Lista
+  </button>
+
+  <button
+    class="import-btn"
+    [routerLink]="['/docente/materias', codigoMateria, 'importar-alumnos']"
+  >
+    <i class="bi bi-upload"></i>
+    Importar Alumnos
+  </button>
+
+  <button
+  class="performance-btn"
+  [routerLink]="['/docente/materias', codigoMateria, 'rendimiento']"
+>
+  <i class="bi bi-graph-up-arrow"></i>
+  Rendimiento
+</button>
+
+</div>
+
+    </section>
+
+    <section class="stats-grid">
+
+      <article class="stat-card">
+        <div class="stat-head">
+          <i class="bi bi-graph-up-arrow"></i>
+          <span>+2% vs anterior</span>
+        </div>
+
+        <p>Promedio Grupal</p>
+        <h3>8.42</h3>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-head">
+          <i class="bi bi-calendar-check"></i>
+          <span>96% hoy</span>
+        </div>
+
+        <p>Asistencia Total</p>
+        <h3>94.8%</h3>
+      </article>
+
+      <article class="progress-card">
+        <div class="progress-head">
+          <span>Progreso del Programa</span>
+          <strong>65%</strong>
+        </div>
+
+        <div class="progress-bar">
+          <div></div>
+        </div>
+
+        <p>Siguiente hito: Derivadas Implícitas (Viernes)</p>
+      </article>
+
+    </section>
+
+    <section class="tabs">
+
+      <button class="active">
+        Lista de Alumnos
+      </button>
+
+      <button>
+        Plan de Evaluación
+      </button>
+
+      <button>
+        Actividades
+      </button>
+
+    </section>
+
+    <section class="students-card">
+
+      <div class="students-header">
+
+        <h3>Estudiantes Matriculados</h3>
+
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Buscar alumno...">
+        </div>
+
+      </div>
+
+      <div class="students-table">
+
+        <div class="table-head">
+          <span>Nombre del Alumno</span>
+          <span>Matrícula</span>
+          <span>Asistencia</span>
+        </div>
+
+        <div
+          class="table-row"
+          *ngFor="let alumno of alumnos"
+        >
+
+          <div class="student-name">
+
+            <div class="initials">
+              {{ alumno.iniciales }}
+            </div>
+
+            <span>
+              {{ alumno.nombre }}
+            </span>
+
+          </div>
+
+          <span>
+            {{ alumno.matricula }}
+          </span>
+
+          <span>
+            {{ alumno.asistencia }}
+          </span>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <app-bottom-navbar-docente></app-bottom-navbar-docente>
+
+</div>

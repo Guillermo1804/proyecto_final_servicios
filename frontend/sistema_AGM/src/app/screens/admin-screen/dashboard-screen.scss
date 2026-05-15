@@ -1,0 +1,436 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f7f7fb;
+  color: #111827;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.admin-dashboard {
+  min-height: 100vh;
+  padding-bottom: 76px;
+  background: #f7f7fb;
+}
+
+
+
+/* CONTENT */
+
+.content {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.hero {
+  margin-bottom: 1.2rem;
+
+  h2 {
+    font-size: 1.75rem;
+    line-height: 1.05;
+    margin: 0 0 .4rem;
+  }
+
+  p {
+    margin: 0;
+    color: #4b5563;
+    font-size: .95rem;
+    line-height: 1.35;
+  }
+}
+
+/* STATS */
+
+.stats-grid {
+  display: grid;
+  gap: .9rem;
+  margin-bottom: 1.4rem;
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+
+  padding: 1rem;
+
+  min-height: 126px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  .stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+      font-size: 1.1rem;
+    }
+
+    &.azul {
+      background: #e8f1ff;
+      color: #0057c2;
+    }
+
+    &.naranja {
+      background: #ffe1d2;
+      color: #111827;
+    }
+
+    &.gris {
+      background: #eeeeef;
+      color: #111827;
+    }
+  }
+
+  .badge {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: .3rem .55rem;
+    border-radius: 999px;
+
+    &.verde {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    &.gris {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    &.rojo {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+  }
+
+  p {
+    margin: .8rem 0 .2rem;
+    font-size: .78rem;
+    letter-spacing: .04em;
+    color: #374151;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.8rem;
+  }
+}
+
+/* ACTIVITY */
+
+.activity-card {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.2rem;
+}
+
+.activity-title {
+  padding: .9rem 1rem;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h3 {
+    margin: 0;
+    font-size: .9rem;
+    font-weight: 500;
+  }
+
+  a {
+    color: #0057c2;
+    text-decoration: none;
+    font-size: .85rem;
+  }
+}
+
+.activity-table {
+  width: 100%;
+}
+
+.table-head,
+.table-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr .65fr;
+  gap: .6rem;
+  align-items: center;
+}
+
+.table-head {
+  background: #ececef;
+  padding: .75rem 1rem;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.table-row {
+  padding: .9rem 1rem;
+  border-top: 1px solid #e5e7eb;
+  font-size: .78rem;
+}
+
+.action-cell {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+
+  i {
+    font-size: 1rem;
+  }
+
+  .azul {
+    color: #0057c2;
+  }
+
+  .rojo {
+    color: #dc2626;
+  }
+
+  .negro {
+    color: #111827;
+  }
+}
+
+/* PERIOD */
+
+.period-card {
+  position: relative;
+  overflow: hidden;
+
+  background: #00234f;
+  color: white;
+
+  border-radius: 12px;
+  padding: 1.1rem;
+  margin-bottom: 1.2rem;
+
+  box-shadow: 0 8px 18px rgba(0, 31, 77, .24);
+
+  h3 {
+    margin: 0 0 .8rem;
+    font-size: .95rem;
+  }
+
+  p {
+    max-width: 300px;
+    margin: 0 0 1rem;
+    font-size: .8rem;
+    line-height: 1.4;
+    color: #b7c4d8;
+  }
+
+  button {
+    border: none;
+    border-radius: 8px;
+    background: white;
+    color: #111827;
+
+    padding: .7rem 1rem;
+
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .period-bg {
+    position: absolute;
+    right: 1rem;
+    bottom: -.6rem;
+
+    font-size: 5rem;
+    color: rgba(255, 255, 255, .12);
+  }
+}
+
+/* TEACHER */
+
+.teacher-card {
+  background: white;
+
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+
+  padding: 1rem;
+  margin-bottom: 1.2rem;
+
+  .teacher-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+
+    background: #e8f1ff;
+    color: #0057c2;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    margin: 0 0 .5rem;
+    font-size: .95rem;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 0 0 1rem;
+    font-size: .82rem;
+    line-height: 1.4;
+    color: #374151;
+  }
+
+  button {
+    width: 100%;
+    height: 38px;
+
+    border: 1.5px solid #0057ff;
+    border-radius: 7px;
+
+    background: white;
+    color: #0057c2;
+
+    font-weight: 600;
+    cursor: pointer;
+  }
+}
+
+/* CAMPUS */
+
+.campus-card {
+  height: 140px;
+
+  position: relative;
+  overflow: hidden;
+
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+
+  margin-bottom: 1rem;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,.72), transparent);
+  }
+
+  .campus-info {
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 2;
+
+    color: white;
+
+    h3 {
+      margin: 0 0 .2rem;
+      font-size: 1rem;
+    }
+
+    p {
+      margin: 0;
+      font-size: .8rem;
+    }
+  }
+}
+
+
+
+/* TABLET */
+
+@media (min-width: 768px) {
+
+  .content {
+    padding: 1.5rem;
+  }
+
+  .hero {
+    h2 {
+      font-size: 2.3rem;
+    }
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .campus-card {
+    height: 220px;
+  }
+}
+
+/* DESKTOP */
+
+@media (min-width: 1024px) {
+
+.admin-dashboard {
+  padding-bottom: 76px;
+}
+
+  // .topbar {
+  //   height: 64px;
+  //   padding: 0 2rem;
+  // }
+
+  .content {
+    padding: 2rem;
+  }
+
+  .hero {
+    margin-bottom: 1.5rem;
+
+    h2 {
+      font-size: 2.8rem;
+    }
+
+    p {
+      font-size: 1rem;
+    }
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  // .bottom-nav {
+  //   display: none;
+  // }
+
+  .activity-card,
+  .period-card,
+  .teacher-card,
+  .campus-card {
+    margin-bottom: 1.5rem;
+  }
+}

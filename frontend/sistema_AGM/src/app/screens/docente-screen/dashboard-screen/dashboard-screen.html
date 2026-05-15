@@ -1,0 +1,107 @@
+<div class="docente-dashboard">
+
+<app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+      <h2>¡Buen día, Dr. Silva!</h2>
+
+      <p>
+        Bienvenido a su resumen académico para hoy, lunes 23 de octubre.
+      </p>
+
+      <button>
+        <i class="bi bi-plus-lg"></i>
+        Nueva Actividad
+      </button>
+    </section>
+
+    <section class="section-title">
+      <h3>Clases de Hoy</h3>
+      <a href="#">Ver horario completo</a>
+    </section>
+
+    <section class="classes-list">
+
+      <article class="class-card" *ngFor="let clase of clasesHoy">
+
+        <div class="class-head">
+          <span>{{ clase.hora }}</span>
+          <i class="bi" [ngClass]="[clase.icono, clase.activo ? 'activo' : '']"></i>
+        </div>
+
+        <h4>{{ clase.materia }}</h4>
+        <p>{{ clase.grupo }}</p>
+
+        <div class="location">
+          <i class="bi bi-geo-alt"></i>
+          {{ clase.aula }}
+        </div>
+
+      </article>
+
+    </section>
+
+    <section class="pending-section">
+
+      <h3>Pendientes por Calificar</h3>
+
+      <div class="pending-card">
+
+        <div
+          class="pending-item"
+          *ngFor="let item of pendientes"
+        >
+
+          <div class="pending-icon" [ngClass]="item.color">
+            <i class="bi" [ngClass]="item.icono"></i>
+          </div>
+
+          <div>
+            <strong>{{ item.titulo }}</strong>
+            <p>{{ item.detalle }}</p>
+          </div>
+
+          <i class="bi bi-chevron-right arrow"></i>
+
+        </div>
+
+        <a href="#" class="center-link">
+          Ir a Centro de Calificaciones
+        </a>
+
+      </div>
+
+    </section>
+
+    <section class="notifications-section">
+
+      <h3>Notificaciones Académicas</h3>
+
+      <div class="notifications-card">
+
+        <div class="table-head">
+          <span>Fecha</span>
+          <span>Asunto</span>
+          <span>Emisor</span>
+        </div>
+
+        <div
+          class="table-row"
+          *ngFor="let item of notificaciones"
+        >
+          <span>{{ item.fecha }}</span>
+          <span>{{ item.asunto }}</span>
+          <span>{{ item.emisor }}</span>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <app-bottom-navbar-docente></app-bottom-navbar-docente>
+
+</div>

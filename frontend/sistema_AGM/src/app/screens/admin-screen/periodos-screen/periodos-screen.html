@@ -1,0 +1,104 @@
+<div class="periodos-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+      <h2>Gestión de Periodos</h2>
+      <p>
+        Configure y administre los ciclos lectivos de la institución.
+      </p>
+    </section>
+
+    <button class="create-btn">
+      <i class="bi bi-plus-lg"></i>
+      Crear Periodo
+    </button>
+
+    <section class="summary-grid">
+
+      <article class="summary-card">
+        <p>Periodo Actual</p>
+        <h3>2024-1</h3>
+        <span>Finaliza en 45 días</span>
+      </article>
+
+      <article class="summary-card">
+        <p>Próximo Periodo</p>
+        <h3>2024-2</h3>
+        <span>Inicia el 15 de Agosto</span>
+      </article>
+
+      <article class="summary-card">
+        <p>Total Histórico</p>
+        <h3>24 Ciclos</h3>
+        <span>Desde el año 2012</span>
+      </article>
+
+    </section>
+
+    <section class="table-card">
+
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" placeholder="Buscar periodos...">
+      </div>
+
+      <div class="actions-row">
+        <button>
+          <i class="bi bi-filter"></i>
+          Filtrar
+        </button>
+
+        <button>
+          <i class="bi bi-download"></i>
+          Exportar
+        </button>
+      </div>
+
+      <div class="periodos-table">
+
+        <div class="table-head">
+          <span>Nombre del Periodo</span>
+          <span>Estado</span>
+          <span>Fecha Inicio</span>
+        </div>
+
+        <div class="table-row" *ngFor="let periodo of periodos">
+
+          <div class="period-name">
+            <div class="calendar-icon" [ngClass]="periodo.icono">
+              <i class="bi bi-calendar3"></i>
+            </div>
+
+            <strong>{{ periodo.nombre }}</strong>
+          </div>
+
+          <span class="status" [ngClass]="periodo.tipo">
+            {{ periodo.estado }}
+          </span>
+
+          <span class="date">
+            {{ periodo.fechaInicio }}
+          </span>
+
+        </div>
+
+      </div>
+
+      <p class="table-footer">
+        Mostrando 4 de 24 periodos
+      </p>
+
+    </section>
+
+  </main>
+
+  <button class="floating-btn">
+    <i class="bi bi-plus-lg"></i>
+  </button>
+
+  <app-bottom-navbar-admin></app-bottom-navbar-admin>
+
+</div>

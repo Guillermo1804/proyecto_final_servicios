@@ -1,0 +1,308 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f7f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.horario-page {
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.content {
+  width: 100%;
+  max-width: 950px;
+
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* DAYS */
+
+.days-row {
+  display: flex;
+  gap: .8rem;
+
+  overflow-x: auto;
+
+  padding-bottom: .5rem;
+  margin-bottom: 1.5rem;
+
+  scrollbar-width: none;
+}
+
+.days-row::-webkit-scrollbar {
+  display: none;
+}
+
+.day-card {
+  min-width: 74px;
+  height: 104px;
+
+  background: white;
+
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  transition: .2s ease;
+
+  span {
+    color: #6b7280;
+    font-size: .82rem;
+    font-weight: 700;
+  }
+
+  h3 {
+    margin: .4rem 0 0;
+    font-size: 2rem;
+    font-weight: 900;
+  }
+
+  &.active {
+    background: #0a67d8;
+    color: white;
+
+    span {
+      color: white;
+    }
+  }
+}
+
+/* SCHEDULE */
+
+.schedule-list {
+  display: grid;
+  gap: 1.2rem;
+
+  margin-bottom: 2rem;
+}
+
+.schedule-item {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 1rem;
+}
+
+.hour {
+  padding-top: .8rem;
+
+  color: #4b5563;
+  font-weight: 700;
+}
+
+.subject-card {
+  background: white;
+
+  border-left: 4px solid #0a67d8;
+  border-radius: 16px;
+
+  padding: 1rem;
+
+  box-shadow: 0 8px 20px rgba(0,0,0,.04);
+
+  h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    line-height: 1.2;
+  }
+
+  p {
+    margin: .7rem 0 1rem;
+    color: #374151;
+    font-size: 1rem;
+  }
+}
+
+.subject-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem;
+}
+
+.room-badge {
+  padding: .45rem .8rem;
+
+  background: #dbe7ff;
+  border-radius: 999px;
+
+  color: #0a67d8;
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.time-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+
+  color: #6b7280;
+}
+
+/* COLORS */
+
+.schedule-item.naranja .subject-card {
+  border-left-color: #ffb38f;
+}
+
+.schedule-item.naranja .room-badge {
+  background: #ffe1d4;
+  color: #c45a1d;
+}
+
+.schedule-item.gris .subject-card {
+  border-left-color: #9ca3af;
+}
+
+.schedule-item.gris .room-badge {
+  background: #ececef;
+  color: #6b7280;
+}
+
+.schedule-item.rojo .subject-card {
+  border-left-color: #dc2626;
+}
+
+.schedule-item.rojo .room-badge {
+  background: #ffd8d8;
+  color: #dc2626;
+}
+
+/* SUMMARY */
+
+.summary-title {
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0;
+    font-size: 2.2rem;
+    font-weight: 900;
+  }
+}
+
+.summary-card {
+  background: #001f4f;
+  color: white;
+
+  border-radius: 18px;
+
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+
+  min-height: 260px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  i {
+    font-size: 2rem;
+  }
+}
+
+.summary-info {
+
+  h3 {
+    margin: 0;
+    font-size: 4rem;
+    line-height: 1;
+    font-weight: 900;
+  }
+
+  p {
+    margin: .4rem 0 0;
+    font-size: 1rem;
+  }
+}
+
+/* STATS */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.mini-card {
+  background: white;
+
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+
+  padding: 1.5rem;
+
+  min-height: 170px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  i {
+    color: #0a67d8;
+    font-size: 2rem;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 3rem;
+    line-height: 1;
+    font-weight: 900;
+  }
+
+  p {
+    margin: 0;
+    color: #374151;
+  }
+
+  &.blue {
+    background: #0a67d8;
+    color: white;
+
+    i,
+    p {
+      color: white;
+    }
+  }
+}
+
+/* TABLET */
+
+@media (min-width: 768px) {
+
+  .content {
+    padding: 1.5rem;
+  }
+
+  .schedule-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+/* DESKTOP */
+
+@media (min-width: 1024px) {
+
+  .content {
+    max-width: 1150px;
+    padding: 2rem;
+  }
+
+  .schedule-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-card {
+    min-height: 320px;
+  }
+
+}

@@ -1,0 +1,36 @@
+.topbar {
+  height: 52px;
+  padding: 0 1rem;
+
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+
+  position: sticky;
+  top: 0;
+  z-index: 20;
+
+  h1 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    flex: 1;
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #111827;
+  }
+}
+
+@media (min-width: 1024px) {
+  .topbar {
+    height: 64px;
+    padding: 0 2rem;
+  }
+}

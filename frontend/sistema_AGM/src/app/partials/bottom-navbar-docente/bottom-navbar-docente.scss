@@ -1,0 +1,39 @@
+.bottom-nav {
+  height: 64px;
+
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  background: white;
+  border-top: 1px solid #e5e7eb;
+
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+
+  z-index: 30;
+
+  a {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: .2rem;
+
+    color: #111827;
+    text-decoration: none;
+    font-size: .75rem;
+
+    cursor: pointer;
+
+    i {
+      font-size: 1.1rem;
+    }
+
+    &.active {
+      color: #0057c2;
+      font-weight: 700;
+    }
+  }
+}

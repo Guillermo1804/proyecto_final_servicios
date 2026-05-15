@@ -1,0 +1,350 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f7f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.notas-page {
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.content {
+  width: 100%;
+  max-width: 950px;
+
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* HERO */
+
+.hero {
+  margin-bottom: 1.5rem;
+
+  h1 {
+    margin: 0 0 .7rem;
+
+    font-size: 2.7rem;
+    line-height: 1.1;
+    font-weight: 900;
+  }
+
+  p {
+    margin: 0;
+    color: #374151;
+    font-size: 1.1rem;
+  }
+}
+
+/* PROMEDIO */
+
+.average-card {
+  background: white;
+
+  border: 1px solid #d1d5db;
+  border-radius: 18px;
+
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+
+  span {
+    color: #1f2937;
+    font-size: .95rem;
+    letter-spacing: .08em;
+  }
+
+  h2 {
+    margin: 1rem 0;
+
+    color: #075fc6;
+
+    font-size: 4rem;
+    line-height: 1;
+    font-weight: 900;
+  }
+
+  p {
+    margin: .7rem 0 0;
+    color: #374151;
+    font-size: .92rem;
+  }
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+
+  background: #e5e7eb;
+  border-radius: 999px;
+
+  overflow: hidden;
+
+  div {
+    width: 65%;
+    height: 100%;
+
+    background: #075fc6;
+  }
+}
+
+/* SUBJECTS */
+
+.subjects-list {
+  display: grid;
+  gap: 1rem;
+
+  margin-bottom: 2rem;
+}
+
+.subject-card {
+  background: white;
+
+  border: 1px solid #d1d5db;
+  border-radius: 18px;
+
+  padding: 1.2rem;
+}
+
+.subject-top {
+  display: flex;
+  gap: 1rem;
+}
+
+.subject-icon {
+  width: 56px;
+  height: 56px;
+
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    font-size: 1.3rem;
+  }
+
+  &.azul {
+    background: #dbe7ff;
+    color: #075fc6;
+  }
+
+  &.naranja {
+    background: #ffe2d5;
+    color: #d46529;
+  }
+
+  &.morado {
+    background: #e5ddff;
+    color: #6d28d9;
+  }
+
+  &.gris {
+    background: #ececef;
+    color: #374151;
+  }
+}
+
+.subject-info {
+
+  h3 {
+    margin: 0 0 .45rem;
+
+    font-size: 2rem;
+    line-height: 1.1;
+  }
+
+  p {
+    margin: 0;
+    color: #4b5563;
+    line-height: 1.4;
+  }
+}
+
+/* PROMEDIO ROW */
+
+.average-row {
+  margin-top: 1.4rem;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .label {
+    display: block;
+    margin-bottom: .45rem;
+
+    color: #374151;
+    font-size: .9rem;
+  }
+
+  i {
+    color: #4b5563;
+    font-size: 1.2rem;
+  }
+}
+
+.grade-pill {
+  width: fit-content;
+
+  padding: .4rem .9rem;
+
+  border-radius: 999px;
+
+  font-weight: 800;
+
+  &.verde {
+    background: #d8f5df;
+    color: #15803d;
+  }
+
+  &.rojo {
+    background: #ffd8d8;
+    color: #dc2626;
+  }
+}
+
+/* PARCIALES */
+
+.partials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .9rem;
+
+  margin-top: 1.3rem;
+}
+
+.partial-card {
+  min-height: 105px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+
+  padding: 1rem;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  span {
+    color: #374151;
+    font-size: .9rem;
+  }
+
+  h4 {
+    margin: 0;
+
+    font-size: 2rem;
+    line-height: 1;
+    font-weight: 900;
+  }
+
+  &.active {
+    background: #075fc6;
+    color: white;
+
+    span {
+      color: white;
+    }
+  }
+}
+
+/* HISTORY */
+
+.history-header {
+  margin-bottom: 1rem;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+
+  h2 {
+    margin: 0;
+
+    max-width: 220px;
+
+    font-size: 2rem;
+    line-height: 1.15;
+    font-weight: 900;
+  }
+
+  a {
+    max-width: 120px;
+
+    color: #075fc6;
+    text-decoration: none;
+
+    text-align: right;
+    line-height: 1.4;
+    font-size: .92rem;
+  }
+}
+
+.history-card {
+  overflow: hidden;
+
+  background: white;
+
+  border: 1px solid #d1d5db;
+  border-radius: 18px;
+}
+
+.table-head,
+.table-row {
+  display: grid;
+  grid-template-columns: 1fr .7fr .7fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.table-head {
+  background: #ececef;
+
+  padding: 1rem;
+
+  font-size: .85rem;
+  font-weight: 700;
+}
+
+.table-row {
+  padding: 1.2rem 1rem;
+
+  border-top: 1px solid #d1d5db;
+
+  font-size: 1rem;
+}
+
+/* TABLET */
+
+@media (min-width: 768px) {
+
+  .content {
+    padding: 1.5rem;
+  }
+
+  .subjects-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+/* DESKTOP */
+
+@media (min-width: 1024px) {
+
+  .content {
+    max-width: 1150px;
+    padding: 2rem;
+  }
+
+  .subjects-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}

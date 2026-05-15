@@ -1,0 +1,151 @@
+<div class="rendimiento-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+      <p>
+        Análisis de Desempeño: Cálculo Integral
+        <br>
+        Métricas detalladas y alertas de seguimiento académico.
+      </p>
+    </section>
+
+    <section class="actions-row">
+
+      <button class="export-btn">
+        <i class="bi bi-download"></i>
+        Exportar CSV
+      </button>
+
+      <button class="pdf-btn">
+        <i class="bi bi-file-earmark-pdf"></i>
+        Reporte PDF
+      </button>
+
+    </section>
+
+    <section class="average-card">
+
+      <p>PROMEDIO ACTUAL</p>
+
+      <div class="average-row">
+        <h2>84.2</h2>
+
+        <span>
+          <i class="bi bi-graph-up-arrow"></i>
+          3.4%
+        </span>
+      </div>
+
+      <div class="divider"></div>
+
+      <p class="comparison">
+        vs Periodo Anterior (81.0)
+      </p>
+
+      <div class="progress-bar">
+        <div></div>
+      </div>
+
+    </section>
+
+    <section class="chart-card">
+
+      <div class="chart-header">
+        <h3>Distribución de Calificaciones</h3>
+
+        <span>
+          <i class="bi bi-circle-fill"></i>
+          Estudiantes
+        </span>
+      </div>
+
+      <div class="chart-space">
+
+        <div class="chart-bars">
+          <span style="height: 22%"></span>
+          <span style="height: 35%"></span>
+          <span style="height: 58%"></span>
+          <span style="height: 78%"></span>
+          <span style="height: 45%"></span>
+        </div>
+
+      </div>
+
+      <div class="chart-labels">
+        <span>0-59</span>
+        <span>60-69</span>
+        <span>70-79</span>
+        <span>80-89</span>
+        <span>90-100</span>
+      </div>
+
+    </section>
+
+    <section class="risk-card">
+
+      <div class="risk-header">
+        <h3>
+          Alumnos en Riesgo Académico
+          <br>
+          (&lt; 70)
+        </h3>
+
+        <div class="alert-badge">
+          <strong>4</strong>
+          Alertas
+        </div>
+      </div>
+
+      <div class="risk-table">
+
+        <div class="table-head">
+          <span>Estudiante</span>
+          <span>Promedio</span>
+          <span>Asistencia</span>
+        </div>
+
+        <div
+          class="table-row"
+          *ngFor="let estudiante of estudiantesRiesgo"
+        >
+
+          <div class="student-cell">
+
+            <div class="initials">
+              {{ estudiante.iniciales }}
+            </div>
+
+            <div>
+              <strong>{{ estudiante.nombre }}</strong>
+              <p>Matrícula: {{ estudiante.matricula }}</p>
+            </div>
+
+          </div>
+
+          <strong class="danger">
+            {{ estudiante.promedio }}
+          </strong>
+
+          <span>
+            {{ estudiante.asistencia }}
+          </span>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <section class="source-info">
+      <p>Última actualización de datos: Hoy, 09:45 AM</p>
+      <p>Fuente: Sistema de Control Escolar Academic v4.2</p>
+    </section>
+
+  </main>
+
+  <app-bottom-navbar-docente></app-bottom-navbar-docente>
+
+</div>

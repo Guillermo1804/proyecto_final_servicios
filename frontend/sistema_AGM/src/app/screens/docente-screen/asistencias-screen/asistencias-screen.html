@@ -1,0 +1,150 @@
+<div class="asistencias-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="attendance-card">
+
+      <div class="hero">
+        <h2>Control de Asistencia</h2>
+
+        <p>
+          Ciclo Lectivo 2024-II | Martes, 12 Octubre
+        </p>
+      </div>
+
+      <div class="tabs-control">
+
+        <button
+          [class.active]="modo === 'codigo'"
+          (click)="cambiarModo('codigo')"
+        >
+          Generar Código
+        </button>
+
+        <button
+          [class.active]="modo === 'scanner'"
+          (click)="cambiarModo('scanner')"
+        >
+          Escanear Manual
+        </button>
+
+      </div>
+
+      <section class="qr-section" *ngIf="modo === 'codigo'">
+
+        <div class="qr-image-box">
+
+          <div class="qr-stage">
+
+            <div class="qr-paper">
+              <i class="bi bi-qr-code"></i>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="qr-status">
+
+          <span>
+            <i class="bi bi-dot"></i>
+            CÓDIGO ACTIVO
+          </span>
+
+          <p>
+            Pide a tus estudiantes que escaneen el código desde la aplicación móvil Portal Alumno.
+          </p>
+
+        </div>
+
+      </section>
+
+      <section class="scanner-section" *ngIf="modo === 'scanner'">
+
+        <h3>Escaneo manual de asistencia</h3>
+
+        <p>
+          Activa la cámara y escanea el QR generado por el alumno.
+        </p>
+
+        <div id="reader"></div>
+
+        <div class="qr-result" *ngIf="resultadoQr">
+          <strong>QR detectado:</strong>
+          <span>{{ resultadoQr }}</span>
+        </div>
+
+      </section>
+
+      <section class="summary-row">
+
+        <article>
+          <h3>42</h3>
+          <p>PRESENTES</p>
+        </article>
+
+        <article>
+          <h3 class="azul">08</h3>
+          <p>FALTANTES</p>
+        </article>
+
+        <article>
+          <h3 class="naranja">03</h3>
+          <p>TARDANZAS</p>
+        </article>
+
+      </section>
+
+    </section>
+
+    <section class="realtime-card">
+
+      <div class="realtime-header">
+
+        <h3>Registro en Tiempo Real</h3>
+
+        <span>Live</span>
+
+      </div>
+
+      <div class="students-list">
+
+        <article
+          class="student-row"
+          *ngFor="let registro of registros"
+        >
+
+          <div class="student-info">
+
+            <img
+              [src]="registro.foto"
+              [alt]="registro.nombre"
+            >
+
+            <div>
+              <strong>{{ registro.nombre }}</strong>
+              <p>Registro: {{ registro.hora }}</p>
+            </div>
+
+          </div>
+
+          <span
+            class="status"
+            [ngClass]="registro.tipo"
+          >
+            {{ registro.estado }}
+          </span>
+
+        </article>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <app-bottom-navbar-docente></app-bottom-navbar-docente>
+
+</div>

@@ -1,0 +1,444 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f7f7fb;
+  color: #080b13;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.detalle-materia-page {
+  min-height: 100vh;
+  padding-bottom: 76px;
+  background: #f7f7fb;
+}
+
+.content {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.4rem;
+}
+
+/* HERO */
+
+.hero {
+  margin-bottom: 1.6rem;
+
+  .group-badge {
+    width: fit-content;
+
+    background: #0875e8;
+    color: white;
+
+    border-radius: 999px;
+
+    padding: .45rem .8rem;
+
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+
+    font-size: .85rem;
+    font-weight: 700;
+
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    margin: 0 0 .8rem;
+
+    font-size: 2.4rem;
+    line-height: 1.1;
+    font-weight: 900;
+  }
+
+  p {
+    margin: 0 0 1.8rem;
+
+    font-size: 1.05rem;
+    line-height: 1.45;
+    color: #1f2937;
+  }
+}
+
+.attendance-btn {
+
+    &:hover {
+    background: #1e293b;
+    transform: translateY(-2px);
+  }
+  height: 52px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #075fc6;
+  color: white;
+
+  padding: 0 1.5rem;
+
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+
+  font-size: .95rem;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow: 0 8px 18px rgba(7, 95, 198, .22);
+
+  i {
+    font-size: 1.25rem;
+  }
+}
+
+/* STATS */
+
+.stats-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.8rem;
+}
+
+.stat-card,
+.progress-card {
+  background: white;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+
+  padding: 1.5rem;
+
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .05);
+}
+
+.stat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 1.4rem;
+
+  i {
+    color: #0057c2;
+    font-size: 1.2rem;
+  }
+
+  span {
+    color: #1f2937;
+    font-size: .8rem;
+  }
+}
+
+.stat-card {
+  p {
+    margin: 0 0 .4rem;
+    font-size: .95rem;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+  }
+}
+
+/* PROGRESS */
+
+.progress-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: .7rem;
+
+  span {
+    font-size: .95rem;
+  }
+
+  strong {
+    color: #0057c2;
+    font-size: .95rem;
+  }
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+
+  background: #e5e7eb;
+  border-radius: 999px;
+
+  overflow: hidden;
+
+  margin-bottom: .8rem;
+
+  div {
+    width: 65%;
+    height: 100%;
+
+    background: #075fc6;
+    border-radius: inherit;
+  }
+}
+
+.progress-card {
+  p {
+    margin: 0;
+    color: #374151;
+    font-size: .85rem;
+  }
+}
+
+/* TABS */
+
+.tabs {
+  display: flex;
+  gap: 1.5rem;
+
+  overflow-x: auto;
+
+  border-bottom: 1px solid #d1d5db;
+
+  margin-bottom: 1.5rem;
+
+  button {
+    border: none;
+    background: transparent;
+
+    padding: 1rem .2rem;
+
+    white-space: nowrap;
+
+    color: #111827;
+
+    font-size: .95rem;
+    cursor: pointer;
+
+    &.active {
+      color: #0057c2;
+      border-bottom: 3px solid #0057c2;
+    }
+  }
+}
+
+/* STUDENTS */
+
+.students-card {
+  background: white;
+
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+
+  overflow: hidden;
+}
+
+.students-header {
+  padding: 1.4rem;
+
+  display: grid;
+  gap: 1rem;
+
+  h3 {
+    margin: 0;
+
+    font-size: 1.6rem;
+    line-height: 1.1;
+    font-weight: 800;
+  }
+}
+
+.search-box {
+  height: 42px;
+
+  border: 1px solid #c9ced8;
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+
+  padding: 0 1rem;
+
+  i {
+    color: #111827;
+    font-size: 1.1rem;
+  }
+
+  input {
+    width: 100%;
+
+    border: none;
+    outline: none;
+    background: transparent;
+
+    font-size: .95rem;
+  }
+}
+
+.students-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-head,
+.table-row {
+  min-width: 620px;
+
+  display: grid;
+  grid-template-columns: 1.4fr 1fr .7fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+.table-head {
+  background: #ececef;
+
+  padding: 1rem 1.5rem;
+
+  font-size: .9rem;
+  color: #1f2937;
+}
+
+.table-row {
+  padding: 1rem 1.5rem;
+
+  border-top: 1px solid #e5e7eb;
+
+  font-size: .95rem;
+}
+
+.student-name {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+}
+
+.initials {
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  background: #dbeafe;
+  color: #0057c2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+/* TABLET */
+
+@media (min-width: 768px) {
+
+  .content {
+    padding: 2rem;
+  }
+
+  .hero h2 {
+    font-size: 3rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .students-header {
+    grid-template-columns: 1fr 320px;
+    align-items: center;
+  }
+
+}
+
+/* DESKTOP */
+
+@media (min-width: 1024px) {
+
+  .content {
+    padding: 2.5rem;
+  }
+
+  .hero h2 {
+    max-width: 520px;
+    font-size: 3.4rem;
+  }
+
+}
+.actions-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  margin-top: 1.2rem;
+}
+
+.import-btn {
+  height: 52px;
+
+  border: 1.5px solid #075fc6;
+  border-radius: 10px;
+
+  background: white;
+  color: #075fc6;
+
+  padding: 0 1.5rem;
+
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+
+  font-size: .95rem;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition: .2s ease;
+
+  &:hover {
+    background: #075fc6;
+    color: white;
+  }
+
+  i {
+    font-size: 1.15rem;
+  }
+}
+.performance-btn {
+  height: 52px;
+
+  border: 1.5px solid #1e2f57;
+  border-radius: 10px;
+
+  background: #2052c6;
+  color: white;
+
+  padding: 0 1.4rem;
+
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+
+  font-size: .95rem;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition: .2s ease;
+
+  &:hover {
+    background: #1e293b;
+    transform: translateY(-2px);
+  }
+
+  i {
+    font-size: 1.1rem;
+  }
+}
