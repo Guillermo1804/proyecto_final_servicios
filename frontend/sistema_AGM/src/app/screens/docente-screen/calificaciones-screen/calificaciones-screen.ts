@@ -12,6 +12,17 @@ import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 })
 export class CalificacionesScreen {
 
+
+  calcularPromedioRedondeado(promedio: number): number {
+
+  const entero = Math.floor(promedio);
+
+  const decimal = promedio - entero;
+
+  return decimal >= 0.5
+    ? entero + 1
+    : entero;
+}
   estudiantes = [
     {
       foto: '/assets/alumno1.jpg',

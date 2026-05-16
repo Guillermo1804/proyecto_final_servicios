@@ -246,40 +246,108 @@
 
 </section>
 
-<section class="activities-grid" *ngIf="tabActiva === 'actividades'">
+<section class="activities-section" *ngIf="tabActiva === 'actividades'">
 
-  <article class="activity-box">
-    <span class="activity-status abierta">Abierta</span>
-    <h3>Práctica 1: Derivadas</h3>
-    <p>Entrega de ejercicios sobre derivadas implícitas.</p>
-
-    <div class="activity-meta">
-      <span><i class="bi bi-calendar"></i> Viernes</span>
-      <span><i class="bi bi-inbox"></i> 12 entregas</span>
+  <div class="activities-top">
+    <div>
+      <h3>Actividades</h3>
+      <p>Cree actividades asociadas a los rubros del plan de evaluación.</p>
     </div>
-  </article>
 
-  <article class="activity-box">
-    <span class="activity-status revision">En revisión</span>
-    <h3>Proyecto Final Parcial</h3>
-    <p>Aplicación de modelos matemáticos en un caso práctico.</p>
+    <button class="add-btn" (click)="abrirFormularioActividad()">
+      <i class="bi bi-plus-circle"></i>
+      Crear Actividad
+    </button>
+  </div>
 
-    <div class="activity-meta">
-      <span><i class="bi bi-calendar"></i> Próxima semana</span>
-      <span><i class="bi bi-inbox"></i> 4 entregas</span>
+  <section class="activity-form" *ngIf="mostrarFormularioActividad">
+
+    <input
+      type="text"
+      placeholder="Nombre de la actividad"
+      [(ngModel)]="nuevaActividad.titulo"
+    >
+
+    <textarea
+      placeholder="Descripción de la actividad"
+      [(ngModel)]="nuevaActividad.descripcion"
+    ></textarea>
+
+    <select [(ngModel)]="nuevaActividad.rubro">
+      <option value="">Seleccione rubro</option>
+
+      <option
+        *ngFor="let rubro of rubrosEvaluacion"
+        [value]="rubro.nombre"
+      >
+        {{ rubro.nombre }}
+      </option>
+    </select>
+
+    <input
+      type="date"
+      [(ngModel)]="nuevaActividad.fechaEntrega"
+    >
+
+    <input
+      type="number"
+      placeholder="Valor dentro del rubro (%)"
+      [(ngModel)]="nuevaActividad.valorInterno"
+    >
+
+    <div class="form-actions">
+      <button class="cancel-btn" (click)="cancelarActividad()">
+        Cancelar
+      </button>
+
+      <button class="save-btn" (click)="crearActividad()">
+        Guardar Actividad
+      </button>
     </div>
-  </article>
 
-  <article class="activity-box">
-    <span class="activity-status cerrada">Cerrada</span>
-    <h3>Examen de unidad</h3>
-    <p>Evaluación correspondiente al primer bloque temático.</p>
+  </section>
 
-    <div class="activity-meta">
-      <span><i class="bi bi-calendar"></i> Finalizada</span>
-      <span><i class="bi bi-check-circle"></i> Calificada</span>
-    </div>
-  </article>
+  <section class="activities-grid">
+
+    <article
+      class="activity-box"
+      *ngFor="let actividad of actividades"
+    >
+
+      <div class="activity-header">
+        <span class="activity-status" [ngClass]="actividad.tipo">
+          {{ actividad.estado }}
+        </span>
+
+        <span class="activity-rubro">
+          {{ actividad.rubro }}
+        </span>
+      </div>
+
+      <h3>{{ actividad.titulo }}</h3>
+
+      <p>{{ actividad.descripcion }}</p>
+
+      <div class="activity-meta">
+        <span>
+          <i class="bi bi-calendar"></i>
+          {{ actividad.fechaEntrega }}
+        </span>
+
+        <span>
+          <i class="bi bi-percent"></i>
+          {{ actividad.valorInterno }}% del rubro
+        </span>
+
+        <span>
+          <i class="bi bi-inbox"></i>
+          {{ actividad.entregas }} entregas
+        </span>
+      </div>
+
+    </article>
+
+  </section>
 
 </section>
 

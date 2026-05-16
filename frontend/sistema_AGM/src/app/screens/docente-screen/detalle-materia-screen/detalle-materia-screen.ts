@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bottom-navbar-docente';
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
@@ -12,8 +12,12 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './detalle-materia-screen.html',
   styleUrl: './detalle-materia-screen.scss'
 })
-export class DetalleMateriaScreen {
+export class DetalleMateriaScreen implements OnInit {
 
+  ngOnInit(): void {
+    // Aquí podrías cargar los datos de la materia usando el código obtenido de la ruta
+    // Ejemplo: this.materiaService.getMateria(this.codigoMateria).subscribe(...)
+  }
   codigoMateria = '';
 
   alumnos = [
@@ -54,21 +58,97 @@ cambiarTab(tab: 'alumnos' | 'evaluacion' | 'actividades'): void {
 }
 rubrosEvaluacion = [
   {
-    nombre: 'Parcial 1',
-    descripcion: 'Examen teórico y ejercicios prácticos',
-    porcentaje: 20
-  },
-  {
-    nombre: 'Parcial 2',
-    descripcion: 'Proyecto aplicado y resolución de problemas',
+    nombre: 'Tareas',
+    descripcion: 'Actividades y entregas semanales',
     porcentaje: 30
   },
   {
-    nombre: 'Evaluación Final',
-    descripcion: 'Examen final acumulativo',
-    porcentaje: 50
+    nombre: 'Proyecto',
+    descripcion: 'Proyecto integrador de la materia',
+    porcentaje: 30
+  },
+  {
+    nombre: 'Examen',
+    descripcion: 'Evaluaciones parciales o finales',
+    porcentaje: 40
   }
 ];
+
+actividades = [
+  {
+    titulo: 'Tarea investigación',
+    descripcion: 'Investigación sobre conceptos principales de la unidad.',
+    rubro: 'Tareas',
+    fechaEntrega: '2024-06-05',
+    valorInterno: 40,
+    estado: 'Abierta',
+    tipo: 'abierta',
+    entregas: 12
+  },
+  {
+    titulo: 'Wireframes',
+    descripcion: 'Diseño de pantallas principales del sistema.',
+    rubro: 'Proyecto',
+    fechaEntrega: '2024-06-12',
+    valorInterno: 30,
+    estado: 'En revisión',
+    tipo: 'revision',
+    entregas: 8
+  },
+  {
+    titulo: 'Examen parcial',
+    descripcion: 'Evaluación correspondiente al primer bloque temático.',
+    rubro: 'Examen',
+    fechaEntrega: '2024-06-18',
+    valorInterno: 100,
+    estado: 'Cerrada',
+    tipo: 'cerrada',
+    entregas: 32
+  }
+];
+
+nuevaActividad = {
+  titulo: '',
+  descripcion: '',
+  rubro: '',
+  fechaEntrega: '',
+  valorInterno: 0,
+  estado: 'Abierta',
+  tipo: 'abierta',
+  entregas: 0
+};
+
+mostrarFormularioActividad = false;
+
+abrirFormularioActividad(): void {
+  this.mostrarFormularioActividad = true;
+}
+
+cancelarActividad(): void {
+  this.mostrarFormularioActividad = false;
+
+  this.nuevaActividad = {
+    titulo: '',
+    descripcion: '',
+    rubro: '',
+    fechaEntrega: '',
+    valorInterno: 0,
+    estado: 'Abierta',
+    tipo: 'abierta',
+    entregas: 0
+  };
+}
+
+crearActividad(): void {
+  if (!this.nuevaActividad.titulo || !this.nuevaActividad.rubro) {
+    alert('Completa el nombre de la actividad y el rubro.');
+    return;
+  }
+
+  this.actividades.push({ ...this.nuevaActividad });
+
+  this.cancelarActividad();
+}
 
 get totalEvaluacion(): number {
   return this.rubrosEvaluacion.reduce(
