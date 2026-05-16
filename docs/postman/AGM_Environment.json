@@ -1,0 +1,19 @@
+{
+	"id": "18f9e0a0-0000-4000-8000-000000000000",
+	"name": "AGM Local Environment",
+	"values": [
+		{
+			"key": "base_url_periodos",
+			"value": "http://localhost:8002",
+			"enabled": true
+		},
+		{
+			"key": "base_url_alumnos",
+			"value": "http://localhost:8003",
+			"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2026-05-16T18:15:00.000Z",
+	"_postman_exported_using": "Postman/10.0.0"
+}
