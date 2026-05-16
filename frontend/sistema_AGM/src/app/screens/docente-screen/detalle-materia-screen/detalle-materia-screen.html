@@ -82,73 +82,206 @@
 
     </section>
 
-    <section class="tabs">
+<section class="tabs">
 
-      <button class="active">
-        Lista de Alumnos
-      </button>
+  <button [class.active]="tabActiva === 'alumnos'" (click)="cambiarTab('alumnos')">
+    Lista de Alumnos
+  </button>
 
-      <button>
-        Plan de Evaluación
-      </button>
+  <button [class.active]="tabActiva === 'evaluacion'" (click)="cambiarTab('evaluacion')">
+    Plan de Evaluación
+  </button>
 
-      <button>
-        Actividades
-      </button>
+  <button [class.active]="tabActiva === 'actividades'" (click)="cambiarTab('actividades')">
+    Actividades
+  </button>
 
-    </section>
+</section>
 
-    <section class="students-card">
+<section class="students-card" *ngIf="tabActiva === 'alumnos'">
 
-      <div class="students-header">
+  <div class="students-header">
 
-        <h3>Estudiantes Matriculados</h3>
+    <h3>Estudiantes Matriculados</h3>
 
-        <div class="search-box">
-          <i class="bi bi-search"></i>
-          <input type="text" placeholder="Buscar alumno...">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+
+      <input
+        type="text"
+        placeholder="Buscar alumno..."
+      >
+    </div>
+
+  </div>
+
+  <div class="students-table">
+
+    <div class="table-head">
+      <span>Nombre del Alumno</span>
+      <span>Matrícula</span>
+      <span>Asistencia</span>
+    </div>
+
+    <div
+      class="table-row"
+      *ngFor="let alumno of alumnos"
+    >
+
+      <div class="student-name">
+
+        <div class="initials">
+          {{ alumno.iniciales }}
         </div>
+
+        <span>
+          {{ alumno.nombre }}
+        </span>
 
       </div>
 
-      <div class="students-table">
+      <span>
+        {{ alumno.matricula }}
+      </span>
 
-        <div class="table-head">
-          <span>Nombre del Alumno</span>
-          <span>Matrícula</span>
-          <span>Asistencia</span>
-        </div>
+      <span>
+        {{ alumno.asistencia }}
+      </span>
 
-        <div
-          class="table-row"
-          *ngFor="let alumno of alumnos"
+    </div>
+
+  </div>
+
+</section>
+
+<section class="evaluation-card" *ngIf="tabActiva === 'evaluacion'">
+
+  <div class="evaluation-top">
+
+    <div>
+      <h3>Plan de Evaluación</h3>
+      <p>Configure los rubros y ponderaciones.</p>
+    </div>
+
+    <div class="total-box">
+      {{ totalEvaluacion }}%
+    </div>
+
+  </div>
+
+  <article
+    class="evaluation-item"
+    *ngFor="let rubro of rubrosEvaluacion; let i = index"
+  >
+
+    <div class="evaluation-left">
+
+      <input
+        type="text"
+        [(ngModel)]="rubro.nombre"
+        placeholder="Nombre del rubro"
+        class="title-input"
+      >
+
+      <textarea
+        [(ngModel)]="rubro.descripcion"
+        placeholder="Descripción"
+      ></textarea>
+
+    </div>
+
+    <div class="evaluation-right">
+
+      <div class="percent-box">
+
+        <input
+          type="number"
+          [(ngModel)]="rubro.porcentaje"
+          min="0"
+          max="100"
         >
 
-          <div class="student-name">
-
-            <div class="initials">
-              {{ alumno.iniciales }}
-            </div>
-
-            <span>
-              {{ alumno.nombre }}
-            </span>
-
-          </div>
-
-          <span>
-            {{ alumno.matricula }}
-          </span>
-
-          <span>
-            {{ alumno.asistencia }}
-          </span>
-
-        </div>
+        <span>%</span>
 
       </div>
 
-    </section>
+      <button
+        class="delete-btn"
+        (click)="eliminarRubro(i)"
+      >
+        <i class="bi bi-trash"></i>
+      </button>
+
+    </div>
+
+  </article>
+
+  <div class="evaluation-actions">
+
+    <button
+      class="add-btn"
+      (click)="agregarRubro()"
+    >
+      <i class="bi bi-plus-circle"></i>
+      Agregar Rubro
+    </button>
+
+    <button class="save-btn" (click)="guardarPlanEvaluacion()">
+      <i class="bi bi-check-circle"></i>
+      Guardar Plan
+    </button>
+
+  </div>
+
+  <div
+    class="warning-box"
+    *ngIf="totalEvaluacion !== 100"
+  >
+
+    <i class="bi bi-exclamation-triangle"></i>
+
+    El total de ponderación debe ser exactamente 100%.
+
+  </div>
+
+</section>
+
+<section class="activities-grid" *ngIf="tabActiva === 'actividades'">
+
+  <article class="activity-box">
+    <span class="activity-status abierta">Abierta</span>
+    <h3>Práctica 1: Derivadas</h3>
+    <p>Entrega de ejercicios sobre derivadas implícitas.</p>
+
+    <div class="activity-meta">
+      <span><i class="bi bi-calendar"></i> Viernes</span>
+      <span><i class="bi bi-inbox"></i> 12 entregas</span>
+    </div>
+  </article>
+
+  <article class="activity-box">
+    <span class="activity-status revision">En revisión</span>
+    <h3>Proyecto Final Parcial</h3>
+    <p>Aplicación de modelos matemáticos en un caso práctico.</p>
+
+    <div class="activity-meta">
+      <span><i class="bi bi-calendar"></i> Próxima semana</span>
+      <span><i class="bi bi-inbox"></i> 4 entregas</span>
+    </div>
+  </article>
+
+  <article class="activity-box">
+    <span class="activity-status cerrada">Cerrada</span>
+    <h3>Examen de unidad</h3>
+    <p>Evaluación correspondiente al primer bloque temático.</p>
+
+    <div class="activity-meta">
+      <span><i class="bi bi-calendar"></i> Finalizada</span>
+      <span><i class="bi bi-check-circle"></i> Calificada</span>
+    </div>
+  </article>
+
+</section>
 
   </main>
 

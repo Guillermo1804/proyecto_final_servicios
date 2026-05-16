@@ -442,3 +442,337 @@
     font-size: 1.1rem;
   }
 }
+
+.evaluation-card,
+.activities-grid {
+  margin-bottom: 1.5rem;
+}
+
+.evaluation-card {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.tab-header,
+.evaluation-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.tab-header {
+  margin-bottom: 1rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  span {
+    color: #0057c2;
+    font-weight: 800;
+  }
+}
+
+.evaluation-item {
+  padding: 1rem 0;
+  border-top: 1px solid #e5e7eb;
+
+  strong {
+    font-size: 1.1rem;
+  }
+
+  p {
+    margin: .3rem 0 0;
+    color: #6b7280;
+  }
+
+  > span {
+    color: #0057c2;
+    font-size: 1.2rem;
+    font-weight: 900;
+  }
+
+  &.final > span {
+    color: #0f172a;
+  }
+}
+
+.activities-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.activity-box {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 1.3rem;
+
+  h3 {
+    margin: .8rem 0 .5rem;
+    font-size: 1.3rem;
+  }
+
+  p {
+    margin: 0 0 1rem;
+    color: #4b5563;
+  }
+}
+
+.activity-status {
+  width: fit-content;
+  padding: .35rem .7rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 800;
+
+  &.abierta {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  &.revision {
+    background: #dbeafe;
+    color: #0057c2;
+  }
+
+  &.cerrada {
+    background: #e5e7eb;
+    color: #374151;
+  }
+}
+
+.activity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  color: #6b7280;
+  font-size: .9rem;
+}
+
+@media (min-width: 768px) {
+  .activities-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.evaluation-card {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.evaluation-top {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: start;
+
+  h3 {
+    margin: 0 0 .4rem;
+    font-size: clamp(1.7rem, 8vw, 2rem);
+    line-height: .95;
+  }
+}
+
+.total-box {
+  min-width: 76px;
+  height: 54px;
+  font-size: 1.2rem;
+}
+
+@media (max-width: 480px) {
+  .evaluation-card {
+    padding: 1.2rem;
+  }
+
+  .evaluation-top {
+    grid-template-columns: 1fr;
+  }
+
+  .total-box {
+    width: fit-content;
+  }
+}
+
+.total-box {
+  min-width: 90px;
+  height: 50px;
+
+  background: #0a67d8;
+  border-radius: 12px;
+
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 1.3rem;
+  font-weight: 900;
+}
+
+.evaluation-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+
+  padding: 1.2rem 0;
+
+  border-top: 1px solid #e5e7eb;
+}
+
+.evaluation-left {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  gap: .8rem;
+}
+
+.title-input,
+textarea,
+.percent-box input {
+  width: 100%;
+
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+
+  padding: .9rem 1rem;
+
+  font-size: 1rem;
+
+  outline: none;
+}
+
+.title-input:focus,
+textarea:focus,
+.percent-box input:focus {
+  border-color: #0a67d8;
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.evaluation-right {
+  width: 120px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.percent-box {
+  width: 100%;
+
+  position: relative;
+
+  span {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    color: #6b7280;
+    font-weight: 700;
+  }
+
+  input {
+    text-align: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+  }
+}
+
+.delete-btn {
+  width: 46px;
+  height: 46px;
+
+  border: none;
+  border-radius: 12px;
+
+  background: #fee2e2;
+  color: #dc2626;
+
+  cursor: pointer;
+
+  i {
+    font-size: 1rem;
+  }
+}
+
+.evaluation-actions {
+  display: flex;
+  gap: 1rem;
+
+  margin-top: 1.5rem;
+}
+
+.add-btn,
+.save-btn {
+  height: 50px;
+
+  border: none;
+  border-radius: 12px;
+
+  padding: 0 1.3rem;
+
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.add-btn {
+  background: #dbeafe;
+  color: #0a67d8;
+}
+
+.save-btn {
+  background: #0a67d8;
+  color: white;
+}
+
+.warning-box {
+  margin-top: 1.2rem;
+
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 12px;
+
+  padding: 1rem;
+
+  color: #c2410c;
+
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+}
+
+@media (max-width: 768px) {
+
+  .evaluation-item {
+    flex-direction: column;
+  }
+
+  .evaluation-right {
+    width: 100%;
+    flex-direction: row;
+  }
+
+  .evaluation-actions {
+    flex-direction: column;
+  }
+
+}
