@@ -11,9 +11,15 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+import os
+import sys
+# Añadir proto_generated al sys.path para que los stubs de gRPC encuentren sus dependencias
+sys.path.append(os.path.join(BASE_DIR, "proto_generated"))
 
 
 # Quick-start development settings - unsuitable for production
@@ -37,6 +43,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Third-party
+    'rest_framework',
+    'corsheaders',
+    # Local
+    'apps.core',
 ]
 
 MIDDLEWARE = [
@@ -74,8 +85,16 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DB_NAME', 'agm_alumnos_db'),
+        'USER': os.getenv('DB_USER', 'root'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'root_password'),
+        'HOST': os.getenv('DB_HOST', 'agm-db-alumnos'),
+        'PORT': os.getenv('DB_PORT', '3306'),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     }
 }
 
@@ -115,3 +134,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Django REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+}
+
+# CORS
+CORS_ALLOW_ALL_ORIGINS = True
+
+# Silenciar advertencia de UniqueConstraint con condition en MySQL
+SILENCED_SYSTEM_CHECKS = ["models.W036"]
