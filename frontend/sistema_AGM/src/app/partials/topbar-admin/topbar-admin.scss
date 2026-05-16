@@ -6,7 +6,8 @@
   align-items: center;
   gap: .8rem;
 
-  background: #ffffff;
+  // background: #ffffff;
+    background: #03104b;
   border-bottom: 1px solid #e5e7eb;
 
   position: sticky;
@@ -17,6 +18,38 @@
     font-size: 1.05rem;
     font-weight: 800;
     flex: 1;
+    color: #ffffff;
+  }
+
+  .logout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .55rem .85rem;
+    border: 1px solid #ef4444;
+    border-radius: 999px;
+    background: #fff5f5;
+    color: #dc2626;
+    font-size: .88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .15s ease, background-color .15s ease, color .15s ease, border-color .15s ease;
+
+    i {
+      font-size: .95rem;
+    }
+
+    &:hover {
+      background: #dc2626;
+      color: #ffffff;
+      border-color: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #dc2626;
+      outline-offset: 2px;
+    }
   }
 
   .avatar {
