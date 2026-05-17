@@ -140,8 +140,14 @@ REST_FRAMEWORK = {
     ),
 }
 
-# CORS
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS (ISSUE-105): desarrollo permisivo; producción → CORS_ALLOW_ALL_ORIGINS=False
+from config.agm_env import env_bool, cors_allowed_origins_list
+
+if env_bool('CORS_ALLOW_ALL_ORIGINS', default=True):
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = cors_allowed_origins_list()
 
 INTERNAL_API_KEY = config('INTERNAL_API_KEY', default='')
 

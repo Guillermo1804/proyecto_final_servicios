@@ -16,9 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from config.health_views import health
 from apps.core.views import login, refresh_token, get_me, forgot_password, reset_password, logout, admin_only, docente_only, alumno_only, usuarios, usuario_detail, usuario_reset_password
 
 urlpatterns = [
+    path('health/', health, name='health'),
     path('admin/', admin.site.urls),
     
     # Auth endpoints
