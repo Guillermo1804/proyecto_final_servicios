@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { FacadeService } from '../../services/facade.service';
 
 @Component({
   selector: 'app-topbar-admin',
@@ -7,5 +9,14 @@ import { Component } from '@angular/core';
   styleUrl: './topbar-admin.scss',
 })
 export class TopbarAdmin {
+  constructor(
+    private facadeService: FacadeService,
+    private router: Router
+  ) {}
+
+  logout(): void {
+    this.facadeService.clearSession();
+    this.router.navigate(['/login'], { replaceUrl: true });
+  }
 
 }

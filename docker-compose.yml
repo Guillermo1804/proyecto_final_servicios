@@ -17,7 +17,14 @@
 # API Gateway Nginx en servicio `nginx` (puerto host 8080 → 80).
 #
 # Requisito: cada ./ms-* incluye Dockerfile + entrypoint.sh; copiar ms-*/.env desde .env.example.
+# Healthcheck REST: GET /health/ en cada MS (Epic 1).
 # =============================================
+
+x-ms-healthcheck: &ms-healthcheck
+  interval: 15s
+  timeout: 5s
+  retries: 5
+  start_period: 60s
 
 services:
 
@@ -188,6 +195,9 @@ services:
     depends_on:
       db-auth:
         condition: service_healthy
+    healthcheck:
+      <<: *ms-healthcheck
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health/')\""]
     networks:
       - agm-network
 
@@ -201,6 +211,9 @@ services:
     depends_on:
       db-periodos:
         condition: service_healthy
+    healthcheck:
+      <<: *ms-healthcheck
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/health/')\""]
     networks:
       - agm-network
 
@@ -214,6 +227,9 @@ services:
     depends_on:
       db-alumnos:
         condition: service_healthy
+    healthcheck:
+      <<: *ms-healthcheck
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8003/health/')\""]
     networks:
       - agm-network
 
@@ -227,6 +243,9 @@ services:
     depends_on:
       db-calificaciones:
         condition: service_healthy
+    healthcheck:
+      <<: *ms-healthcheck
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8004/health/')\""]
     networks:
       - agm-network
 
@@ -242,6 +261,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      <<: *ms-healthcheck
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8005/health/')\""]
     networks:
       - agm-network
 
@@ -255,6 +277,9 @@ services:
     depends_on:
       db-notificaciones:
         condition: service_healthy
+    healthcheck:
+      <<: *ms-healthcheck
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8006/health/')\""]
     networks:
       - agm-network
 
@@ -268,6 +293,9 @@ services:
     depends_on:
       db-reportes:
         condition: service_healthy
+    healthcheck:
+      <<: *ms-healthcheck
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8007/health/')\""]
     networks:
       - agm-network
 
@@ -279,13 +307,26 @@ services:
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - ms-auth
-      - ms-periodos
-      - ms-alumnos
-      - ms-calificaciones
-      - ms-asistencias
-      - ms-notificaciones
-      - ms-reportes
+      ms-auth:
+        condition: service_healthy
+      ms-periodos:
+        condition: service_healthy
+      ms-alumnos:
+        condition: service_healthy
+      ms-calificaciones:
+        condition: service_healthy
+      ms-asistencias:
+        condition: service_healthy
+      ms-notificaciones:
+        condition: service_healthy
+      ms-reportes:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1/health | grep -q ok"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
     networks:
       - agm-network
 

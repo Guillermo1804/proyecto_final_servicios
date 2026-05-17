@@ -11,56 +11,69 @@
       <h2>Iniciar sesión</h2>
       <p class="subtitle">Accede con tu correo institucional</p>
 
-      <div class="input-group">
-        <label>Correo universitario</label>
+      <form (ngSubmit)="login()" novalidate>
+        <div class="input-group">
+          <label>Correo universitario</label>
 
-        <div class="input-wrapper">
-          <i class="bi bi-envelope"></i>
-          <input type="email" placeholder="nombre@buap.mx">
+          <div class="input-wrapper">
+            <i class="bi bi-envelope"></i>
+            <input
+              type="email"
+              name="email"
+              [(ngModel)]="email"
+              placeholder="nombre@buap.mx"
+              autocomplete="username"
+            >
+          </div>
         </div>
-      </div>
 
-<div class="input-group">
+        <div class="input-group">
 
-  <label>Contraseña</label>
+          <label>Contraseña</label>
 
-  <div class="input-wrapper">
+          <div class="input-wrapper">
 
-    <i class="bi bi-lock"></i>
+            <i class="bi bi-lock"></i>
 
-    <input
-      [type]="showPassword ? 'text' : 'password'"
-      placeholder="••••••••"
-    >
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              name="password"
+              [(ngModel)]="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+            >
 
-    <button
-      type="button"
-      class="toggle-password"
-      (click)="togglePassword()"
-    >
-      <i
-        class="bi"
-        [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"
-      ></i>
-    </button>
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePassword()"
+            >
+              <i
+                class="bi"
+                [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"
+              ></i>
+            </button>
 
-  </div>
+          </div>
 
-</div>
+        </div>
 
-      <div class="options-row">
-        <label class="remember-me">
-          <input type="checkbox">
-          <span>Recordarme</span>
-        </label>
+        <div class="options-row">
+          <label class="remember-me">
+            <input type="checkbox" name="remember" [(ngModel)]="remember">
+            <span>Recordarme</span>
+          </label>
 
-        <a href="#">¿Olvidaste tu contraseña?</a>
-      </div>
+          <a href="#">¿Olvidaste tu contraseña?</a>
+        </div>
 
-      <button class="login-btn">
-        Ingresar
-        <i class="bi bi-box-arrow-in-right"></i>
-      </button>
+        <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+
+        <button class="login-btn" type="submit" [disabled]="loading">
+          {{ loading ? 'Ingresando...' : 'Ingresar' }}
+          <i class="bi bi-box-arrow-in-right"></i>
+        </button>
+      </form>
 
       <div class="divider"></div>
 

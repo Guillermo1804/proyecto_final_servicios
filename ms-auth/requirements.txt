@@ -7,3 +7,4 @@ grpcio>=1.60
 grpcio-tools>=1.60
 python-decouple>=3.8
 gunicorn>=21.2
+protobuf>=3.20,<5
