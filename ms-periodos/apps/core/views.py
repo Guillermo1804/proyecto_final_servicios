@@ -9,6 +9,7 @@ from apps.core.models import Periodo, Materia
 from apps.core.serializers import PeriodoSerializer, MateriaSerializer
 from utils.pagination import AGMPagination
 from utils.responses import error_response, success_response
+from utils.auth import jwt_required
 
 
 class PeriodoViewSet(ViewSet):
@@ -20,6 +21,7 @@ class PeriodoViewSet(ViewSet):
     pagination_class = AGMPagination
 
     # ── LIST ────────────────────────────────────────────────────────────
+    @jwt_required()
     def list(self, request):
         qs = Periodo.objects.all().order_by("-fecha_creacion")
         paginator = AGMPagination()
@@ -28,6 +30,7 @@ class PeriodoViewSet(ViewSet):
         return Response(paginator.get_paginated_envelope(data))
 
     # ── RETRIEVE ────────────────────────────────────────────────────────
+    @jwt_required()
     def retrieve(self, request, pk=None):
         try:
             periodo = Periodo.objects.get(pk=pk)
@@ -36,6 +39,7 @@ class PeriodoViewSet(ViewSet):
         return success_response(PeriodoSerializer(periodo).data)
 
     # ── CREATE ──────────────────────────────────────────────────────────
+    @jwt_required(roles=["admin"])
     def create(self, request):
         serializer = PeriodoSerializer(data=request.data)
         if not serializer.is_valid():
@@ -50,6 +54,7 @@ class PeriodoViewSet(ViewSet):
         )
 
     # ── UPDATE ──────────────────────────────────────────────────────────
+    @jwt_required(roles=["admin"])
     def update(self, request, pk=None):
         try:
             periodo = Periodo.objects.get(pk=pk)
@@ -67,6 +72,7 @@ class PeriodoViewSet(ViewSet):
         )
 
     # ── DESTROY ─────────────────────────────────────────────────────────
+    @jwt_required(roles=["admin"])
     def destroy(self, request, pk=None):
         try:
             periodo = Periodo.objects.get(pk=pk)
@@ -81,6 +87,7 @@ class PeriodoViewSet(ViewSet):
         return success_response(None, message="Periodo eliminado exitosamente")
 
     # ── ACTIVAR (custom action) ─────────────────────────────────────────
+    @jwt_required(roles=["admin"])
     @action(detail=True, methods=["post"], url_path="activar")
     def activar(self, request, pk=None):
         """
@@ -121,6 +128,7 @@ class PeriodoViewSet(ViewSet):
         return success_response(PeriodoSerializer(periodo).data)
 
     # ── IMPORTAR MATERIAS (custom action) ───────────────────────────────
+    @jwt_required(roles=["admin"])
     @action(detail=True, methods=["post"], url_path="importar-materias")
     def importar_materias(self, request, pk=None):
         """
@@ -214,6 +222,7 @@ class MateriaViewSet(ModelViewSet):
             
         return qs
 
+    @jwt_required()
     def list(self, request, *args, **kwargs):
         params = request.query_params
         allowed_params = {"periodo_id", "nrc", "nombre", "docente_nombre", "page", "limit"}
@@ -230,11 +239,13 @@ class MateriaViewSet(ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return success_response(serializer.data)
 
+    @jwt_required()
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return success_response(serializer.data)
 
+    @jwt_required(roles=["admin"])
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
@@ -242,6 +253,7 @@ class MateriaViewSet(ModelViewSet):
         serializer.save()
         return success_response(serializer.data, message="Materia creada exitosamente", status=201)
 
+    @jwt_required(roles=["admin"])
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)
         instance = self.get_object()
@@ -251,6 +263,7 @@ class MateriaViewSet(ModelViewSet):
         serializer.save()
         return success_response(serializer.data, message="Materia actualizada exitosamente")
 
+    @jwt_required(roles=["admin"])
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         # Validación de alumnos inscritos vía MS-3 en el futuro

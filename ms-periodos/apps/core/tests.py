@@ -3,11 +3,13 @@ import sys
 import grpc
 from django.test import TestCase
 from rest_framework.test import APIClient
+from unittest.mock import patch, MagicMock
 
 # Añadir proto_generated al path para evitar ModuleNotFoundError en archivos gRPC generados
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(BASE_DIR, "proto_generated"))
 
+from proto_generated import auth_pb2
 from apps.core.models import Periodo
 
 
@@ -16,6 +18,22 @@ class PeriodoCRUDTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
+        self.patcher = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher.start()
+        
+        self.mock_stub = MagicMock()
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id=1,
+            email="test@buap.mx",
+            rol="admin",
+            nombre="Test"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+
+    def tearDown(self):
+        self.patcher.stop()
 
     # ── Test 1: crear periodo válido retorna 201 ───────────────────────
     def test_crear_periodo_valido_retorna_201(self):
@@ -168,6 +186,36 @@ class PeriodoCRUDTests(TestCase):
         self.assertTrue(body["data"]["activo"])
         self.assertEqual(body["data"]["nombre"], "Activo Now")
 
+    # ── Test 5: request sin Authorization header retorna 401 ──────────
+    def test_request_sin_auth_header_retorna_401(self):
+        """Un endpoint protegido sin header de autenticación debe retornar 401."""
+        self.client.credentials()
+        response = self.client.post("/api/periodos/", data={}, format="json")
+        self.assertEqual(response.status_code, 401)
+        body = response.json()
+        self.assertFalse(body["success"])
+        self.assertEqual(body["message"], "Token requerido")
+
+    # ── Test 6: request con rol incorrecto retorna 403 ─────────────────
+    def test_request_rol_incorrecto_retorna_403(self):
+        """Un usuario con rol no autorizado (ej. alumno) debe recibir 403 en ruta de admin."""
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id=2,
+            email="alumno@buap.mx",
+            rol="alumno",
+            nombre="Alumno Test"
+        )
+        payload = {
+            "nombre": "Primavera 2026",
+            "fecha_inicio": "2026-02-01",
+            "fecha_fin": "2026-06-30",
+        }
+        response = self.client.post("/api/periodos/", data=payload, format="json")
+        self.assertEqual(response.status_code, 403)
+        body = response.json()
+        self.assertFalse(body["success"])
+        self.assertEqual(body["message"], "Sin permisos")
 
 
 class MateriaCRUDTests(TestCase):
@@ -175,11 +223,28 @@ class MateriaCRUDTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
+        self.patcher = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher.start()
+        
+        self.mock_stub = MagicMock()
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id=1,
+            email="test@buap.mx",
+            rol="admin",
+            nombre="Test"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+
         self.periodo = Periodo.objects.create(
             nombre="Periodo Prueba",
             fecha_inicio="2026-01-01",
             fecha_fin="2026-06-30"
         )
+
+    def tearDown(self):
+        self.patcher.stop()
 
     def test_list_materias_paginado(self):
         """El listado debe retornar el envelope de paginación AGM con count y results."""
