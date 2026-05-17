@@ -20,6 +20,10 @@ echo "MySQL listo!"
 echo "Aplicando migraciones..."
 python manage.py migrate --noinput
 
+# Crear usuario administrador inicial
+echo "Inicializando administrador..."
+python manage.py create_admin
+
 # Arrancar servidor gRPC en background (si existe el management command)
 if python manage.py help grpc_server 2>/dev/null; then
   echo "Iniciando servidor gRPC en puerto ${GRPC_PORT}..."

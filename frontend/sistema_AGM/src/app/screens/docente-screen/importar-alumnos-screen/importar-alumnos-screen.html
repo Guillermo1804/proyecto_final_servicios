@@ -1,0 +1,165 @@
+<div class="importar-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="breadcrumb">
+      <span>Mis Materias</span>
+      <i class="bi bi-chevron-right"></i>
+      <span>Estructura de Datos II</span>
+      <i class="bi bi-chevron-right"></i>
+      <strong>Importar Alumnos</strong>
+    </section>
+
+    <section class="hero">
+      <h2>Carga Masiva de Alumnos</h2>
+
+      <p>
+        Agregue estudiantes a la materia utilizando un archivo CSV o Excel.
+      </p>
+
+      <button class="download-btn">
+        <i class="bi bi-download"></i>
+        Descargar Plantilla
+      </button>
+    </section>
+
+    <section class="upload-card">
+
+      <div class="upload-icon">
+        <i class="bi bi-file-earmark-arrow-up"></i>
+      </div>
+
+      <h3>Arrastre su archivo aquí</h3>
+
+      <p>
+        Soporta archivos .CSV, .XLS y .XLSX (Máx. 5MB).
+        Asegúrese de que las columnas coincidan con la plantilla oficial.
+      </p>
+
+      <button>
+        Seleccionar Archivo
+      </button>
+
+    </section>
+
+    <section class="requirements-card">
+
+      <h4>
+        <i class="bi bi-info-circle"></i>
+        Requisitos del archivo
+      </h4>
+
+      <ul>
+        <li>
+          <i class="bi bi-check-circle"></i>
+          Columna 'Matrícula' es obligatoria.
+        </li>
+
+        <li>
+          <i class="bi bi-check-circle"></i>
+          Nombres y Apellidos en columnas separadas.
+        </li>
+
+        <li>
+          <i class="bi bi-check-circle"></i>
+          Correo institucional válido.
+        </li>
+      </ul>
+
+    </section>
+
+    <section class="success-card">
+
+      <h4>
+        <i class="bi bi-patch-check"></i>
+        Archivo validado con éxito
+      </h4>
+
+      <p>
+        Se encontraron <strong>128 registros</strong> listos para importar.
+        Revise la previsualización debajo.
+      </p>
+
+    </section>
+
+    <section class="preview-card">
+
+      <div class="preview-header">
+
+        <h3>Previsualización de Estudiantes</h3>
+
+        <div class="preview-badges">
+          <span class="validos">128<br>Válidos</span>
+          <span class="errores">0<br>Errores</span>
+        </div>
+
+      </div>
+
+      <div class="students-table">
+
+        <div class="table-head">
+          <span>Matrícula</span>
+          <span>Nombre Completo</span>
+          <span>Correo</span>
+        </div>
+
+        <div
+          class="table-row"
+          *ngFor="let alumno of alumnos"
+        >
+
+          <strong>
+            {{ alumno.matricula }}
+          </strong>
+
+          <span>
+            {{ alumno.nombre }}
+          </span>
+
+          <a href="#">
+            {{ alumno.correo }}
+          </a>
+
+        </div>
+
+      </div>
+
+      <div class="preview-footer">
+
+        <p>
+          Mostrando 4 de 128 alumnos encontrados
+        </p>
+
+        <div class="pagination">
+          <button>
+            <i class="bi bi-chevron-left"></i>
+          </button>
+
+          <button>
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+    <section class="bottom-actions">
+
+      <button class="cancel-btn">
+        Cancelar
+      </button>
+
+      <button class="import-btn">
+        Importar Alumnos
+      </button>
+
+    </section>
+
+  </main>
+
+  <app-bottom-navbar-docente></app-bottom-navbar-docente>
+
+</div>

@@ -1,0 +1,134 @@
+<div class="materias-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+      <h2>Gestión de Asignaturas</h2>
+
+      <p>
+        Administre el catálogo académico institucional, cursos y prerrequisitos.
+      </p>
+    </section>
+
+    <button class="create-btn">
+      <i class="bi bi-plus-lg"></i>
+      Nueva Materia
+    </button>
+
+    <section class="filters-card">
+
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+
+        <input
+          type="text"
+          placeholder="Buscar por código o nombre..."
+        >
+      </div>
+
+      <select>
+        <option>Todas las Carreras</option>
+        <option>ITI</option>
+        <option>ICC</option>
+        <option>ITC</option>
+      </select>
+
+      <button class="filter-btn">
+        <i class="bi bi-filter"></i>
+        Filtrar
+      </button>
+
+    </section>
+
+    <section class="table-card">
+
+      <div class="table-head">
+        <span>CÓDIGO</span>
+        <span>NOMBRE DE ASIGNATURA</span>
+        <span>FACULTAD</span>
+      </div>
+
+      <div
+        class="table-row"
+        *ngFor="let materia of materias"
+      >
+
+        <span class="codigo">
+          {{ materia.codigo }}
+        </span>
+
+        <div class="materia-info">
+          <strong>{{ materia.nombre }}</strong>
+
+          <p>
+            Prerrequisito:
+            <br>
+            {{ materia.prerequisito }}
+          </p>
+        </div>
+
+        <span
+          class="facultad"
+          [ngClass]="materia.tipo"
+        >
+          {{ materia.facultad }}
+        </span>
+
+      </div>
+
+      <p class="table-footer">
+        Mostrando 1 a 4 de 128 materias
+      </p>
+
+    </section>
+
+    <section class="summary-grid">
+
+      <article class="summary-card">
+
+        <div class="summary-icon azul">
+          <i class="bi bi-book"></i>
+        </div>
+
+        <div>
+          <p>TOTAL MATERIAS</p>
+          <h3>482</h3>
+        </div>
+
+      </article>
+
+      <article class="summary-card">
+
+        <div class="summary-icon naranja">
+          <i class="bi bi-bank"></i>
+        </div>
+
+        <div>
+          <p>FACULTADES</p>
+          <h3>8</h3>
+        </div>
+
+      </article>
+
+      <article class="summary-card">
+
+        <div class="summary-icon celeste">
+          <i class="bi bi-patch-check"></i>
+        </div>
+
+        <div>
+          <p>PLAN 2024</p>
+          <h3>94%</h3>
+        </div>
+
+      </article>
+
+    </section>
+
+  </main>
+
+  <app-bottom-navbar-admin></app-bottom-navbar-admin>
+
+</div>

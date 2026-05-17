@@ -1,0 +1,358 @@
+<div class="detalle-materia-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+
+      <span class="group-badge">
+        <i class="bi bi-people"></i>
+        Grupo: ENG-302
+      </span>
+
+      <h2>Cálculo Diferencial</h2>
+
+      <p>
+        Lunes, Miércoles y Viernes | 08:00-10:00 AM
+      </p>
+
+<div class="actions-row">
+
+  <button class="attendance-btn"
+  routerLink="/docente/asistencias">
+    <i class="bi bi-calendar-check"></i>
+    Pasar Lista
+  </button>
+
+  <button
+    class="import-btn"
+    [routerLink]="['/docente/materias', codigoMateria, 'importar-alumnos']"
+  >
+    <i class="bi bi-upload"></i>
+    Importar Alumnos
+  </button>
+
+  <button
+  class="performance-btn"
+  [routerLink]="['/docente/materias', codigoMateria, 'rendimiento']"
+>
+  <i class="bi bi-graph-up-arrow"></i>
+  Rendimiento
+</button>
+
+</div>
+
+    </section>
+
+    <section class="stats-grid">
+
+      <article class="stat-card">
+        <div class="stat-head">
+          <i class="bi bi-graph-up-arrow"></i>
+          <span>+2% vs anterior</span>
+        </div>
+
+        <p>Promedio Grupal</p>
+        <h3>8.42</h3>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-head">
+          <i class="bi bi-calendar-check"></i>
+          <span>96% hoy</span>
+        </div>
+
+        <p>Asistencia Total</p>
+        <h3>94.8%</h3>
+      </article>
+
+      <article class="progress-card">
+        <div class="progress-head">
+          <span>Progreso del Programa</span>
+          <strong>65%</strong>
+        </div>
+
+        <div class="progress-bar">
+          <div></div>
+        </div>
+
+        <p>Siguiente hito: Derivadas Implícitas (Viernes)</p>
+      </article>
+
+    </section>
+
+<section class="tabs">
+
+  <button [class.active]="tabActiva === 'alumnos'" (click)="cambiarTab('alumnos')">
+    Lista de Alumnos
+  </button>
+
+  <button [class.active]="tabActiva === 'evaluacion'" (click)="cambiarTab('evaluacion')">
+    Plan de Evaluación
+  </button>
+
+  <button [class.active]="tabActiva === 'actividades'" (click)="cambiarTab('actividades')">
+    Actividades
+  </button>
+
+</section>
+
+<section class="students-card" *ngIf="tabActiva === 'alumnos'">
+
+  <div class="students-header">
+
+    <h3>Estudiantes Matriculados</h3>
+
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+
+      <input
+        type="text"
+        placeholder="Buscar alumno..."
+      >
+    </div>
+
+  </div>
+
+  <div class="students-table">
+
+    <div class="table-head">
+      <span>Nombre del Alumno</span>
+      <span>Matrícula</span>
+      <span>Asistencia</span>
+    </div>
+
+    <div
+      class="table-row"
+      *ngFor="let alumno of alumnos"
+    >
+
+      <div class="student-name">
+
+        <div class="initials">
+          {{ alumno.iniciales }}
+        </div>
+
+        <span>
+          {{ alumno.nombre }}
+        </span>
+
+      </div>
+
+      <span>
+        {{ alumno.matricula }}
+      </span>
+
+      <span>
+        {{ alumno.asistencia }}
+      </span>
+
+    </div>
+
+  </div>
+
+</section>
+
+<section class="evaluation-card" *ngIf="tabActiva === 'evaluacion'">
+
+  <div class="evaluation-top">
+
+    <div>
+      <h3>Plan de Evaluación</h3>
+      <p>Configure los rubros y ponderaciones.</p>
+    </div>
+
+    <div class="total-box">
+      {{ totalEvaluacion }}%
+    </div>
+
+  </div>
+
+  <article
+    class="evaluation-item"
+    *ngFor="let rubro of rubrosEvaluacion; let i = index"
+  >
+
+    <div class="evaluation-left">
+
+      <input
+        type="text"
+        [(ngModel)]="rubro.nombre"
+        placeholder="Nombre del rubro"
+        class="title-input"
+      >
+
+      <textarea
+        [(ngModel)]="rubro.descripcion"
+        placeholder="Descripción"
+      ></textarea>
+
+    </div>
+
+    <div class="evaluation-right">
+
+      <div class="percent-box">
+
+        <input
+          type="number"
+          [(ngModel)]="rubro.porcentaje"
+          min="0"
+          max="100"
+        >
+
+        <span>%</span>
+
+      </div>
+
+      <button
+        class="delete-btn"
+        (click)="eliminarRubro(i)"
+      >
+        <i class="bi bi-trash"></i>
+      </button>
+
+    </div>
+
+  </article>
+
+  <div class="evaluation-actions">
+
+    <button
+      class="add-btn"
+      (click)="agregarRubro()"
+    >
+      <i class="bi bi-plus-circle"></i>
+      Agregar Rubro
+    </button>
+
+    <button class="save-btn" (click)="guardarPlanEvaluacion()">
+      <i class="bi bi-check-circle"></i>
+      Guardar Plan
+    </button>
+
+  </div>
+
+  <div
+    class="warning-box"
+    *ngIf="totalEvaluacion !== 100"
+  >
+
+    <i class="bi bi-exclamation-triangle"></i>
+
+    El total de ponderación debe ser exactamente 100%.
+
+  </div>
+
+</section>
+
+<section class="activities-section" *ngIf="tabActiva === 'actividades'">
+
+  <div class="activities-top">
+    <div>
+      <h3>Actividades</h3>
+      <p>Cree actividades asociadas a los rubros del plan de evaluación.</p>
+    </div>
+
+    <button class="add-btn" (click)="abrirFormularioActividad()">
+      <i class="bi bi-plus-circle"></i>
+      Crear Actividad
+    </button>
+  </div>
+
+  <section class="activity-form" *ngIf="mostrarFormularioActividad">
+
+    <input
+      type="text"
+      placeholder="Nombre de la actividad"
+      [(ngModel)]="nuevaActividad.titulo"
+    >
+
+    <textarea
+      placeholder="Descripción de la actividad"
+      [(ngModel)]="nuevaActividad.descripcion"
+    ></textarea>
+
+    <select [(ngModel)]="nuevaActividad.rubro">
+      <option value="">Seleccione rubro</option>
+
+      <option
+        *ngFor="let rubro of rubrosEvaluacion"
+        [value]="rubro.nombre"
+      >
+        {{ rubro.nombre }}
+      </option>
+    </select>
+
+    <input
+      type="date"
+      [(ngModel)]="nuevaActividad.fechaEntrega"
+    >
+
+    <input
+      type="number"
+      placeholder="Valor dentro del rubro (%)"
+      [(ngModel)]="nuevaActividad.valorInterno"
+    >
+
+    <div class="form-actions">
+      <button class="cancel-btn" (click)="cancelarActividad()">
+        Cancelar
+      </button>
+
+      <button class="save-btn" (click)="crearActividad()">
+        Guardar Actividad
+      </button>
+    </div>
+
+  </section>
+
+  <section class="activities-grid">
+
+    <article
+      class="activity-box"
+      *ngFor="let actividad of actividades"
+    >
+
+      <div class="activity-header">
+        <span class="activity-status" [ngClass]="actividad.tipo">
+          {{ actividad.estado }}
+        </span>
+
+        <span class="activity-rubro">
+          {{ actividad.rubro }}
+        </span>
+      </div>
+
+      <h3>{{ actividad.titulo }}</h3>
+
+      <p>{{ actividad.descripcion }}</p>
+
+      <div class="activity-meta">
+        <span>
+          <i class="bi bi-calendar"></i>
+          {{ actividad.fechaEntrega }}
+        </span>
+
+        <span>
+          <i class="bi bi-percent"></i>
+          {{ actividad.valorInterno }}% del rubro
+        </span>
+
+        <span>
+          <i class="bi bi-inbox"></i>
+          {{ actividad.entregas }} entregas
+        </span>
+      </div>
+
+    </article>
+
+  </section>
+
+</section>
+
+  </main>
+
+  <app-bottom-navbar-docente></app-bottom-navbar-docente>
+
+</div>

@@ -1,0 +1,93 @@
+<div class="login-page">
+
+  <section class="brand-panel">
+    <img src="/logoAGM.png" alt="Logo AGM" class="brand-logo">
+  </section>
+
+  <section class="form-panel">
+
+    <div class="login-card">
+
+      <h2>Iniciar sesión</h2>
+      <p class="subtitle">Accede con tu correo institucional</p>
+
+      <form (ngSubmit)="login()" novalidate>
+        <div class="input-group">
+          <label>Correo universitario</label>
+
+          <div class="input-wrapper">
+            <i class="bi bi-envelope"></i>
+            <input
+              type="email"
+              name="email"
+              [(ngModel)]="email"
+              placeholder="nombre@buap.mx"
+              autocomplete="username"
+            >
+          </div>
+        </div>
+
+        <div class="input-group">
+
+          <label>Contraseña</label>
+
+          <div class="input-wrapper">
+
+            <i class="bi bi-lock"></i>
+
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              name="password"
+              [(ngModel)]="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+            >
+
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePassword()"
+            >
+              <i
+                class="bi"
+                [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"
+              ></i>
+            </button>
+
+          </div>
+
+        </div>
+
+        <div class="options-row">
+          <label class="remember-me">
+            <input type="checkbox" name="remember" [(ngModel)]="remember">
+            <span>Recordarme</span>
+          </label>
+
+          <a href="#">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+
+        <button class="login-btn" type="submit" [disabled]="loading">
+          {{ loading ? 'Ingresando...' : 'Ingresar' }}
+          <i class="bi bi-box-arrow-in-right"></i>
+        </button>
+      </form>
+
+      <div class="divider"></div>
+
+      <p class="support-text">
+        ¿Necesitas soporte técnico?
+        <a href="#">Contactar a soporte académico</a>
+      </p>
+
+    </div>
+
+    <footer>
+      © 2026 Academic Grade Management System. Todos los derechos reservados.
+    </footer>
+
+  </section>
+
+</div>

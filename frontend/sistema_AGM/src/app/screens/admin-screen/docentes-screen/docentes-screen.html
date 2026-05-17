@@ -1,0 +1,117 @@
+<div class="docentes-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+      <h2>Gestión de Docentes</h2>
+
+      <p>
+        Administre la nómina académica, asignaciones y estados de los docentes con precisión institucional.
+      </p>
+    </section>
+
+    <button class="create-btn">
+      <i class="bi bi-person-plus"></i>
+      Registrar Docente
+    </button>
+
+    <section class="filters-section">
+
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+
+        <input
+          type="text"
+          placeholder="Buscar por nombre, ID o especialidad"
+        >
+      </div>
+
+      <div class="filter-row">
+
+        <select>
+          <option>Todas las Carreras</option>
+          <option>ITI</option>
+          <option>ICC</option>
+          <option>ITC</option>
+
+        </select>
+
+        <button class="filter-btn">
+          <i class="bi bi-filter"></i>
+        </button>
+
+      </div>
+
+    </section>
+
+    <section class="table-card">
+
+      <div class="table-head">
+        <span>Docente</span>
+        <span>Facultad</span>
+        <span>Estado</span>
+      </div>
+
+      <div
+        class="table-row"
+        *ngFor="let docente of docentes"
+      >
+
+        <div class="teacher-info">
+
+          <img
+            [src]="docente.foto"
+            [alt]="docente.nombre"
+          >
+
+          <div>
+            <strong>{{ docente.nombre }}</strong>
+            <p>ID: {{ docente.id }}</p>
+          </div>
+
+        </div>
+
+        <span class="faculty">
+          {{ docente.facultad }}
+        </span>
+
+        <span
+          class="status"
+          [ngClass]="docente.tipo"
+        >
+          {{ docente.estado }}
+        </span>
+
+      </div>
+
+      <div class="table-footer">
+
+        <span>Mostrando 4 de 128 docentes</span>
+
+        <div class="pagination">
+          <button disabled>
+            <i class="bi bi-chevron-left"></i>
+          </button>
+
+          <strong>1</strong>
+
+          <button>
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <button class="floating-btn">
+    <i class="bi bi-plus-lg"></i>
+  </button>
+
+  <app-bottom-navbar-admin></app-bottom-navbar-admin>
+
+</div>

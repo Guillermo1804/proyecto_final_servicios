@@ -1,0 +1,139 @@
+<div class="notas-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <!-- HEADER -->
+
+    <section class="hero">
+
+      <h1>Mis Calificaciones</h1>
+
+      <p>Periodo Académico: Primavera 2024</p>
+
+    </section>
+
+    <!-- PROMEDIO -->
+
+    <section class="average-card">
+
+      <span>PROMEDIO GENERAL PARCIAL</span>
+
+      <h2>8.7</h2>
+
+      <div class="progress-bar">
+        <div></div>
+      </div>
+
+      <p>Progreso del periodo: 65% completado</p>
+
+    </section>
+
+    <!-- MATERIAS -->
+
+    <section class="subjects-list">
+
+      <article
+        class="subject-card"
+        *ngFor="let materia of materias"
+      >
+
+        <div class="subject-top">
+
+          <div class="subject-icon" [ngClass]="materia.color">
+            <i class="bi" [ngClass]="materia.icono"></i>
+          </div>
+
+          <div class="subject-info">
+
+            <h3>{{ materia.nombre }}</h3>
+
+            <p>
+              NRC: {{ materia.nrc }}
+              •
+              Prof. {{ materia.profesor }}
+            </p>
+
+          </div>
+
+        </div>
+
+        <div class="average-row">
+
+          <div>
+            <span class="label">Promedio</span>
+
+            <div
+              class="grade-pill"
+              [ngClass]="materia.promedioColor"
+            >
+              {{ materia.promedio }}
+            </div>
+          </div>
+
+          <i class="bi bi-chevron-down"></i>
+
+        </div>
+
+        <section
+          class="partials-grid"
+          *ngIf="materia.expandido"
+        >
+
+          <article
+            class="partial-card"
+            *ngFor="let parcial of materia.parciales"
+            [ngClass]="{ active: parcial.activo }"
+          >
+
+            <span>{{ parcial.titulo }}</span>
+
+            <h4>{{ parcial.valor }}</h4>
+
+          </article>
+
+        </section>
+
+      </article>
+
+    </section>
+
+    <!-- HISTORIAL -->
+
+    <section class="history-header">
+
+      <h2>Resumen por Periodo</h2>
+
+      <a href="#">
+        Ver Historial Completo
+      </a>
+
+    </section>
+
+    <section class="history-card">
+
+      <div class="table-head">
+        <span>Periodo</span>
+        <span>Materias</span>
+        <span>Aprobadas</span>
+      </div>
+
+      <div
+        class="table-row"
+        *ngFor="let item of historial"
+      >
+
+        <span>{{ item.periodo }}</span>
+        <span>{{ item.materias }}</span>
+        <span>{{ item.aprobadas }}</span>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <app-bottom-navbar-alumno></app-bottom-navbar-alumno>
+
+</div>

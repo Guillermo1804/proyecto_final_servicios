@@ -1,0 +1,168 @@
+<div class="alumno-dashboard">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <!-- HERO -->
+
+    <section class="hero-card">
+
+      <p>Bienvenido de nuevo.</p>
+
+      <h2>Roberto García</h2>
+
+      <span>
+        Tienes 3 clases programadas para hoy y un examen parcial la próxima semana.
+        ¡Sigue con el excelente desempeño!
+      </span>
+
+      <div class="hero-bg"></div>
+
+    </section>
+
+    <!-- PROMEDIO -->
+
+    <section class="average-card">
+
+      <p>PROMEDIO GENERAL</p>
+
+      <h3>9.4</h3>
+
+      <span>
+        <i class="bi bi-graph-up-arrow"></i>
+        Superior al ciclo anterior
+      </span>
+
+    </section>
+
+    <!-- MATERIAS -->
+
+    <section class="section-title">
+
+      <div>
+        <h2>Materias de Hoy</h2>
+        <p>Viernes, 24 de Mayo</p>
+      </div>
+
+      <a href="#">
+        Ver horario completo
+        <i class="bi bi-arrow-right"></i>
+      </a>
+
+    </section>
+
+    <section class="subjects-list">
+
+      <article
+        class="subject-card"
+        *ngFor="let materia of materiasHoy"
+      >
+
+        <div class="card-top">
+
+          <div
+            class="icon-box"
+            [ngClass]="materia.color"
+          >
+            <i class="bi" [ngClass]="materia.icono"></i>
+          </div>
+
+          <span class="time-badge">
+            {{ materia.horario }}
+          </span>
+
+        </div>
+
+        <h3>{{ materia.materia }}</h3>
+
+        <p>
+          <i class="bi bi-geo-alt"></i>
+          {{ materia.aula }}
+        </p>
+
+      </article>
+
+    </section>
+
+    <!-- EVALUACIONES -->
+
+    <section class="section-heading">
+      <h2>Próximas Evaluaciones</h2>
+    </section>
+
+    <section class="table-card">
+
+      <div class="table-head">
+        <span>MATERIA</span>
+        <span>FECHA</span>
+        <span>VALOR</span>
+      </div>
+
+      <div
+        class="table-row"
+        *ngFor="let item of evaluaciones"
+      >
+
+        <span>{{ item.materia }}</span>
+        <span>{{ item.fecha }}</span>
+
+        <div class="badge">
+          {{ item.valor }}
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- AVISOS -->
+
+    <section class="section-heading">
+      <h2>Avisos Campus</h2>
+    </section>
+
+    <section class="alerts-card">
+
+      <article class="alert-item">
+
+        <div class="alert-icon">
+          <i class="bi bi-wifi"></i>
+        </div>
+
+        <div>
+          <strong>Mantenimiento Red</strong>
+
+          <p>
+            Mañana de 02:00 a 05:00 AM.
+          </p>
+        </div>
+
+      </article>
+
+      <article class="alert-item">
+
+        <div class="alert-icon">
+          <i class="bi bi-journal-text"></i>
+        </div>
+
+        <div>
+          <strong>Libros Nuevos</strong>
+
+          <p>
+            Sección de Ingeniería actualizada.
+          </p>
+        </div>
+
+      </article>
+
+      <button>
+        Ver todos los avisos
+      </button>
+
+    </section>
+
+  </main>
+
+  <app-bottom-navbar-alumno></app-bottom-navbar-alumno>
+
+</div>

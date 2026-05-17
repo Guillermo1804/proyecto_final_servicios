@@ -1,0 +1,395 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f7f7fb;
+  color: #080b13;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.materias-docente-page {
+  min-height: 100vh;
+  padding-bottom: 76px;
+  background: #f7f7fb;
+}
+
+/* TOPBAR */
+
+.topbar {
+  height: 56px;
+  padding: 0 1rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: white;
+  border-bottom: 1px solid #d1d5db;
+
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+
+  i {
+    font-size: 1rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+
+  i {
+    font-size: 1.1rem;
+  }
+
+  img {
+    width: 30px;
+    height: 30px;
+
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #111827;
+  }
+}
+
+/* CONTENT */
+
+.content {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* HERO */
+
+.hero {
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0 0 .3rem;
+    font-size: 1.7rem;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 0;
+    color: #374151;
+    line-height: 1.4;
+    font-size: .95rem;
+  }
+}
+
+/* SELECTOR */
+
+.period-selector {
+  height: 42px;
+
+  background: white;
+
+  border: 1px solid #c9ced8;
+  border-radius: 9px;
+
+  padding: 0 1rem;
+  margin-bottom: 1.4rem;
+
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+
+  font-size: .85rem;
+
+  i:first-child {
+    color: #0057c2;
+  }
+
+  i:last-child {
+    margin-left: auto;
+  }
+}
+
+/* SUBJECT CARDS */
+
+.subjects-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.subject-card,
+.tesis-card {
+  background: white;
+
+  border: 1px solid #c9ced8;
+  border-radius: 10px;
+
+  padding: 1.2rem;
+
+  box-shadow: 0 6px 16px rgba(15, 23, 42, .04);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 1.2rem;
+
+  .code {
+    background: #dbeafe;
+    color: #0057c2;
+
+    padding: .25rem .6rem;
+    border-radius: 999px;
+
+    font-size: .72rem;
+    font-weight: 800;
+  }
+
+  i {
+    color: #111827;
+  }
+}
+
+.subject-card,
+.tesis-card {
+  h3 {
+    margin: 0 0 .35rem;
+
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .faculty {
+    margin: 0 0 1.4rem;
+
+    color: #111827;
+    font-size: .9rem;
+  }
+}
+
+.students {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+
+  margin-bottom: 1.6rem;
+
+  color: #111827;
+  font-size: .9rem;
+
+  i {
+    color: #374151;
+  }
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+
+  margin-bottom: .45rem;
+
+  span {
+    color: #374151;
+    font-size: .75rem;
+  }
+
+  strong {
+    color: #0057c2;
+    font-size: .75rem;
+  }
+}
+
+.progress-bar {
+  width: 100%;
+  height: 5px;
+
+  background: #e5e7eb;
+  border-radius: 999px;
+
+  overflow: hidden;
+
+  margin-bottom: 1.3rem;
+
+  div {
+    height: 100%;
+    background: #0057c2;
+    border-radius: inherit;
+  }
+}
+
+.schedule {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  color: #6b7280;
+  font-size: .75rem;
+
+  i {
+    color: #0057c2;
+    font-size: 1.2rem;
+  }
+}
+
+/* TESIS CARD */
+
+.tesis-card {
+  margin-top: 1rem;
+
+  hr {
+    border: none;
+    border-top: 1px solid #d1d5db;
+    margin: 1.2rem 0;
+  }
+
+  .schedule-text {
+    margin: 0 0 1.2rem;
+    color: #6b7280;
+    font-size: .78rem;
+  }
+}
+
+.circle-box {
+  background: #f1f1f4;
+  border-radius: 8px;
+
+  padding: 1.4rem;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  p {
+    margin: .7rem 0 0;
+    font-size: .75rem;
+    color: #374151;
+  }
+}
+
+.circle-progress {
+  width: 78px;
+  height: 78px;
+
+  border-radius: 50%;
+
+  background:
+    conic-gradient(#0057c2 0 75%, #d1d5db 75% 100%);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: #f1f1f4;
+  }
+
+  span {
+    position: relative;
+    z-index: 1;
+    font-size: 1.2rem;
+    font-weight: 800;
+  }
+}
+
+/* WEEKLY CARD */
+
+.weekly-card {
+  margin-top: 1.4rem;
+
+  background: #00234f;
+  color: white;
+
+  border-radius: 10px;
+  padding: 1.2rem;
+
+  i {
+    font-size: 1.8rem;
+    color: #7896c2;
+  }
+
+  h3 {
+    margin: .4rem 0;
+    font-size: 1.25rem;
+    color: #9fb3d5;
+  }
+
+  p {
+    margin: 0 0 1rem;
+    color: #9fb3d5;
+    line-height: 1.4;
+  }
+
+  button {
+    width: 100%;
+    height: 36px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: white;
+    color: #111827;
+
+    font-weight: 800;
+    cursor: pointer;
+  }
+}
+
+/* TABLET */
+
+@media (min-width: 768px) {
+  .content {
+    padding: 1.5rem;
+  }
+
+  .subjects-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hero h2 {
+    font-size: 2.2rem;
+  }
+}
+
+/* DESKTOP */
+
+@media (min-width: 1024px) {
+  .content {
+    padding: 2rem;
+  }
+
+  .subjects-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .tesis-card,
+  .weekly-card {
+    max-width: 420px;
+  }
+}
+.subject-card {
+  cursor: pointer;
+}

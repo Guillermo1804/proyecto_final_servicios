@@ -1,0 +1,459 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #f5f6fa;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.login-page {
+  width: 100%;
+  height: 100vh;
+
+  overflow: hidden;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  background: #f5f6fa;
+  color: #111827;
+}
+
+/* =========================
+   PANEL IZQUIERDO
+========================= */
+
+.brand-panel {
+  height: 100vh;
+  overflow: hidden;
+
+  padding: 2rem;
+
+  background: linear-gradient(135deg, #001b4d, #003b88);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  color: white;
+
+.brand-logo {
+  width: 420px;
+  max-width: 90%;
+
+  height: auto;
+
+  object-fit: contain;
+
+  margin-bottom: 2rem;
+}
+
+  h1 {
+    font-size: 4rem;
+    font-weight: 800;
+
+    margin-bottom: 1rem;
+  }
+
+  p {
+    max-width: 500px;
+
+    font-size: 1.2rem;
+    line-height: 1.5;
+
+    opacity: .92;
+
+    margin-bottom: 2rem;
+  }
+
+  span {
+    font-size: .9rem;
+
+    letter-spacing: 5px;
+    text-transform: uppercase;
+
+    opacity: .75;
+  }
+}
+
+/* =========================
+   PANEL DERECHO
+========================= */
+
+.form-panel {
+  height: 100vh;
+  overflow: hidden;
+
+  padding: 1.5rem 2rem;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  background: #f5f6fa;
+
+  footer {
+    margin-top: 1rem;
+
+    text-align: center;
+
+    color: #6b7280;
+    font-size: .85rem;
+  }
+}
+
+/* =========================
+   CARD
+========================= */
+
+.login-card {
+  width: 100%;
+  max-width: 560px;
+
+  background: white;
+
+  border: 1px solid #d1d5db;
+  border-radius: 28px;
+
+  padding: 2rem;
+
+  box-shadow: 0 15px 40px rgba(0, 0, 0, .06);
+
+  h2 {
+    font-size: 2rem;
+    margin-bottom: .4rem;
+  }
+
+  .subtitle {
+    color: #6b7280;
+    margin-bottom: 1.8rem;
+  }
+}
+
+/* =========================
+   INPUTS
+========================= */
+
+.input-group {
+  margin-bottom: 1.2rem;
+
+  label {
+    display: block;
+
+    margin-bottom: .6rem;
+
+    font-size: 1rem;
+    font-weight: 700;
+  }
+}
+
+.input-wrapper {
+  height: 60px;
+
+  border: 2px solid #d1d5db;
+  border-radius: 18px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 1rem;
+
+  transition: .2s ease;
+
+  &:focus-within {
+    border-color: #1976d2;
+  }
+
+  i {
+    font-size: 1.3rem;
+    color: #6b7280;
+  }
+
+  input {
+    flex: 1;
+    width: 100%;
+
+    border: none;
+    outline: none;
+    background: transparent;
+
+    padding: 0 .9rem;
+
+    font-size: 1rem;
+    color: #111827;
+  }
+}
+
+.toggle-password {
+  border: none;
+  background: transparent;
+
+  cursor: pointer;
+
+  i {
+    font-size: 1.2rem;
+  }
+}
+
+/* =========================
+   OPCIONES
+========================= */
+
+.options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 1rem;
+
+  margin: 1rem 0 1.5rem;
+
+  a {
+    text-decoration: none;
+    color: #0057c2;
+    font-weight: 700;
+  }
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+
+  input {
+    width: 18px;
+    height: 18px;
+  }
+
+  span {
+    font-size: .95rem;
+  }
+}
+
+/* =========================
+   BOTÓN
+========================= */
+
+.login-btn {
+  width: 100%;
+  height: 58px;
+
+  border: none;
+  border-radius: 18px;
+
+  background: #1976d2;
+  color: white;
+
+  font-size: 1.1rem;
+  font-weight: 700;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .8rem;
+
+  cursor: pointer;
+
+  transition: .2s ease;
+
+  &:hover {
+    background: #0f5fb5;
+    transform: translateY(-2px);
+  }
+
+  i {
+    font-size: 1.3rem;
+  }
+}
+
+/* =========================
+   DIVIDER
+========================= */
+
+.divider {
+  height: 1px;
+
+  background: #d1d5db;
+
+  margin: 1.5rem 0;
+}
+
+/* =========================
+   SOPORTE
+========================= */
+
+.support-text {
+  text-align: center;
+
+  color: #4b5563;
+  line-height: 1.5;
+
+  a {
+    display: block;
+
+    margin-top: .3rem;
+
+    color: #0057c2;
+    font-weight: 700;
+
+    text-decoration: none;
+  }
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 992px) {
+
+  :host {
+    height: auto;
+    overflow-y: auto;
+  }
+
+  .login-page {
+    height: auto;
+    min-height: 100vh;
+
+    overflow-y: auto;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  .brand-panel {
+    height: auto;
+
+    background: transparent;
+    color: #111827;
+
+    padding: 2rem 1rem 1rem;
+
+    .brand-logo {
+      width: 120px;
+      height: 120px;
+
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+    }
+
+    p {
+      font-size: 1rem;
+      color: #374151;
+
+      margin-bottom: .7rem;
+    }
+
+    span {
+      display: none;
+    }
+  }
+
+  .form-panel {
+    height: auto;
+
+    overflow: visible;
+
+    padding: 1rem 1rem 2rem;
+  }
+
+  .login-card {
+    max-width: 620px;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 480px) {
+
+  :host {
+    overflow-x: hidden;
+  }
+
+  .login-page {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .brand-panel {
+    width: 100%;
+
+    padding: 1.8rem 1rem 1rem;
+
+    .brand-logo {
+      width: 95px;
+      height: 95px;
+    }
+
+    h1 {
+      font-size: 2rem;
+    }
+
+    p {
+      font-size: .95rem;
+    }
+  }
+
+  .form-panel {
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 100%;
+
+    padding: 1.4rem;
+
+    border-radius: 24px;
+
+    h2 {
+      font-size: 1.6rem;
+    }
+  }
+
+  .input-wrapper {
+    height: 56px;
+  }
+
+  .options-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  footer {
+    font-size: .75rem !important;
+    padding: 0 .5rem;
+  }
+}
+.toggle-password {
+  border: none;
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  padding: .3rem;
+
+  i {
+    font-size: 1.2rem;
+    color: #6b7280;
+  }
+}

@@ -1,0 +1,366 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f7f7fb;
+  color: #111827;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.docentes-page {
+  min-height: 100vh;
+  padding-bottom: 76px;
+  background: #f7f7fb;
+}
+
+.content {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.4rem;
+}
+
+/* HERO */
+
+.hero {
+  margin-bottom: 1.6rem;
+
+  h2 {
+    margin: 0 0 .6rem;
+    font-size: 2.2rem;
+    line-height: 1.05;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 0;
+    max-width: 680px;
+    color: #374151;
+    font-size: 1.1rem;
+    line-height: 1.45;
+  }
+}
+
+/* BOTÓN CREAR */
+
+.create-btn {
+  width: 100%;
+  height: 64px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #0875e8;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .8rem;
+
+  margin-bottom: 2rem;
+
+  font-size: 1.1rem;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  i {
+    font-size: 1.5rem;
+  }
+}
+
+/* FILTROS */
+
+.filters-section {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.8rem;
+}
+
+.search-box {
+  height: 66px;
+
+  background: white;
+  border: 1.5px solid #c9ced8;
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+
+  padding: 0 1.2rem;
+
+  i {
+    font-size: 1.5rem;
+    color: #6b7280;
+  }
+
+  input {
+    width: 100%;
+
+    border: none;
+    outline: none;
+    background: transparent;
+
+    font-size: 1.05rem;
+    color: #111827;
+
+    &::placeholder {
+      color: #6b7280;
+    }
+  }
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: 1fr 66px;
+  gap: .8rem;
+
+  select {
+    height: 64px;
+
+    background: white;
+
+    border: 1.5px solid #c9ced8;
+    border-radius: 12px;
+
+    padding: 0 1.2rem;
+
+    color: #111827;
+    font-size: 1rem;
+  }
+
+  .filter-btn {
+    height: 64px;
+
+    border: 1.5px solid #c9ced8;
+    border-radius: 12px;
+
+    background: white;
+    color: #111827;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    i {
+      font-size: 1.4rem;
+    }
+  }
+}
+
+/* TABLA */
+
+.table-card {
+  background: white;
+
+  border: 1px solid #c9ced8;
+  border-radius: 12px;
+
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.table-head,
+.table-row {
+  display: grid;
+  grid-template-columns: 1.35fr 1.1fr .7fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+.table-head {
+  background: #ececef;
+
+  padding: 1.2rem 2rem;
+
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+}
+
+.table-row {
+  padding: 1.3rem 2rem;
+
+  border-top: 1px solid #e5e7eb;
+}
+
+.teacher-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  img {
+    width: 52px;
+    height: 52px;
+
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  strong {
+    display: block;
+
+    margin-bottom: .2rem;
+
+    font-size: 1.1rem;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+
+  p {
+    margin: 0;
+
+    color: #374151;
+    font-size: .9rem;
+  }
+}
+
+.faculty {
+  font-size: 1.1rem;
+  line-height: 1.35;
+  color: #1f2937;
+}
+
+.status {
+  width: fit-content;
+
+  padding: .4rem .8rem;
+
+  border-radius: 999px;
+
+  font-size: .9rem;
+  font-weight: 800;
+
+  &.activo {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  &.licencia {
+    background: #ffedd5;
+    color: #c2410c;
+  }
+
+  &.inactivo {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+}
+
+/* FOOTER TABLA */
+
+.table-footer {
+  padding: 1.1rem 2rem;
+
+  background: #f1f1f4;
+  border-top: 1px solid #c9ced8;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  color: #374151;
+  font-size: .95rem;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+
+  button {
+    border: none;
+    background: transparent;
+    color: #111827;
+
+    font-size: 1.2rem;
+    cursor: pointer;
+
+    &:disabled {
+      color: #b7bbc4;
+      cursor: default;
+    }
+  }
+
+  strong {
+    color: #0057c2;
+  }
+}
+
+/* BOTÓN FLOTANTE */
+
+.floating-btn {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 5.5rem;
+
+  width: 72px;
+  height: 72px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: #0875e8;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 12px 26px rgba(0, 0, 0, .24);
+
+  cursor: pointer;
+  z-index: 25;
+
+  i {
+    font-size: 2rem;
+  }
+}
+
+/* TABLET */
+
+@media (min-width: 768px) {
+
+  .content {
+    padding: 2rem;
+  }
+
+  .hero h2 {
+    font-size: 2.6rem;
+  }
+
+  .create-btn {
+    max-width: 360px;
+  }
+
+}
+
+/* DESKTOP */
+
+@media (min-width: 1024px) {
+
+  .content {
+    padding: 2.4rem;
+  }
+
+  .filters-section {
+    grid-template-columns: 1.5fr 1fr;
+    align-items: center;
+  }
+
+  .filter-row {
+    grid-template-columns: 1fr 64px;
+  }
+
+  .floating-btn {
+    display: none;
+  }
+
+}

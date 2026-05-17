@@ -1,0 +1,366 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f7f7fb;
+  color: #111827;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.materias-page {
+  min-height: 100vh;
+  padding-bottom: 76px;
+  background: #f7f7fb;
+}
+
+.content {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* HERO */
+
+.hero {
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0 0 .5rem;
+    font-size: 2rem;
+    line-height: 1.05;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 0;
+    color: #374151;
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+}
+
+/* BOTÓN CREAR */
+
+.create-btn {
+  width: 100%;
+  height: 50px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #075fc6;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+
+  padding: 0 1.5rem;
+  margin-bottom: 1.5rem;
+
+  font-size: 1rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  i {
+    font-size: 1.3rem;
+  }
+}
+
+/* FILTROS */
+
+.filters-card {
+  background: white;
+
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+
+  display: grid;
+  gap: 1rem;
+}
+
+.search-box {
+  height: 46px;
+
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+
+  padding: 0 1rem;
+
+  i {
+    font-size: 1.15rem;
+    color: #6b7280;
+  }
+
+  input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+
+    font-size: 1rem;
+    color: #111827;
+
+    &::placeholder {
+      color: #6b7280;
+    }
+  }
+}
+
+select {
+  height: 42px;
+
+  border: 1.5px solid #d1d5db;
+  border-radius: 7px;
+
+  padding: 0 1rem;
+
+  background: white;
+  color: #111827;
+
+  font-size: .95rem;
+}
+
+.filter-btn {
+  height: 42px;
+
+  border: none;
+  background: transparent;
+  color: #0057c2;
+
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: .5rem;
+
+  font-size: .95rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  i {
+    font-size: 1.2rem;
+  }
+}
+
+/* TABLA */
+
+.table-card {
+  background: white;
+
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.table-head,
+.table-row {
+  display: grid;
+  grid-template-columns: .8fr 1.4fr .9fr;
+  align-items: center;
+  gap: .8rem;
+}
+
+.table-head {
+  background: #ececef;
+
+  padding: 1rem 1.5rem;
+
+  font-size: .8rem;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+
+.table-row {
+  padding: 1rem 1.5rem;
+
+  border-top: 1px solid #d1d5db;
+}
+
+.codigo {
+  color: #0057c2;
+  font-size: 1rem;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.materia-info {
+  strong {
+    display: block;
+
+    margin-bottom: .3rem;
+
+    font-size: .95rem;
+    line-height: 1.25;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0;
+
+    color: #4b5563;
+    font-size: .78rem;
+    line-height: 1.25;
+  }
+}
+
+.facultad {
+  width: fit-content;
+
+  padding: .35rem .7rem;
+
+  border-radius: 999px;
+
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+
+  &.ingenieria {
+    background: #dbeafe;
+    color: #1f2937;
+  }
+
+  &.ciencias {
+    background: #dbeafe;
+    color: #1f2937;
+  }
+
+  &.artes {
+    background: #ffe1d2;
+    color: #7c2d12;
+  }
+}
+
+.table-footer {
+  margin: 0;
+  padding: 1rem 1.5rem;
+
+  border-top: 1px solid #d1d5db;
+
+  font-size: .85rem;
+  color: #374151;
+}
+
+/* RESUMEN */
+
+.summary-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.summary-card {
+  background: #f1f1f4;
+
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+
+  padding: 1.4rem;
+
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  .summary-icon {
+    width: 52px;
+    height: 52px;
+
+    border-radius: 50%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    i {
+      font-size: 1.5rem;
+    }
+
+    &.azul {
+      background: #0077ff;
+      color: white;
+    }
+
+    &.naranja {
+      background: #ffe1d2;
+      color: #7c2d12;
+    }
+
+    &.celeste {
+      background: #dbeafe;
+      color: #111827;
+    }
+  }
+
+  p {
+    margin: 0 0 .2rem;
+
+    color: #374151;
+    font-size: .8rem;
+    letter-spacing: .04em;
+  }
+
+  h3 {
+    margin: 0;
+
+    font-size: 1.8rem;
+    font-weight: 800;
+  }
+}
+
+/* TABLET */
+
+@media (min-width: 768px) {
+
+  .content {
+    padding: 1.5rem;
+  }
+
+  .hero h2 {
+    font-size: 2.4rem;
+  }
+
+  .filters-card {
+    grid-template-columns: 1.3fr 1fr auto;
+    align-items: center;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+}
+
+/* DESKTOP */
+
+@media (min-width: 1024px) {
+
+  .content {
+    padding: 2rem;
+  }
+
+  .hero h2 {
+    font-size: 2.8rem;
+  }
+
+  .create-btn {
+    max-width: 240px;
+  }
+
+  .table-head,
+  .table-row {
+    grid-template-columns: .7fr 1.7fr .8fr;
+  }
+
+}
