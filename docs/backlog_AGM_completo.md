@@ -808,72 +808,79 @@
 
 ### ISSUE-901: Configuración Base del Proyecto Django (ms-reportes)
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] Inicializar proyecto Django en `/ms-reportes/`
-  - [ ] Dependencias: `openpyxl` (Excel), `reportlab` o `WeasyPrint` (PDF), `grpcio`, `grpcio-tools`
-  - [ ] Configurar BD: `agm_reportes_db` (MySQL 8; opcional: tablas de caché / vistas para agregados pesados)
+  - [x] Inicializar proyecto Django en `/ms-reportes/`
+  - [x] Dependencias: `openpyxl` (Excel), `reportlab` o `WeasyPrint` (PDF), `grpcio`, `grpcio-tools`
+  - [x] Configurar BD: `agm_reportes_db` (MySQL 8; opcional: tablas de caché / vistas para agregados pesados)
 - **Criterio de aceptación:** El MS levanta y se conecta a su base de datos.
 
 ---
 
 ### ISSUE-902: Generación de Reporte de Calificaciones en Excel
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /reportes/calificaciones/:materiaId?formato=xls` → genera y descarga archivo Excel
-  - [ ] Obtener datos del concentrado via gRPC a ms-calificaciones (`GetConcentrado`)
-  - [ ] Obtener datos de alumnos via gRPC a ms-alumnos
-  - [ ] Formato Excel: encabezado con nombre de materia, periodo, docente; columnas por actividad; promedio real; promedio redondeado
-  - [ ] Usar `openpyxl` para generar el archivo; retornar con header `Content-Disposition: attachment; filename="calificaciones_NRC.xlsx"`
+  - [x] `GET /reportes/calificaciones/:materiaId?formato=xls` → genera y descarga archivo Excel
+  - [x] Obtener datos del concentrado via gRPC a ms-calificaciones (`GetConcentrado`)
+  - [x] Obtener datos de alumnos via gRPC a ms-alumnos
+  - [x] Formato Excel: encabezado con nombre de materia, periodo, docente; columnas por actividad; promedio real; promedio redondeado
+  - [x] Usar `openpyxl` para generar el archivo; retornar con header `Content-Disposition: attachment; filename="calificaciones_NRC.xlsx"`
 - **Criterio de aceptación:** Se descarga un Excel con el concentrado de calificaciones correctamente formateado.
 
 ---
 
 ### ISSUE-903: Generación de Reporte de Calificaciones en PDF
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /reportes/calificaciones/:materiaId?formato=pdf` → genera y descarga PDF
-  - [ ] Mismos datos que el Excel pero en formato PDF con logo institucional (opcional) y pie de página
-  - [ ] Usar `reportlab` o `WeasyPrint` para la generación
+  - [x] `GET /reportes/calificaciones/:materiaId?formato=pdf` → genera y descarga PDF
+  - [x] Mismos datos que el Excel pero en formato PDF con logo institucional (opcional) y pie de página
+  - [x] Usar `reportlab` o `WeasyPrint` para la generación
 - **Criterio de aceptación:** Se descarga un PDF con el concentrado de calificaciones.
 
 ---
 
 ### ISSUE-904: Reporte de Concentrado de Asistencias
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /reportes/asistencias/:materiaId?formato=pdf|xls` → genera reporte de asistencias
-  - [ ] Obtener datos via gRPC a ms-asistencias (`GetEstadisticasAsistencia`)
-  - [ ] Incluir: alumno, total de clases, presentes, retardos, ausentes, % asistencia
+  - [x] `GET /reportes/asistencias/:materiaId?formato=pdf|xls` → genera reporte de asistencias
+  - [x] Obtener datos via gRPC a ms-asistencias (`GetEstadisticasAsistencia`)
+  - [x] Incluir: alumno, total de clases, presentes, retardos, ausentes, % asistencia
 - **Criterio de aceptación:** Se puede descargar el concentrado de asistencias en PDF y Excel.
 
 ---
 
 ### ISSUE-905: Estadísticas del Docente
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /estadisticas/docente/:id` → estadísticas históricas del docente por materia y periodo
-  - [ ] Obtener materias del docente via gRPC a ms-periodos (`GetMateriasByDocente`)
-  - [ ] Para cada materia/periodo: promedio grupal, % aprobación, % asistencia
-  - [ ] Implementar comparativa si la misma materia fue impartida en múltiples periodos
+  - [x] `GET /estadisticas/docente/:id` → estadísticas históricas del docente por materia y periodo
+  - [x] Obtener materias del docente via gRPC a ms-periodos (`GetMateriasByDocente`)
+  - [x] Para cada materia/periodo: promedio grupal, % aprobación, % asistencia
+  - [x] Implementar comparativa si la misma materia fue impartida en múltiples periodos
 - **Criterio de aceptación:** El docente puede ver el historial comparativo de sus materias.
 
 ---
 
 ### ISSUE-906: Estadísticas del Alumno
 - **Prioridad:** 🟡 Media
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /estadisticas/alumno/:id` → estadísticas del alumno en sus materias
-  - [ ] Incluir: promedio actual, % asistencia, materias activas vs históricas
+  - [x] `GET /estadisticas/alumno/:id` → estadísticas del alumno en sus materias
+  - [x] Incluir: promedio actual, % asistencia, materias activas vs históricas
 - **Criterio de aceptación:** El alumno puede ver sus estadísticas personales.
 
 ---
 
 ### ISSUE-907: Servidor gRPC de Reportes
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] Implementar `GenerateReport(params) → FileBytes`
-  - [ ] Implementar `GetHistorialDocente(docenteId) → [StatsPeriodo]`
-  - [ ] Puerto gRPC: **50057**
+  - [x] Implementar `GenerateReport(params) → FileBytes`
+  - [x] Implementar `GetHistorialDocente(docenteId) → [StatsPeriodo]`
+  - [x] Puerto gRPC: **50057**
 - **Criterio de aceptación:** Los 2 métodos gRPC responden correctamente en el puerto 50057.
 
 ---

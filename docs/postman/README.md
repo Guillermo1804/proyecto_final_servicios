@@ -6,8 +6,8 @@ Colección y entorno para probar APIs de los microservicios AGM.
 
 | Archivo | Contenido |
 |---------|-----------|
-| `AGM_API_Collection.json` | MS-2 Periodos, MS-3 Alumnos, **MS-6 Notificaciones** |
-| `AGM_Environment.json` | URLs locales y `internal_api_key` |
+| `AGM_API_Collection.json` | MS-2 Periodos, MS-3 Alumnos, MS-6 Notificaciones, **MS-7 Reportes** |
+| `AGM_Environment.json` | URLs locales, `internal_api_key`, `jwt_token`, IDs MS-7 |
 
 También: [`../postman_collection.json`](../postman_collection.json) (auth + gateway).
 
@@ -38,3 +38,20 @@ Todos los POST usan header **`X-Internal-Api-Key: {{internal_api_key}}`**.
 | Reset password | `POST /notificaciones/reset-password` |
 
 Documentación: [`../../ms-notificaciones/README.md`](../../ms-notificaciones/README.md).
+
+## MS-7 Reportes y Estadísticas (Epic 9)
+
+Obtener JWT: `POST {{base_url_gateway}}/auth/login` → copiar `access_token` a `jwt_token`.
+
+| Request | Ruta gateway |
+|---------|----------------|
+| Calificaciones Excel | `GET /reportes/calificaciones/{{materia_id}}?formato=xlsx` |
+| Calificaciones PDF | `GET /reportes/calificaciones/{{materia_id}}?formato=pdf` |
+| Asistencias Excel | `GET /reportes/asistencias/{{materia_id}}?formato=xlsx` |
+| Asistencias PDF | `GET /reportes/asistencias/{{materia_id}}?formato=pdf` |
+| Stats docente | `GET /estadisticas/docente/{{docente_usuario_id}}` |
+| Stats alumno | `GET /estadisticas/alumno/{{alumno_id}}` |
+
+Header: **`Authorization: Bearer {{jwt_token}}`**. `internal_api_key` solo aplica a MS-6.
+
+Documentación: [`../../ms-reportes/README.md`](../../ms-reportes/README.md).

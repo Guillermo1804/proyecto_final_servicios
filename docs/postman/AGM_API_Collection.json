@@ -440,6 +440,110 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "MS-7 Reportes y Estadísticas",
+			"description": "REST vía gateway (:8080) o directo (:8007). Requiere **Authorization: Bearer {{jwt_token}}** (MS-1). `internal_api_key` no aplica a MS-7 (solo MS-6). IDs: `materia_id` = PK MS-2; `docente_usuario_id` = usuario_id MS-1; `alumno_id` = PK Alumno MS-3.",
+			"item": [
+				{
+					"name": "Calificaciones — Excel (xlsx)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{base_url_gateway}}/reportes/calificaciones/{{materia_id}}?formato=xlsx",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["reportes", "calificaciones", "{{materia_id}}"],
+							"query": [{ "key": "formato", "value": "xlsx" }]
+						},
+						"description": "Descarga binaria Excel del concentrado de calificaciones (ISSUE-902). Alias: formato=xls."
+					}
+				},
+				{
+					"name": "Calificaciones — PDF",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{base_url_gateway}}/reportes/calificaciones/{{materia_id}}?formato=pdf",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["reportes", "calificaciones", "{{materia_id}}"],
+							"query": [{ "key": "formato", "value": "pdf" }]
+						},
+						"description": "Descarga binaria PDF con soporte UTF-8 (ISSUE-903)."
+					}
+				},
+				{
+					"name": "Asistencias — Excel (xlsx)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{base_url_gateway}}/reportes/asistencias/{{materia_id}}?formato=xlsx",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["reportes", "asistencias", "{{materia_id}}"],
+							"query": [{ "key": "formato", "value": "xlsx" }]
+						},
+						"description": "Concentrado de asistencias en Excel (ISSUE-904)."
+					}
+				},
+				{
+					"name": "Asistencias — PDF",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{base_url_gateway}}/reportes/asistencias/{{materia_id}}?formato=pdf",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["reportes", "asistencias", "{{materia_id}}"],
+							"query": [{ "key": "formato", "value": "pdf" }]
+						},
+						"description": "Concentrado de asistencias en PDF (ISSUE-904)."
+					}
+				},
+				{
+					"name": "Estadísticas docente (JSON)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{base_url_gateway}}/estadisticas/docente/{{docente_usuario_id}}?page=1&limit=20",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["estadisticas", "docente", "{{docente_usuario_id}}"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "20" }
+							]
+						},
+						"description": "Historial comparativo del docente. `:id` = **usuario_id** MS-1 (no PK Docente MS-3). ISSUE-905."
+					}
+				},
+				{
+					"name": "Estadísticas alumno (JSON)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{base_url_gateway}}/estadisticas/alumno/{{alumno_id}}",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["estadisticas", "alumno", "{{alumno_id}}"]
+						},
+						"description": "Estadísticas personales del alumno. `:id` = PK Alumno MS-3. ISSUE-906."
+					}
+				}
+			]
 		}
 	]
 }

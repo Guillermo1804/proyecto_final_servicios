@@ -26,6 +26,31 @@
 			"key": "internal_api_key",
 			"value": "cambiar-clave-interna-segura",
 			"enabled": true
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "materia_id",
+			"value": "1",
+			"enabled": true
+		},
+		{
+			"key": "docente_usuario_id",
+			"value": "2",
+			"enabled": true
+		},
+		{
+			"key": "alumno_id",
+			"value": "1",
+			"enabled": true
+		},
+		{
+			"key": "base_url_reportes",
+			"value": "http://localhost:8007",
+			"enabled": true
 		}
 	],
 	"_postman_variable_scope": "environment",
