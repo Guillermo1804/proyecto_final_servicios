@@ -20,11 +20,9 @@ echo "MySQL listo!"
 echo "Aplicando migraciones..."
 python manage.py migrate --noinput
 
-# Arrancar servidor gRPC en background (si existe el management command)
-if python manage.py help grpc_server 2>/dev/null; then
-  echo "Iniciando servidor gRPC en puerto ${GRPC_PORT}..."
-  python manage.py grpc_server &
-fi
+# Arrancar servidor gRPC en background (puerto GRPC_PORT, default 50056)
+echo "Iniciando servidor gRPC en puerto ${GRPC_PORT:-50056}..."
+python -m grpc_server.server &
 
 # Arrancar Gunicorn
 echo "Iniciando servidor REST en puerto ${REST_PORT}..."

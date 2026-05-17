@@ -740,70 +740,67 @@
 
 ## 📧 Epic 8: ms-notificaciones Notificaciones
 
-### ISSUE-801: Configuración Base del Proyecto Django (ms-notificaciones)
+### ISSUE-801: Configuración Base del Proyecto Django (ms-notificaciones) ✅
 - **Prioridad:** 🔴 Crítica
 - **Tareas:**
-  - [ ] Inicializar proyecto Django en `/ms-notificaciones/`
-  - [ ] Dependencias: `sendgrid` o `django-ses` o configurar SMTP con Gmail, `grpcio`, `grpcio-tools`
-  - [ ] Configurar BD: `agm_notificaciones_db` (MySQL 8; historial de correos en tablas Django)
-  - [ ] Crear modelo `HistorialCorreo`: tipo, destinatario_email, asunto, enviado_en, exitoso, error_msg
-  - [ ] Configurar credenciales SMTP desde variables de entorno
+  - [x] Inicializar proyecto Django en `/ms-notificaciones/`
+  - [x] Dependencias: SMTP (Django), `grpcio`, `grpcio-tools`
+  - [x] Configurar BD: `agm_notificaciones_db` (MySQL 8; historial de correos en tablas Django)
+  - [x] Crear modelo `HistorialCorreo`: tipo, destinatario_email, asunto, enviado_en, exitoso, error_msg
+  - [x] Configurar credenciales SMTP desde variables de entorno
 - **Criterio de aceptación:** El MS levanta y puede enviar un correo de prueba.
 
 ---
 
-### ISSUE-802: Correo de Bienvenida al Alumno
+### ISSUE-802: Correo de Bienvenida al Alumno ✅
 - **Prioridad:** 🔴 Crítica
 - **Tareas:**
-  - [ ] `POST /notificaciones/bienvenida` → recibe alumno_id, materia_id
-  - [ ] Consultar datos del alumno via gRPC a ms-alumnos y datos de la materia via gRPC a ms-periodos
-  - [ ] Enviar correo con: nombre del alumno, nombre de materia, **clave única de acceso** (generada en ms-auth), instrucciones de acceso
-  - [ ] Registrar el envío en `HistorialCorreo`
+  - [x] `POST /notificaciones/bienvenida` → recibe alumno_id, materia_id, clave_acceso
+  - [x] Consultar datos del alumno via gRPC a ms-alumnos y datos de la materia via gRPC a ms-periodos
+  - [x] Enviar correo con clave de acceso e instrucciones
+  - [x] Registrar el envío en `HistorialCorreo`
 - **Criterio de aceptación:** El alumno recibe su clave de acceso por correo al ser importado.
 
 ---
 
-### ISSUE-803: Notificación de Baja al Docente
+### ISSUE-803: Notificación de Baja al Docente ✅
 - **Prioridad:** 🟠 Alta
 - **Tareas:**
-  - [ ] `POST /notificaciones/baja` → recibe alumno_id, docente_id
-  - [ ] Consultar datos del alumno y del docente via gRPC
-  - [ ] Enviar correo al docente notificando la baja del alumno (nombre, matrícula, materia)
-  - [ ] Registrar en `HistorialCorreo`
+  - [x] `POST /notificaciones/baja` → recibe alumno_id, docente_id, materia_id
+  - [x] Consultar datos del alumno y del docente via gRPC
+  - [x] Enviar correo al docente notificando la baja del alumno
+  - [x] Registrar en `HistorialCorreo`
 - **Criterio de aceptación:** El docente recibe notificación por correo cuando un alumno se da de baja.
 
 ---
 
-### ISSUE-804: Notificación de Cierre de Materia a Alumnos
+### ISSUE-804: Notificación de Cierre de Materia a Alumnos ✅
 - **Prioridad:** 🟠 Alta
 - **Tareas:**
-  - [ ] `POST /notificaciones/cierre-materia` → recibe materia_id
-  - [ ] Obtener lista de alumnos de la materia via gRPC a ms-alumnos
-  - [ ] Enviar correo a **cada alumno** notificando el cierre y disponibilidad de calificaciones finales
-  - [ ] Implementar envío asíncrono (ej. usando `Celery` o `threading`) para no bloquear la respuesta HTTP
-  - [ ] Registrar cada envío en `HistorialCorreo`
+  - [x] `POST /notificaciones/cierre-materia` → recibe materia_id
+  - [x] Obtener lista de alumnos de la materia via gRPC a ms-alumnos
+  - [x] Enviar correo a cada alumno (ThreadPoolExecutor / `EMAIL_MAX_WORKERS`)
+  - [x] Registrar cada envío en `HistorialCorreo`
 - **Criterio de aceptación:** Todos los alumnos de la materia reciben correo de cierre.
 
 ---
 
-### ISSUE-805: Correo de Reset de Contraseña
+### ISSUE-805: Correo de Reset de Contraseña ✅
 - **Prioridad:** 🟠 Alta
 - **Tareas:**
-  - [ ] `POST /notificaciones/reset-password` → recibe email y token de reset
-  - [ ] Enviar correo con enlace de restablecimiento: `https://frontend.url/reset-password?token=<token>`
-  - [ ] Registrar en `HistorialCorreo`
+  - [x] `POST /notificaciones/reset-password` → recibe email, token, reset_url
+  - [x] Enviar correo con enlace de restablecimiento
+  - [x] Registrar en `HistorialCorreo`
 - **Criterio de aceptación:** El usuario recibe el enlace de reset de contraseña por correo.
 
 ---
 
-### ISSUE-806: Servidor gRPC de Notificaciones
+### ISSUE-806: Servidor gRPC de Notificaciones ✅
 - **Prioridad:** 🔴 Crítica
 - **Tareas:**
-  - [ ] Implementar `SendBienvenida(alumnoId, materiaId) → bool`
-  - [ ] Implementar `SendBajaNotif(alumnoId, docenteId) → bool`
-  - [ ] Implementar `SendCierreMateria(materiaId) → bool`
-  - [ ] Puerto gRPC: **50056**
-- **Criterio de aceptación:** Los 3 métodos gRPC responden correctamente en el puerto 50056.
+  - [x] Implementar `SendBienvenida`, `SendBajaNotif`, `SendCierreMateria`, `SendResetPassword`
+  - [x] Puerto gRPC: **50056** (`python -m grpc_server.server`)
+- **Criterio de aceptación:** Los **4** métodos gRPC responden correctamente en el puerto 50056.
 
 ---
 
@@ -811,72 +808,79 @@
 
 ### ISSUE-901: Configuración Base del Proyecto Django (ms-reportes)
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] Inicializar proyecto Django en `/ms-reportes/`
-  - [ ] Dependencias: `openpyxl` (Excel), `reportlab` o `WeasyPrint` (PDF), `grpcio`, `grpcio-tools`
-  - [ ] Configurar BD: `agm_reportes_db` (MySQL 8; opcional: tablas de caché / vistas para agregados pesados)
+  - [x] Inicializar proyecto Django en `/ms-reportes/`
+  - [x] Dependencias: `openpyxl` (Excel), `reportlab` o `WeasyPrint` (PDF), `grpcio`, `grpcio-tools`
+  - [x] Configurar BD: `agm_reportes_db` (MySQL 8; opcional: tablas de caché / vistas para agregados pesados)
 - **Criterio de aceptación:** El MS levanta y se conecta a su base de datos.
 
 ---
 
 ### ISSUE-902: Generación de Reporte de Calificaciones en Excel
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /reportes/calificaciones/:materiaId?formato=xls` → genera y descarga archivo Excel
-  - [ ] Obtener datos del concentrado via gRPC a ms-calificaciones (`GetConcentrado`)
-  - [ ] Obtener datos de alumnos via gRPC a ms-alumnos
-  - [ ] Formato Excel: encabezado con nombre de materia, periodo, docente; columnas por actividad; promedio real; promedio redondeado
-  - [ ] Usar `openpyxl` para generar el archivo; retornar con header `Content-Disposition: attachment; filename="calificaciones_NRC.xlsx"`
+  - [x] `GET /reportes/calificaciones/:materiaId?formato=xls` → genera y descarga archivo Excel
+  - [x] Obtener datos del concentrado via gRPC a ms-calificaciones (`GetConcentrado`)
+  - [x] Obtener datos de alumnos via gRPC a ms-alumnos
+  - [x] Formato Excel: encabezado con nombre de materia, periodo, docente; columnas por actividad; promedio real; promedio redondeado
+  - [x] Usar `openpyxl` para generar el archivo; retornar con header `Content-Disposition: attachment; filename="calificaciones_NRC.xlsx"`
 - **Criterio de aceptación:** Se descarga un Excel con el concentrado de calificaciones correctamente formateado.
 
 ---
 
 ### ISSUE-903: Generación de Reporte de Calificaciones en PDF
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /reportes/calificaciones/:materiaId?formato=pdf` → genera y descarga PDF
-  - [ ] Mismos datos que el Excel pero en formato PDF con logo institucional (opcional) y pie de página
-  - [ ] Usar `reportlab` o `WeasyPrint` para la generación
+  - [x] `GET /reportes/calificaciones/:materiaId?formato=pdf` → genera y descarga PDF
+  - [x] Mismos datos que el Excel pero en formato PDF con logo institucional (opcional) y pie de página
+  - [x] Usar `reportlab` o `WeasyPrint` para la generación
 - **Criterio de aceptación:** Se descarga un PDF con el concentrado de calificaciones.
 
 ---
 
 ### ISSUE-904: Reporte de Concentrado de Asistencias
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /reportes/asistencias/:materiaId?formato=pdf|xls` → genera reporte de asistencias
-  - [ ] Obtener datos via gRPC a ms-asistencias (`GetEstadisticasAsistencia`)
-  - [ ] Incluir: alumno, total de clases, presentes, retardos, ausentes, % asistencia
+  - [x] `GET /reportes/asistencias/:materiaId?formato=pdf|xls` → genera reporte de asistencias
+  - [x] Obtener datos via gRPC a ms-asistencias (`GetEstadisticasAsistencia`)
+  - [x] Incluir: alumno, total de clases, presentes, retardos, ausentes, % asistencia
 - **Criterio de aceptación:** Se puede descargar el concentrado de asistencias en PDF y Excel.
 
 ---
 
 ### ISSUE-905: Estadísticas del Docente
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /estadisticas/docente/:id` → estadísticas históricas del docente por materia y periodo
-  - [ ] Obtener materias del docente via gRPC a ms-periodos (`GetMateriasByDocente`)
-  - [ ] Para cada materia/periodo: promedio grupal, % aprobación, % asistencia
-  - [ ] Implementar comparativa si la misma materia fue impartida en múltiples periodos
+  - [x] `GET /estadisticas/docente/:id` → estadísticas históricas del docente por materia y periodo
+  - [x] Obtener materias del docente via gRPC a ms-periodos (`GetMateriasByDocente`)
+  - [x] Para cada materia/periodo: promedio grupal, % aprobación, % asistencia
+  - [x] Implementar comparativa si la misma materia fue impartida en múltiples periodos
 - **Criterio de aceptación:** El docente puede ver el historial comparativo de sus materias.
 
 ---
 
 ### ISSUE-906: Estadísticas del Alumno
 - **Prioridad:** 🟡 Media
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /estadisticas/alumno/:id` → estadísticas del alumno en sus materias
-  - [ ] Incluir: promedio actual, % asistencia, materias activas vs históricas
+  - [x] `GET /estadisticas/alumno/:id` → estadísticas del alumno en sus materias
+  - [x] Incluir: promedio actual, % asistencia, materias activas vs históricas
 - **Criterio de aceptación:** El alumno puede ver sus estadísticas personales.
 
 ---
 
 ### ISSUE-907: Servidor gRPC de Reportes
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] Implementar `GenerateReport(params) → FileBytes`
-  - [ ] Implementar `GetHistorialDocente(docenteId) → [StatsPeriodo]`
-  - [ ] Puerto gRPC: **50057**
+  - [x] Implementar `GenerateReport(params) → FileBytes`
+  - [x] Implementar `GetHistorialDocente(docenteId) → [StatsPeriodo]`
+  - [x] Puerto gRPC: **50057**
 - **Criterio de aceptación:** Los 2 métodos gRPC responden correctamente en el puerto 50057.
 
 ---

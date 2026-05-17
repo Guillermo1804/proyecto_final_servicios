@@ -1,8 +1,10 @@
-from django.test import TestCase
-from django.db import IntegrityError
-from django.core.files.uploadedfile import SimpleUploadedFile
+import os
+
 import grpc
-from unittest.mock import patch, MagicMock
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import IntegrityError
+from django.test import TestCase
+from unittest.mock import MagicMock, patch
 from apps.core.models import Alumno, Docente, InscripcionMateria
 from proto_generated import alumnos_pb2, alumnos_pb2_grpc
 from grpc_server.servicer import AlumnosServicer
@@ -237,20 +239,26 @@ class AlumnoBajaMateriaTests(TestCase):
             alumno=self.alumno, materia_id=5, nrc="500", nombre_materia="Bajas", docente_nombre="D5", activa=True
         )
 
+    @patch("apps.core.views.get_materia_docente_id", return_value=99)
     @patch("apps.core.views.send_baja_notif")
-    def test_baja_materia_exitosa(self, mock_send):
+    def test_baja_materia_exitosa(self, mock_send, _mock_docente):
         """POST /api/alumnos/{id}/baja-materia/ marca activa=False y setea fecha_baja."""
         mock_send.return_value = True
         payload = {"materia_id": 5}
-        
-        response = self.client.post(f"/api/alumnos/{self.alumno.id}/baja-materia/", payload, content_type="application/json")
+
+        response = self.client.post(
+            f"/api/alumnos/{self.alumno.id}/baja-materia/",
+            payload,
+            content_type="application/json",
+        )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["success"])
-        
+
         self.insc.refresh_from_db()
         self.assertFalse(self.insc.activa)
         self.assertIsNotNone(self.insc.fecha_baja)
-        self.assertEqual(mock_send.call_count, 1)
+        mock_send.assert_called_once()
+        self.assertEqual(mock_send.call_args.kwargs["docente_id"], 99)
 
     @patch("apps.core.views.send_baja_notif")
     def test_baja_materia_ya_inactiva_falla(self, mock_send):
@@ -296,3 +304,18 @@ class AlumnosGRPCTests(TestCase):
         response = self.servicer.IsAlumnoEnMateria(request, context)
         
         self.assertTrue(response.inscrito)
+
+
+class NotificacionesClientEnvTests(TestCase):
+    @patch.dict(
+        os.environ,
+        {
+            'MS_NOTIFICACIONES_GRPC_HOST': 'ms-notificaciones',
+            'MS_NOTIFICACIONES_GRPC_PORT': '50056',
+        },
+        clear=False,
+    )
+    def test_target_from_env(self):
+        from utils.notificaciones_client import _notificaciones_target
+
+        self.assertEqual(_notificaciones_target(), 'ms-notificaciones:50056')

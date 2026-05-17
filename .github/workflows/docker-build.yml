@@ -1,0 +1,26 @@
+name: Docker build (7 MS)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-microservices:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ms-auth
+          - ms-periodos
+          - ms-alumnos
+          - ms-calificaciones
+          - ms-asistencias
+          - ms-notificaciones
+          - ms-reportes
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build ${{ matrix.service }}
+        run: docker build -t agm-${{ matrix.service }} ./${{ matrix.service }}

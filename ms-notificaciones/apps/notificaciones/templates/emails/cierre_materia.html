@@ -1,0 +1,11 @@
+{% extends "emails/base.html" %}
+{% block title %}Materia cerrada{% endblock %}
+{% block content %}
+<p>Hola <strong>{{ alumno_nombre }}</strong>,</p>
+<p>La materia <strong>{{ materia_nombre }}</strong> (NRC {{ nrc }}, sección {{ seccion }}) del periodo {{ periodo_nombre }} ha sido <strong>cerrada</strong> por tu docente.</p>
+<p>Ya puedes consultar tus calificaciones finales en el portal AGM cuando estén disponibles.</p>
+<p style="text-align:center;">
+  <a href="{{ login_url|default:'http://localhost:4200' }}" class="btn">Ver AGM</a>
+</p>
+<p class="muted">Matrícula: {{ matricula }}</p>
+{% endblock %}

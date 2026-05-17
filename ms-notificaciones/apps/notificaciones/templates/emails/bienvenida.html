@@ -1,0 +1,15 @@
+{% extends "emails/base.html" %}
+{% block title %}Bienvenida a AGM{% endblock %}
+{% block content %}
+<p>Hola <strong>{{ alumno_nombre }}</strong>,</p>
+<p>Has sido registrado en el sistema AGM para la materia <strong>{{ materia_nombre }}</strong> (NRC {{ nrc }}, sección {{ seccion }}).</p>
+<div class="info-box">
+  <p><strong>Matrícula:</strong> {{ matricula }}</p>
+  <p><strong>Clave de acceso temporal:</strong> {{ clave_acceso }}</p>
+</div>
+<p>Te recomendamos cambiar tu contraseña después del primer inicio de sesión.</p>
+<p style="text-align:center;">
+  <a href="{{ login_url }}" class="btn">Iniciar sesión en AGM</a>
+</p>
+<p class="muted">Si no solicitaste este registro, ignora este mensaje.</p>
+{% endblock %}

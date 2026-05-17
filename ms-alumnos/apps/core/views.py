@@ -1,14 +1,21 @@
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from rest_framework.decorators import action
+import logging
+
 from django.db import transaction
 from django.utils import timezone
-from apps.core.models import Docente, Alumno, InscripcionMateria
-from apps.core.serializers import DocenteSerializer, AlumnoSerializer, InscripcionMateriaSerializer
-from utils.pagination import AGMPagination
-from utils.responses import success_response, error_response
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from apps.core.models import Alumno, Docente, InscripcionMateria
+from apps.core.serializers import AlumnoSerializer, DocenteSerializer, InscripcionMateriaSerializer
+from utils.auth_client import create_user_alumno
 from utils.excel_parser import parse_alumnos_file
-from utils.notificaciones_client import send_bienvenida, send_baja_notif
+from utils.pagination import AGMPagination
+from utils.notificaciones_client import send_baja_notif, send_bienvenida
+from utils.periodos_client import get_materia_docente_id
+from utils.responses import error_response, success_response
+
+logger = logging.getLogger(__name__)
 
 
 class DocenteViewSet(viewsets.ModelViewSet):
@@ -127,6 +134,11 @@ class AlumnoViewSet(viewsets.ModelViewSet):
                     if not matricula:
                         continue
                         
+                    usuario_id = int(data.get('usuario_id') or 0)
+                    clave_acceso = (data.get('clave_acceso') or '').strip()
+                    materia_id = int(data.get('materia_id') or 0)
+                    nombre_completo = f"{data.get('nombre', '')} {data.get('apellido', '')}".strip()
+
                     alumno, created = Alumno.objects.update_or_create(
                         matricula=matricula,
                         defaults={
@@ -135,14 +147,32 @@ class AlumnoViewSet(viewsets.ModelViewSet):
                             "email": data.get('email'),
                             "carrera": data.get('carrera', 'ICC'),
                             "semestre": data.get('semestre', 1),
-                            "usuario_id": data.get('usuario_id', 0) # Placeholder hasta ISSUE-502
-                        }
+                            "usuario_id": usuario_id,
+                        },
                     )
-                    
+
                     if created:
                         creados += 1
-                        # Intentar notificar bienvenida (graceful error handling dentro del cliente)
-                        send_bienvenida(alumno)
+                        if not alumno.usuario_id:
+                            uid, clave_ms1, err = create_user_alumno(
+                                alumno.email,
+                                nombre_completo or alumno.matricula,
+                            )
+                            if uid:
+                                alumno.usuario_id = uid
+                                alumno.save(update_fields=['usuario_id'])
+                                clave_acceso = clave_acceso or (clave_ms1 or '')
+                            elif err:
+                                logger.warning(
+                                    'Import %s: usuario MS-1 no creado (%s); import continúa',
+                                    matricula,
+                                    err,
+                                )
+                        send_bienvenida(
+                            alumno,
+                            materia_id=materia_id,
+                            clave_acceso=clave_acceso,
+                        )
                     else:
                         actualizados += 1
                         
@@ -209,8 +239,8 @@ class AlumnoViewSet(viewsets.ModelViewSet):
                 inscripcion.fecha_baja = timezone.now()
                 inscripcion.save()
                 
-                # Notificar a MS-6 (mockeado en tests)
-                send_baja_notif(inscripcion)
+                docente_id = get_materia_docente_id(int(materia_id)) or 0
+                send_baja_notif(inscripcion, docente_id=docente_id)
                 
             return success_response({
                 "alumno": alumno.matricula,

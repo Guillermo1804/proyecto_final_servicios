@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AGM — BUAP{% endblock %}</title>
+  <style>
+    body { margin: 0; padding: 0; background: #f4f6f8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1a1a1a; }
+    .wrapper { max-width: 600px; margin: 0 auto; padding: 24px 16px; }
+    .card { background: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+    .header { background: #003366; color: #ffffff; padding: 20px 24px; text-align: center; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+    .header p { margin: 8px 0 0; font-size: 13px; opacity: 0.9; }
+    .body { padding: 24px; line-height: 1.6; font-size: 15px; }
+    .btn { display: inline-block; margin: 16px 0; padding: 12px 24px; background: #0066cc; color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: 600; }
+    .info-box { background: #f0f7ff; border-left: 4px solid #0066cc; padding: 12px 16px; margin: 16px 0; }
+    .muted { color: #666; font-size: 13px; }
+    .footer { padding: 16px 24px; background: #f0f2f5; font-size: 12px; color: #666; text-align: center; }
+    @media only screen and (max-width: 480px) {
+      .body { padding: 16px; }
+      .header h1 { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="header">
+        <h1>AGM</h1>
+        <p>Sistema de Gestión y Automatización de Calificaciones — BUAP FCC</p>
+      </div>
+      <div class="body">
+        {% block content %}{% endblock %}
+      </div>
+      <div class="footer">
+        Facultad de Ciencias de la Computación · Benemérita Universidad Autónoma de Puebla
+      </div>
+    </div>
+  </div>
+</body>
+</html>
