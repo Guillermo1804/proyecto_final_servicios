@@ -1,0 +1,351 @@
+{
+	"info": {
+		"_postman_id": "18f9e0a0-0000-4000-8000-000000000001",
+		"name": "AGM API Collection",
+		"description": "Colección de APIs para el proyecto AGM (Periodos y Alumnos)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "MS Periodos",
+			"item": [
+				{
+					"name": "Listar Periodos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", ""]
+						},
+						"description": "Retorna todos los periodos académicos con paginación AGM."
+					}
+				},
+				{
+					"name": "Crear Periodo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Primavera 2026\",\n    \"fecha_inicio\": \"2026-01-05\",\n    \"fecha_fin\": \"2026-05-30\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", ""]
+						},
+						"description": "Crea un nuevo periodo académico. Solo uno puede estar activo a la vez."
+					}
+				},
+				{
+					"name": "Ver Periodo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/1/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Periodo",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Primavera 2026 (Modificado)\",\n    \"fecha_inicio\": \"2026-01-06\",\n    \"fecha_fin\": \"2026-05-31\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/1/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Periodo",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/1/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Activar Periodo",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/1/activar/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", "1", "activar", ""]
+						},
+						"description": "Activa un periodo y desactiva el anterior atómicamente."
+					}
+				},
+				{
+					"name": "Consultar Periodo Activo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/activo/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", "activo", ""]
+						}
+					}
+				},
+				{
+					"name": "Listar Materias",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/materias/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "materias", ""]
+						}
+					}
+				},
+				{
+					"name": "Crear Materia",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nrc\": \"12345\",\n    \"nombre\": \"Programación Avanzada\",\n    \"docente_usuario_id\": 101,\n    \"periodo\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url_periodos}}/api/materias/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "materias", ""]
+						}
+					}
+				},
+				{
+					"name": "Ver Materia",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/materias/1/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "materias", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Materia",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nrc\": \"12345\",\n    \"nombre\": \"Programación Avanzada II\",\n    \"docente_usuario_id\": 101,\n    \"periodo\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url_periodos}}/api/materias/1/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "materias", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Materia",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/materias/1/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "materias", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Importar Materias",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "archivo", "type": "file", "src": [] }
+							]
+						},
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/1/importar-materias/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", "1", "importar-materias", ""]
+						},
+						"description": "Importación masiva de materias desde un archivo Excel."
+					}
+				}
+			]
+		},
+		{
+			"name": "MS Alumnos",
+			"item": [
+				{
+					"name": "Listar Docentes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/docentes/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "docentes", ""]
+						}
+					}
+				},
+				{
+					"name": "Crear Docente",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"usuario_id\": 101,\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Perez\",\n    \"email\": \"juan.perez@buap.mx\",\n    \"departamento\": \"Computación\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/docentes/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "docentes", ""]
+						}
+					}
+				},
+				{
+					"name": "Ver Docente",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/docentes/1/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "docentes", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Docente",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"usuario_id\": 101,\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Perez Sosa\",\n    \"email\": \"juan.perez@buap.mx\",\n    \"departamento\": \"Computación\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/docentes/1/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "docentes", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Docente",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/docentes/1/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "docentes", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Importar Alumnos (Preview)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "archivo", "type": "file", "src": [] }
+							]
+						},
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/alumnos/importar/preview/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "alumnos", "importar", "preview", ""]
+						}
+					}
+				},
+				{
+					"name": "Importar Alumnos (Confirmar)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"matricula\": \"202012345\",\n        \"nombre\": \"Alumno Test\",\n        \"apellido\": \"Postman\",\n        \"email\": \"test@alumno.buap.mx\",\n        \"carrera\": \"ICC\",\n        \"semestre\": 1\n    }\n]"
+						},
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/alumnos/importar/confirmar/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "alumnos", "importar", "confirmar", ""]
+						}
+					}
+				},
+				{
+					"name": "Alumnos por Materia",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/alumnos/por-materia/?materia_id=1",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "alumnos", "por-materia", ""],
+							"query": [
+								{ "key": "materia_id", "value": "1" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Baja de Materia",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"materia_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/alumnos/1/baja-materia/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "alumnos", "1", "baja-materia", ""]
+						}
+					}
+				}
+			]
+		}
+	]
+}
