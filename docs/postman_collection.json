@@ -6,7 +6,8 @@
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8080" },
-    { "key": "accessToken", "value": "" }
+    { "key": "accessToken", "value": "" },
+    { "key": "internalApiKey", "value": "cambiar-clave-interna-segura" }
   ],
   "item": [
     {
@@ -50,6 +51,36 @@
         "method": "GET",
         "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
         "url": "{{baseUrl}}/docentes/"
+      }
+    },
+    {
+      "name": "MS-6 Bienvenida",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Internal-Api-Key", "value": "{{internalApiKey}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"alumno_id\":1,\"materia_id\":10,\"clave_acceso\":\"clave-demo\"}"
+        },
+        "url": "{{baseUrl}}/notificaciones/bienvenida"
+      }
+    },
+    {
+      "name": "MS-6 Reset password",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Internal-Api-Key", "value": "{{internalApiKey}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\":\"user@buap.mx\",\"token\":\"abc\",\"reset_url\":\"http://localhost:4200/reset-password?token=abc\"}"
+        },
+        "url": "{{baseUrl}}/notificaciones/reset-password"
       }
     }
   ]

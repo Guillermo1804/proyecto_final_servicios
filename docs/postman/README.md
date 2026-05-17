@@ -1,35 +1,40 @@
 # AGM Postman Collection
 
-Este directorio contiene la colección de Postman y el entorno para probar las APIs de los microservicios del proyecto AGM.
+Colección y entorno para probar APIs de los microservicios AGM.
 
 ## Archivos
 
-- `AGM_API_Collection.json`: Colección con todos los endpoints de `ms-periodos` y `ms-alumnos`.
-- `AGM_Environment.json`: Variables de entorno para facilitar el cambio entre local y otros ambientes.
+| Archivo | Contenido |
+|---------|-----------|
+| `AGM_API_Collection.json` | MS-2 Periodos, MS-3 Alumnos, **MS-6 Notificaciones** |
+| `AGM_Environment.json` | URLs locales y `internal_api_key` |
 
-## Instrucciones de Importación
+También: [`../postman_collection.json`](../postman_collection.json) (auth + gateway).
 
-1. Abrir Postman.
-2. Hacer clic en **Import**.
-3. Seleccionar ambos archivos (`AGM_API_Collection.json` y `AGM_Environment.json`).
-4. En la esquina superior derecha, seleccionar el environment **AGM Local Environment**.
+## Importación
 
-## Variables de Entorno
+1. Postman → **Import** → ambos JSON de esta carpeta.
+2. Seleccionar environment **AGM Local Environment**.
 
-- `base_url_periodos`: URL base para el microservicio de periodos (default: `http://localhost:8002`).
-- `base_url_alumnos`: URL base para el microservicio de alumnos (default: `http://localhost:8003`).
+## Variables
 
-## Endpoints Incluidos
+| Variable | Default | Uso |
+|----------|---------|-----|
+| `base_url_periodos` | `http://localhost:8002` | MS-2 directo |
+| `base_url_alumnos` | `http://localhost:8003` | MS-3 directo |
+| `base_url_notificaciones` | `http://localhost:8006` | MS-6 health directo |
+| `base_url_gateway` | `http://localhost:8080` | MS-6 REST (recomendado) |
+| `internal_api_key` | placeholder | Debe coincidir con `INTERNAL_API_KEY` en `ms-notificaciones/.env` |
 
-### MS Periodos (Port 8002)
-- CRUD de Periodos
-- Activar Periodo
-- Consultar Periodo Activo
-- CRUD de Materias
-- Importar Materias desde Excel
+## MS-6 Notificaciones (Epic 8)
 
-### MS Alumnos (Port 8003)
-- CRUD de Docentes
-- Importación de Alumnos (Preview y Confirmar)
-- Listado de Alumnos por Materia
-- Baja de Materia
+Todos los POST usan header **`X-Internal-Api-Key: {{internal_api_key}}`**.
+
+| Request | Ruta gateway |
+|---------|----------------|
+| Bienvenida | `POST /notificaciones/bienvenida` |
+| Baja | `POST /notificaciones/baja` |
+| Cierre materia | `POST /notificaciones/cierre-materia` |
+| Reset password | `POST /notificaciones/reset-password` |
+
+Documentación: [`../../ms-notificaciones/README.md`](../../ms-notificaciones/README.md).

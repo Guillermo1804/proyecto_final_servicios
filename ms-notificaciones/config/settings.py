@@ -1,10 +1,17 @@
 """Django settings for MS-6 Notificaciones."""
 
+import os
+import sys
 from pathlib import Path
+
 from decouple import config
+
 from config.agm_env import env_bool, cors_allowed_origins_list, mysql_database_settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Stubs gRPC (import alumnos_pb2, auth_pb2, …)
+sys.path.insert(0, os.path.join(BASE_DIR, 'proto_generated'))
 
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me')
 DEBUG = config('DEBUG', default=True, cast=bool)
@@ -19,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'apps.notificaciones',
 ]
 
 MIDDLEWARE = [
@@ -71,3 +79,19 @@ if env_bool('CORS_ALLOW_ALL_ORIGINS', default=True):
 else:
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = cors_allowed_origins_list()
+
+# SMTP (ISSUE-801) — django.core.mail
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config(
+    'DEFAULT_FROM_EMAIL',
+    default='AGM Sistema <noreply@agm.buap.mx>',
+)
+
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'utils.exception_handlers.agm_exception_handler',
+}

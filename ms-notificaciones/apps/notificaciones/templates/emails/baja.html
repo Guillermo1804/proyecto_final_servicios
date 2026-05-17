@@ -1,0 +1,11 @@
+{% extends "emails/base.html" %}
+{% block title %}Baja de alumno{% endblock %}
+{% block content %}
+<p>Estimado(a) <strong>{{ docente_nombre }}</strong>,</p>
+<p>Le informamos que el alumno <strong>{{ alumno_nombre }}</strong> (matrícula {{ matricula }}) ha solicitado o registrado su baja de la materia:</p>
+<div class="info-box">
+  <p><strong>{{ materia_nombre }}</strong></p>
+  <p>NRC {{ nrc }} · Sección {{ seccion }}</p>
+</div>
+<p class="muted">Este es un mensaje automático del sistema AGM.</p>
+{% endblock %}

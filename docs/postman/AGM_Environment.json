@@ -11,6 +11,21 @@
 			"key": "base_url_alumnos",
 			"value": "http://localhost:8003",
 			"enabled": true
+		},
+		{
+			"key": "base_url_notificaciones",
+			"value": "http://localhost:8006",
+			"enabled": true
+		},
+		{
+			"key": "base_url_gateway",
+			"value": "http://localhost:8080",
+			"enabled": true
+		},
+		{
+			"key": "internal_api_key",
+			"value": "cambiar-clave-interna-segura",
+			"enabled": true
 		}
 	],
 	"_postman_variable_scope": "environment",

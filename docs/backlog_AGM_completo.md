@@ -740,70 +740,67 @@
 
 ## 📧 Epic 8: ms-notificaciones Notificaciones
 
-### ISSUE-801: Configuración Base del Proyecto Django (ms-notificaciones)
+### ISSUE-801: Configuración Base del Proyecto Django (ms-notificaciones) ✅
 - **Prioridad:** 🔴 Crítica
 - **Tareas:**
-  - [ ] Inicializar proyecto Django en `/ms-notificaciones/`
-  - [ ] Dependencias: `sendgrid` o `django-ses` o configurar SMTP con Gmail, `grpcio`, `grpcio-tools`
-  - [ ] Configurar BD: `agm_notificaciones_db` (MySQL 8; historial de correos en tablas Django)
-  - [ ] Crear modelo `HistorialCorreo`: tipo, destinatario_email, asunto, enviado_en, exitoso, error_msg
-  - [ ] Configurar credenciales SMTP desde variables de entorno
+  - [x] Inicializar proyecto Django en `/ms-notificaciones/`
+  - [x] Dependencias: SMTP (Django), `grpcio`, `grpcio-tools`
+  - [x] Configurar BD: `agm_notificaciones_db` (MySQL 8; historial de correos en tablas Django)
+  - [x] Crear modelo `HistorialCorreo`: tipo, destinatario_email, asunto, enviado_en, exitoso, error_msg
+  - [x] Configurar credenciales SMTP desde variables de entorno
 - **Criterio de aceptación:** El MS levanta y puede enviar un correo de prueba.
 
 ---
 
-### ISSUE-802: Correo de Bienvenida al Alumno
+### ISSUE-802: Correo de Bienvenida al Alumno ✅
 - **Prioridad:** 🔴 Crítica
 - **Tareas:**
-  - [ ] `POST /notificaciones/bienvenida` → recibe alumno_id, materia_id
-  - [ ] Consultar datos del alumno via gRPC a ms-alumnos y datos de la materia via gRPC a ms-periodos
-  - [ ] Enviar correo con: nombre del alumno, nombre de materia, **clave única de acceso** (generada en ms-auth), instrucciones de acceso
-  - [ ] Registrar el envío en `HistorialCorreo`
+  - [x] `POST /notificaciones/bienvenida` → recibe alumno_id, materia_id, clave_acceso
+  - [x] Consultar datos del alumno via gRPC a ms-alumnos y datos de la materia via gRPC a ms-periodos
+  - [x] Enviar correo con clave de acceso e instrucciones
+  - [x] Registrar el envío en `HistorialCorreo`
 - **Criterio de aceptación:** El alumno recibe su clave de acceso por correo al ser importado.
 
 ---
 
-### ISSUE-803: Notificación de Baja al Docente
+### ISSUE-803: Notificación de Baja al Docente ✅
 - **Prioridad:** 🟠 Alta
 - **Tareas:**
-  - [ ] `POST /notificaciones/baja` → recibe alumno_id, docente_id
-  - [ ] Consultar datos del alumno y del docente via gRPC
-  - [ ] Enviar correo al docente notificando la baja del alumno (nombre, matrícula, materia)
-  - [ ] Registrar en `HistorialCorreo`
+  - [x] `POST /notificaciones/baja` → recibe alumno_id, docente_id, materia_id
+  - [x] Consultar datos del alumno y del docente via gRPC
+  - [x] Enviar correo al docente notificando la baja del alumno
+  - [x] Registrar en `HistorialCorreo`
 - **Criterio de aceptación:** El docente recibe notificación por correo cuando un alumno se da de baja.
 
 ---
 
-### ISSUE-804: Notificación de Cierre de Materia a Alumnos
+### ISSUE-804: Notificación de Cierre de Materia a Alumnos ✅
 - **Prioridad:** 🟠 Alta
 - **Tareas:**
-  - [ ] `POST /notificaciones/cierre-materia` → recibe materia_id
-  - [ ] Obtener lista de alumnos de la materia via gRPC a ms-alumnos
-  - [ ] Enviar correo a **cada alumno** notificando el cierre y disponibilidad de calificaciones finales
-  - [ ] Implementar envío asíncrono (ej. usando `Celery` o `threading`) para no bloquear la respuesta HTTP
-  - [ ] Registrar cada envío en `HistorialCorreo`
+  - [x] `POST /notificaciones/cierre-materia` → recibe materia_id
+  - [x] Obtener lista de alumnos de la materia via gRPC a ms-alumnos
+  - [x] Enviar correo a cada alumno (ThreadPoolExecutor / `EMAIL_MAX_WORKERS`)
+  - [x] Registrar cada envío en `HistorialCorreo`
 - **Criterio de aceptación:** Todos los alumnos de la materia reciben correo de cierre.
 
 ---
 
-### ISSUE-805: Correo de Reset de Contraseña
+### ISSUE-805: Correo de Reset de Contraseña ✅
 - **Prioridad:** 🟠 Alta
 - **Tareas:**
-  - [ ] `POST /notificaciones/reset-password` → recibe email y token de reset
-  - [ ] Enviar correo con enlace de restablecimiento: `https://frontend.url/reset-password?token=<token>`
-  - [ ] Registrar en `HistorialCorreo`
+  - [x] `POST /notificaciones/reset-password` → recibe email, token, reset_url
+  - [x] Enviar correo con enlace de restablecimiento
+  - [x] Registrar en `HistorialCorreo`
 - **Criterio de aceptación:** El usuario recibe el enlace de reset de contraseña por correo.
 
 ---
 
-### ISSUE-806: Servidor gRPC de Notificaciones
+### ISSUE-806: Servidor gRPC de Notificaciones ✅
 - **Prioridad:** 🔴 Crítica
 - **Tareas:**
-  - [ ] Implementar `SendBienvenida(alumnoId, materiaId) → bool`
-  - [ ] Implementar `SendBajaNotif(alumnoId, docenteId) → bool`
-  - [ ] Implementar `SendCierreMateria(materiaId) → bool`
-  - [ ] Puerto gRPC: **50056**
-- **Criterio de aceptación:** Los 3 métodos gRPC responden correctamente en el puerto 50056.
+  - [x] Implementar `SendBienvenida`, `SendBajaNotif`, `SendCierreMateria`, `SendResetPassword`
+  - [x] Puerto gRPC: **50056** (`python -m grpc_server.server`)
+- **Criterio de aceptación:** Los **4** métodos gRPC responden correctamente en el puerto 50056.
 
 ---
 

@@ -22,6 +22,7 @@
 | S-11 | ms-alumnos | ISSUE-506: Baja de materia — irreversible logic, fecha_baja field, gRPC SendBajaNotif mock | none | 11→13 passed; 0 failed | 1 | 0 |
 | S-12 | ms-alumnos | ISSUE-507: Servidor gRPC :50053 — GetAlumnosByMateria, GetAlumnoById, IsAlumnoEnMateria | none | 13→15 passed; 0 failed | 1 | 0 |
 | S-13 | docs | ISSUE-1104: Colección Postman — 22 endpoints (MS-2 y MS-3) + Environment | none | N/A | 0 | 0 |
+| S-14 | ms-notificaciones | Epic 8 ISSUE-801–806: EmailService, REST, gRPC :50056, integración MS-1/3/4 | none | 0→20 passed; 0 failed | 1 | 0 |
 
 ---
 
@@ -111,7 +112,7 @@
 | ISSUE-605 | Concentrado de calificaciones (promedio real + redondeado) | 🔴 activo | Alta |
 | ISSUE-606 | Import calificaciones desde Excel | 🟡 pendiente | Media |
 | ISSUE-607 | Servidor gRPC :50054 — 3 RPCs de `calificaciones.proto` | 🔴 activo | Alta |
-| ISSUE-608 | `POST /cerrar-materia/` → `SendCierreMateria` gRPC MS-6 | 🔴 activo | Alta |
+| ~~ISSUE-608~~ | ~~`POST /materias/:id/cerrar` → `SendCierreMateria` gRPC MS-6~~ | ✅ cerrado | Alta |
 
 ---
 
@@ -134,13 +135,12 @@
 
 | Issue | Descripción | Estado | Prioridad |
 |---|---|---|---|
-| ISSUE-801 | Modelo de log de notificaciones + migraciones | 🔴 activo | Alta |
-| ISSUE-802 | Servidor gRPC :50056 — 4 RPCs de `notificaciones.proto` | 🔴 activo | Alta |
-| ISSUE-803 | Envío real de correo (SMTP / servicio externo) | 🔴 activo | Alta |
-| ISSUE-804 | `SendBienvenida` con clave_acceso alumno | 🔴 activo | Alta |
-| ISSUE-805 | `SendBajaNotif` — correo al docente | 🔴 activo | Alta |
-| ISSUE-806 | `SendCierreMateria` — notificación masiva alumnos | 🟡 pendiente | Media |
-| ISSUE-807 | `SendResetPassword` con token + URL | 🟡 pendiente | Media |
+| ~~ISSUE-801~~ | ~~Modelo `HistorialCorreo` + SMTP + fundación Django~~ | ✅ cerrado | Alta |
+| ~~ISSUE-802~~ | ~~REST/gRPC bienvenida + `clave_acceso`~~ | ✅ cerrado | Alta |
+| ~~ISSUE-803~~ | ~~REST/gRPC baja al docente~~ | ✅ cerrado | Alta |
+| ~~ISSUE-804~~ | ~~Cierre materia masivo (ThreadPoolExecutor)~~ | ✅ cerrado | Alta |
+| ~~ISSUE-805~~ | ~~Reset password REST/gRPC~~ | ✅ cerrado | Alta |
+| ~~ISSUE-806~~ | ~~Servidor gRPC :50056 — 4 RPCs~~ | ✅ cerrado | Alta |
 
 ---
 
@@ -217,6 +217,6 @@
 | ms-alumnos | 15 passed; 0 failed | 2026-05-16 |
 | ms-calificaciones | 0 passed; 0 failed (no tests) | 2026-05-16 |
 | ms-asistencias | 0 passed; 0 failed (no tests) | 2026-05-16 |
-| ms-notificaciones | 0 passed; 0 failed (no tests) | 2026-05-16 |
+| ms-notificaciones | 20 passed; 0 failed | 2026-05-17 |
 | ms-reportes | 0 passed; 0 failed (no tests) | 2026-05-16 |
 | frontend (Angular) | 1 passed; 0 failed (app.spec.ts default) | 2026-05-16 |

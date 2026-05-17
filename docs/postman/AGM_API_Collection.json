@@ -346,6 +346,100 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "MS-6 Notificaciones",
+			"description": "REST vía gateway (8080) o directo (8006). Requiere X-Internal-Api-Key.",
+			"item": [
+				{
+					"name": "Health MS-6",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_notificaciones}}/health/",
+							"host": ["{{base_url_notificaciones}}"],
+							"path": ["health", ""]
+						}
+					}
+				},
+				{
+					"name": "Bienvenida",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "X-Internal-Api-Key", "value": "{{internal_api_key}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"alumno_id\": 1,\n    \"materia_id\": 10,\n    \"clave_acceso\": \"uuid-clave-temporal-ms1\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_gateway}}/notificaciones/bienvenida",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["notificaciones", "bienvenida"]
+						}
+					}
+				},
+				{
+					"name": "Baja (notificar docente)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "X-Internal-Api-Key", "value": "{{internal_api_key}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"alumno_id\": 1,\n    \"docente_id\": 5,\n    \"materia_id\": 10\n}"
+						},
+						"url": {
+							"raw": "{{base_url_gateway}}/notificaciones/baja",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["notificaciones", "baja"]
+						}
+					}
+				},
+				{
+					"name": "Cierre materia",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "X-Internal-Api-Key", "value": "{{internal_api_key}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"materia_id\": 5\n}"
+						},
+						"url": {
+							"raw": "{{base_url_gateway}}/notificaciones/cierre-materia",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["notificaciones", "cierre-materia"]
+						}
+					}
+				},
+				{
+					"name": "Reset password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "X-Internal-Api-Key", "value": "{{internal_api_key}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"usuario@buap.mx\",\n    \"token\": \"token-uuid-ejemplo\",\n    \"reset_url\": \"http://localhost:4200/reset-password?token=token-uuid-ejemplo\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_gateway}}/notificaciones/reset-password",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["notificaciones", "reset-password"]
+						}
+					}
+				}
+			]
 		}
 	]
 }

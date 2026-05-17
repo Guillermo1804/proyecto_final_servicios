@@ -48,7 +48,7 @@ AGM es una plataforma académica digital que permite a la Facultad de Ciencias d
 | MS-3 | Docentes & Alumnos | 8003 | 50053 | agm_alumnos_db |
 | MS-4 | Calificaciones & Ponderaciones | 8004 | 50054 | agm_calificaciones_db |
 | MS-5 | Asistencias QR | 8005 | 50055 | agm_asistencias_db |
-| MS-6 | Notificaciones | 8006 | 50056 | agm_notificaciones_db |
+| MS-6 | Notificaciones | 8006 | 50056 | agm_notificaciones_db — [README](ms-notificaciones/README.md) |
 | MS-7 | Reportes & Estadísticas | 8007 | 50057 | agm_reportes_db |
 
 ---
@@ -207,7 +207,8 @@ No está en `docker-compose`. Desde `frontend/sistema_AGM`: `npm install` y `npm
 ## 🔧 CI y calidad (Epic 1)
 
 - **GitHub Actions:** `.github/workflows/docker-build.yml` — `docker build` en los 7 MS en cada push/PR a `main` o `develop`.
-- **Postman:** [`docs/postman_collection.json`](docs/postman_collection.json) — login y rutas vía gateway local.
+- **Postman:** [`docs/postman/AGM_API_Collection.json`](docs/postman/AGM_API_Collection.json) (MS-2, MS-3, **MS-6**); [`docs/postman_collection.json`](docs/postman_collection.json) — auth y gateway.
+- **MS-6:** matriz de pruebas P1–P10 en [`docs/devs/Makinohara/MATRIZ_PRUEBAS_MS6.md`](docs/devs/Makinohara/MATRIZ_PRUEBAS_MS6.md).
 
 ---
 
