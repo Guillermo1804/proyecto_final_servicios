@@ -503,107 +503,113 @@ class DocenteImportTests(TestCase):
         self.assertEqual(response.status_code, 401)
 
 
+from proto_generated import periodos_pb2
+
 class AlumnoMeMateriasTests(TestCase):
-    """Tests para el endpoint de materias del alumno autenticado GET /api/alumnos/me/materias/."""
+    """Tests para el endpoint GET /api/alumnos/me/materias/."""
 
     def setUp(self):
         self.client = APIClient()
         self.patcher_auth = patch("utils.auth.get_auth_stub")
         self.mock_get_auth_stub = self.patcher_auth.start()
         
-        self.mock_stub = MagicMock()
-        # By default, mock ValidateToken to represent Alumno (rol="alumno") with user_id=123
-        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
-            valid=True, user_id=123, email="alumno@buap.mx", rol="alumno", nombre="Alumno Test"
+        self.mock_auth_stub = MagicMock()
+        # Mocking ValidateToken for alumno (rol="alumno", user_id=50)
+        self.mock_auth_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=50, email="alumno50@correo.buap.mx", rol="alumno", nombre="Juan Perez"
         )
-        self.mock_get_auth_stub.return_value = self.mock_stub
-        
-        # Create a local Alumno record
-        self.alumno = Alumno.objects.create(
-            usuario_id=123,
-            matricula="202012345",
-            nombre="Alumno",
-            apellido="Test",
-            email="alumno@buap.mx",
-            carrera="ICC",
-            semestre=5,
-            activo=True
-        )
+        self.mock_get_auth_stub.return_value = self.mock_auth_stub
 
     def tearDown(self):
         self.patcher_auth.stop()
 
     @patch("utils.periodos_ms2_client.get_periodos_stub")
-    def test_get_materias_me_enriquecidas_exitoso(self, mock_get_periodos_stub):
-        """Un alumno obtiene sus materias activas enriquecidas con detalles de MS-2."""
+    def test_get_my_materias_enriquecido(self, mock_get_periodos_stub):
+        """Alumno autenticado obtiene sus materias activas enriquecidas con MS-2."""
         self.client.credentials(HTTP_AUTHORIZATION="Bearer token_alumno")
         
-        # Create active enrollment
+        # 1. Crear el Alumno en la BD
+        alumno = Alumno.objects.create(
+            usuario_id=50,
+            matricula="202050000",
+            nombre="Juan",
+            apellido="Perez",
+            email="alumno50@correo.buap.mx",
+            carrera="ICC",
+            semestre=5
+        )
+        
+        # 2. Crear InscripcionMateria activa
         InscripcionMateria.objects.create(
-            alumno=self.alumno,
-            materia_id=10,
-            nrc="12345",
-            nombre_materia="Cálculo",
-            docente_nombre="Juan Perez",
+            alumno=alumno,
+            materia_id=123,
+            nrc="11111",
+            nombre_materia="Matematicas",
+            docente_nombre="Docente Uno",
+            horario="L-M 08:00",
             activa=True
         )
-        
-        # Mock periodos gRPC response
-        from proto_generated import periodos_pb2
-        mock_stub_periodos = MagicMock()
-        mock_stub_periodos.GetMateriaById.return_value = periodos_pb2.MateriaInfo(
-            id=10,
-            nrc="12345",
-            nombre="Cálculo",
+
+        # 3. Mockear gRPC PeriodosService stub
+        mock_periodos_stub = MagicMock()
+        mock_periodos_stub.GetMateriaById.return_value = periodos_pb2.MateriaInfo(
+            id=123,
+            nrc="11111",
+            nombre="Matematicas Basicas",
             seccion="001",
             clave="MAT101",
-            docente_nombre="Juan Perez",
-            docente_id=50,
-            horario="Lun-Mie 09:00-11:00",
-            periodo_id=2,
+            docente_nombre="Docente Uno",
+            docente_id=888,
+            horario="L-M 08:00",
+            periodo_id=2026,
             periodo_nombre="Primavera 2026"
         )
-        mock_get_periodos_stub.return_value = mock_stub_periodos
-        
+        mock_get_periodos_stub.return_value = mock_periodos_stub
+
+        # 4. Hacer la peticion GET
         response = self.client.get("/api/alumnos/me/materias/")
-        
         self.assertEqual(response.status_code, 200)
+        
         body = response.json()
         self.assertTrue(body["success"])
         self.assertEqual(len(body["data"]["results"]), 1)
-        
-        materia = body["data"]["results"][0]
-        self.assertEqual(materia["materia_id"], 10)
-        self.assertEqual(materia["materia_detail"]["seccion"], "001")
-        self.assertEqual(materia["materia_detail"]["clave"], "MAT101")
-        self.assertEqual(materia["materia_detail"]["periodo_nombre"], "Primavera 2026")
+        self.assertEqual(body["data"]["results"][0]["materia_id"], 123)
+        self.assertEqual(body["data"]["results"][0]["materia_detail"]["clave"], "MAT101")
+        self.assertEqual(body["data"]["results"][0]["materia_detail"]["periodo_nombre"], "Primavera 2026")
 
-    def test_get_materias_me_sin_inscripciones_vacia(self):
-        """Un alumno sin inscripciones activas obtiene una lista vacía con 200."""
+    def test_get_my_materias_sin_inscripciones(self):
+        """Alumno con cero inscripciones obtiene una lista vacia (200)."""
         self.client.credentials(HTTP_AUTHORIZATION="Bearer token_alumno")
         
-        # No enrollment created
-        response = self.client.get("/api/alumnos/me/materias/")
+        # Crear el Alumno en la BD, sin inscripciones
+        Alumno.objects.create(
+            usuario_id=50,
+            matricula="202050000",
+            nombre="Juan",
+            apellido="Perez",
+            email="alumno50@correo.buap.mx",
+            carrera="ICC",
+            semestre=5
+        )
         
+        response = self.client.get("/api/alumnos/me/materias/")
         self.assertEqual(response.status_code, 200)
+        
         body = response.json()
         self.assertTrue(body["success"])
         self.assertEqual(len(body["data"]["results"]), 0)
 
-    def test_get_materias_me_usuario_sin_alumno_404(self):
-        """Un usuario autenticado que no tiene registro de Alumno retorna 404."""
-        # Authenticate as user 999 (does not exist in Alumno database)
-        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
-            valid=True, user_id=999, email="unknown@buap.mx", rol="alumno", nombre="Unknown User"
-        )
-        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_unknown")
+    def test_get_my_materias_sin_alumno_asociado(self):
+        """Usuario autenticado cuyo usuario_id no tiene Alumno asociado retorna 404."""
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_alumno")
         
+        # No creamos Alumno en la BD para usuario_id=50
         response = self.client.get("/api/alumnos/me/materias/")
-        
         self.assertEqual(response.status_code, 404)
+        
         body = response.json()
         self.assertFalse(body["success"])
-        self.assertIn("Alumno no encontrado", body["message"])
+        self.assertIn("asociado al usuario no existe", body["message"])
 
 
 

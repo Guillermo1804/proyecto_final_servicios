@@ -23,6 +23,7 @@ from utils.pdf_docentes_parser import parse_pdf_docentes
 from utils.auth_ms1_client import create_user_in_auth
 from utils.periodos_ms2_client import get_materia_detail
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -340,31 +341,34 @@ class AlumnoViewSet(viewsets.ModelViewSet):
     @jwt_required()
     @action(detail=False, methods=['get'], url_path='me/materias')
     def me_materias(self, request):
-        """Obtiene las materias activas para el alumno autenticado enriched con MS-2."""
-        usuario_id = request.user_id
+        """Obtiene las materias activas del alumno autenticado enriquecidas con MS-2."""
+        user_id = request.user_id
         try:
-            alumno = Alumno.objects.get(usuario_id=usuario_id)
+            alumno = Alumno.objects.get(usuario_id=user_id)
         except Alumno.DoesNotExist:
-            return error_response("Alumno no encontrado para el usuario autenticado.", status=404)
-            
+            return error_response("El alumno asociado al usuario no existe.", status=404)
+
         queryset = InscripcionMateria.objects.filter(
             alumno=alumno,
             activa=True
         ).order_by('id')
-        
-        # Paginación
+
+
+
+        # Pagination
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = InscripcionMateriaSerializer(page, many=True)
-            enriched_data = []
-            for item in serializer.data:
-                item["materia_detail"] = get_materia_detail(item["materia_id"])
-                enriched_data.append(item)
-            return self.get_paginated_response(enriched_data)
-            
+            data = serializer.data
+            for idx, item in enumerate(data):
+                m_id = item["materia_id"]
+                item["materia_detail"] = get_materia_detail(m_id)
+            return self.get_paginated_response(data)
+
         serializer = InscripcionMateriaSerializer(queryset, many=True)
-        enriched_data = []
-        for item in serializer.data:
-            item["materia_detail"] = get_materia_detail(item["materia_id"])
-            enriched_data.append(item)
-        return success_response(enriched_data)
+        data = serializer.data
+        for item in data:
+            m_id = item["materia_id"]
+            item["materia_detail"] = get_materia_detail(m_id)
+        return success_response(data)
+

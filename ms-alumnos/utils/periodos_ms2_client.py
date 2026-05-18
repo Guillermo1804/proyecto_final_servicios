@@ -15,15 +15,13 @@ logger = logging.getLogger(__name__)
 
 def get_materia_detail(materia_id: int) -> dict | None:
     """
-    Calls MS-2 Periodos GetMateriaById gRPC endpoint.
-    Returns a dict with materia details or None if it fails (graceful).
+    Llama a GetMateriaById gRPC de ms-periodos con timeout 3s.
+    Retorna un diccionario con los datos o None en caso de fallo.
     """
     try:
         stub = get_periodos_stub()
         request = periodos_pb2.GetMateriaByIdRequest(materia_id=int(materia_id))
         response = stub.GetMateriaById(request, timeout=3)
-        
-        # Build dictionary matching the MateriaInfo structure
         return {
             "id": response.id,
             "nrc": response.nrc,
@@ -40,5 +38,5 @@ def get_materia_detail(materia_id: int) -> dict | None:
         logger.warning("MS-2 GetMateriaById falló por gRPC: %s", exc.code())
         return None
     except Exception as exc:
-        logger.error("Error inesperado GetMateriaById MS-2: %s", exc)
+        logger.error("Error inesperado en GetMateriaById MS-2: %s", exc)
         return None
