@@ -21,6 +21,7 @@ from utils.responses import error_response, success_response
 from utils.auth import jwt_required
 from utils.pdf_docentes_parser import parse_pdf_docentes
 from utils.auth_ms1_client import create_user_in_auth
+from utils.periodos_ms2_client import get_materia_detail
 
 logger = logging.getLogger(__name__)
 
@@ -335,3 +336,35 @@ class AlumnoViewSet(viewsets.ModelViewSet):
             
         except Exception as e:
             return error_response(f"Error inesperado al procesar la baja: {str(e)}", status=500)
+
+    @jwt_required()
+    @action(detail=False, methods=['get'], url_path='me/materias')
+    def me_materias(self, request):
+        """Obtiene las materias activas para el alumno autenticado enriched con MS-2."""
+        usuario_id = request.user_id
+        try:
+            alumno = Alumno.objects.get(usuario_id=usuario_id)
+        except Alumno.DoesNotExist:
+            return error_response("Alumno no encontrado para el usuario autenticado.", status=404)
+            
+        queryset = InscripcionMateria.objects.filter(
+            alumno=alumno,
+            activa=True
+        ).order_by('id')
+        
+        # Paginación
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = InscripcionMateriaSerializer(page, many=True)
+            enriched_data = []
+            for item in serializer.data:
+                item["materia_detail"] = get_materia_detail(item["materia_id"])
+                enriched_data.append(item)
+            return self.get_paginated_response(enriched_data)
+            
+        serializer = InscripcionMateriaSerializer(queryset, many=True)
+        enriched_data = []
+        for item in serializer.data:
+            item["materia_detail"] = get_materia_detail(item["materia_id"])
+            enriched_data.append(item)
+        return success_response(enriched_data)

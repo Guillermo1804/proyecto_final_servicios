@@ -502,3 +502,108 @@ class DocenteImportTests(TestCase):
         response = self.client.post("/api/docentes/importar/", {"file": pdf_file}, format="multipart")
         self.assertEqual(response.status_code, 401)
 
+
+class AlumnoMeMateriasTests(TestCase):
+    """Tests para el endpoint de materias del alumno autenticado GET /api/alumnos/me/materias/."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.patcher_auth = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher_auth.start()
+        
+        self.mock_stub = MagicMock()
+        # By default, mock ValidateToken to represent Alumno (rol="alumno") with user_id=123
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=123, email="alumno@buap.mx", rol="alumno", nombre="Alumno Test"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+        
+        # Create a local Alumno record
+        self.alumno = Alumno.objects.create(
+            usuario_id=123,
+            matricula="202012345",
+            nombre="Alumno",
+            apellido="Test",
+            email="alumno@buap.mx",
+            carrera="ICC",
+            semestre=5,
+            activo=True
+        )
+
+    def tearDown(self):
+        self.patcher_auth.stop()
+
+    @patch("utils.periodos_ms2_client.get_periodos_stub")
+    def test_get_materias_me_enriquecidas_exitoso(self, mock_get_periodos_stub):
+        """Un alumno obtiene sus materias activas enriquecidas con detalles de MS-2."""
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_alumno")
+        
+        # Create active enrollment
+        InscripcionMateria.objects.create(
+            alumno=self.alumno,
+            materia_id=10,
+            nrc="12345",
+            nombre_materia="Cálculo",
+            docente_nombre="Juan Perez",
+            activa=True
+        )
+        
+        # Mock periodos gRPC response
+        from proto_generated import periodos_pb2
+        mock_stub_periodos = MagicMock()
+        mock_stub_periodos.GetMateriaById.return_value = periodos_pb2.MateriaInfo(
+            id=10,
+            nrc="12345",
+            nombre="Cálculo",
+            seccion="001",
+            clave="MAT101",
+            docente_nombre="Juan Perez",
+            docente_id=50,
+            horario="Lun-Mie 09:00-11:00",
+            periodo_id=2,
+            periodo_nombre="Primavera 2026"
+        )
+        mock_get_periodos_stub.return_value = mock_stub_periodos
+        
+        response = self.client.get("/api/alumnos/me/materias/")
+        
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body["success"])
+        self.assertEqual(len(body["data"]["results"]), 1)
+        
+        materia = body["data"]["results"][0]
+        self.assertEqual(materia["materia_id"], 10)
+        self.assertEqual(materia["materia_detail"]["seccion"], "001")
+        self.assertEqual(materia["materia_detail"]["clave"], "MAT101")
+        self.assertEqual(materia["materia_detail"]["periodo_nombre"], "Primavera 2026")
+
+    def test_get_materias_me_sin_inscripciones_vacia(self):
+        """Un alumno sin inscripciones activas obtiene una lista vacía con 200."""
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_alumno")
+        
+        # No enrollment created
+        response = self.client.get("/api/alumnos/me/materias/")
+        
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body["success"])
+        self.assertEqual(len(body["data"]["results"]), 0)
+
+    def test_get_materias_me_usuario_sin_alumno_404(self):
+        """Un usuario autenticado que no tiene registro de Alumno retorna 404."""
+        # Authenticate as user 999 (does not exist in Alumno database)
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=999, email="unknown@buap.mx", rol="alumno", nombre="Unknown User"
+        )
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_unknown")
+        
+        response = self.client.get("/api/alumnos/me/materias/")
+        
+        self.assertEqual(response.status_code, 404)
+        body = response.json()
+        self.assertFalse(body["success"])
+        self.assertIn("Alumno no encontrado", body["message"])
+
+
+

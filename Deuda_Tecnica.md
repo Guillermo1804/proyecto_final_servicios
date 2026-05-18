@@ -27,6 +27,7 @@
 | S-16 | ms-periodos | ISSUE-406: JWT en ms-periodos — @jwt_required decorator, ValidateToken via gRPC, mock auth [13 tests] | none | 11→13 passed; 0 failed | 1 | 0 |
 | S-17 | ms-alumnos | ISSUE-509: JWT en ms-alumnos — @jwt_required decorator, ValidateToken via gRPC, auth fix [18 tests] | none | 16→18 passed; 0 failed | 1 | 0 |
 | S-18 | ms-alumnos | ISSUE-502: Import PDF docentes — pdfplumber, CreateUser via gRPC MS-1, graceful error handling [21 tests] | none | 18→21 passed; 0 failed | 1 | 0 |
+| S-19 | ms-alumnos | ISSUE-508: GET /api/alumnos/me/materias/ enriched with MS-2 Periodos gRPC, periodos_client, graceful fallback [24 tests] | none | 21→24 passed; 0 failed | 1 | 0 |
 
 ---
 
@@ -100,7 +101,7 @@
 | ~~ISSUE-505~~ | ~~Listado alumnos por materia (solo activos)~~ | ✅ cerrado | Alta |
 | ~~ISSUE-506~~ | ~~Baja de materia — irreversible, `SendBajaNotif` gRPC MS-6~~ | ✅ cerrado | Alta |
 | ~~ISSUE-507~~ | ~~Servidor gRPC :50053 — 4 RPCs de `alumnos.proto`~~ | ✅ cerrado | Alta |
-| ISSUE-508 | `GET /api/alumnos/me/materias/` enriquecido con MS-2 | 🟡 pendiente | Media |
+| ~~ISSUE-508~~ | ~~`GET /api/alumnos/me/materias/` enriquecido con MS-2~~ | ✅ cerrado | Media |
 | ~~ISSUE-509~~ | ~~JWT via gRPC MS-1 en todos los endpoints~~ | ✅ cerrado | Alta |
 
 ---
