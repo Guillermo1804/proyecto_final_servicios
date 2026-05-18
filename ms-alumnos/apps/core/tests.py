@@ -5,8 +5,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.test import TestCase
 from unittest.mock import MagicMock, patch
+from rest_framework.test import APIClient
 from apps.core.models import Alumno, Docente, InscripcionMateria
-from proto_generated import alumnos_pb2, alumnos_pb2_grpc
+from proto_generated import alumnos_pb2, alumnos_pb2_grpc, auth_pb2
 from grpc_server.servicer import AlumnosServicer
 
 class AlumnoModelTests(TestCase):
@@ -91,6 +92,17 @@ class DocenteCRUDTests(TestCase):
     """Tests para CRUD de Docente y sus filtros/paginación."""
 
     def setUp(self):
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
+        self.patcher = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher.start()
+        
+        self.mock_stub = MagicMock()
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=1, email="test@buap.mx", rol="admin", nombre="Test"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+
         # Crear 15 docentes para probar paginación
         for i in range(15):
             Docente.objects.create(
@@ -100,6 +112,9 @@ class DocenteCRUDTests(TestCase):
                 email=f"docente{i}@fcc.buap.mx",
                 departamento="IA" if i % 2 == 0 else "Computación"
             )
+
+    def tearDown(self):
+        self.patcher.stop()
 
     def test_list_docentes_paginado(self):
         """Listar docentes debe retornar envelope AGM con count y 10 resultados por página."""
@@ -133,9 +148,38 @@ class DocenteCRUDTests(TestCase):
         self.assertEqual(body["data"]["nombre"], "Ana")
         self.assertEqual(body["data"]["usuario_id"], 9999)
 
+    def test_crear_docente_sin_auth_retorna_401(self):
+        self.client.credentials()
+        response = self.client.post("/api/docentes/", data={}, content_type="application/json")
+        self.assertEqual(response.status_code, 401)
+        self.assertFalse(response.json()["success"])
+
+    def test_crear_docente_rol_alumno_retorna_403(self):
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=2, email="alumno@buap.mx", rol="alumno", nombre="Test"
+        )
+        response = self.client.post("/api/docentes/", data={}, content_type="application/json")
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(response.json()["success"])
+
 
 class AlumnoImportTests(TestCase):
     """Tests para los flujos de importación de alumnos (Preview + Confirmar)."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
+        self.patcher = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher.start()
+        
+        self.mock_stub = MagicMock()
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=1, email="test@buap.mx", rol="admin", nombre="Test"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+
+    def tearDown(self):
+        self.patcher.stop()
 
     def test_import_preview_csv_valido(self):
         """Verifica que un CSV se parsee correctamente en el preview."""
@@ -199,6 +243,17 @@ class AlumnoPorMateriaTests(TestCase):
     """Tests para el endpoint /api/alumnos/por-materia/."""
 
     def setUp(self):
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
+        self.patcher = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher.start()
+        
+        self.mock_stub = MagicMock()
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=1, email="test@buap.mx", rol="admin", nombre="Test"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+
         # Crear 3 alumnos
         self.a1 = Alumno.objects.create(usuario_id=1, matricula="20201", nombre="Juan", apellido="Zepeda", email="juan@b.com")
         self.a2 = Alumno.objects.create(usuario_id=2, matricula="20202", nombre="Beto", apellido="Yañez", email="beto@b.com")
@@ -210,6 +265,9 @@ class AlumnoPorMateriaTests(TestCase):
         
         # Inscribir a3 en materia 1 (inactivo)
         InscripcionMateria.objects.create(alumno=self.a3, materia_id=1, nrc="100", nombre_materia="Mate", docente_nombre="Doc1", activa=False)
+
+    def tearDown(self):
+        self.patcher.stop()
 
     def test_list_por_materia_exitoso(self):
         """GET ?materia_id=1 debe retornar solo 2 alumnos activos, ordenados por apellido."""
@@ -234,10 +292,24 @@ class AlumnoBajaMateriaTests(TestCase):
     """Tests para la baja irreversible de materias."""
 
     def setUp(self):
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
+        self.patcher = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher.start()
+        
+        self.mock_stub = MagicMock()
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=1, email="test@buap.mx", rol="admin", nombre="Test"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+
         self.alumno = Alumno.objects.create(usuario_id=10, matricula="2020555", nombre="Luis", apellido="Baja", email="luis@b.com")
         self.insc = InscripcionMateria.objects.create(
             alumno=self.alumno, materia_id=5, nrc="500", nombre_materia="Bajas", docente_nombre="D5", activa=True
         )
+
+    def tearDown(self):
+        self.patcher.stop()
 
     @patch("apps.core.views.get_materia_docente_id", return_value=99)
     @patch("apps.core.views.send_baja_notif")

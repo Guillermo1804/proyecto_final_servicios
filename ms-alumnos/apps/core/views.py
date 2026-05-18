@@ -14,6 +14,7 @@ from utils.pagination import AGMPagination
 from utils.notificaciones_client import send_baja_notif, send_bienvenida
 from utils.periodos_client import get_materia_docente_id
 from utils.responses import error_response, success_response
+from utils.auth import jwt_required
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,7 @@ class DocenteViewSet(viewsets.ModelViewSet):
             
         return queryset
 
+    @jwt_required()
     def list(self, request, *args, **kwargs):
         params = request.query_params
         allowed_params = {"page", "limit", "nombre", "apellido", "departamento", "usuario_id"}
@@ -60,6 +62,7 @@ class DocenteViewSet(viewsets.ModelViewSet):
             )
         return super().list(request, *args, **kwargs)
 
+    @jwt_required(roles=["admin"])
     def create(self, request, *args, **kwargs):
         """Crear un docente. Se permite pasar usuario_id manualmente para este issue."""
         serializer = self.get_serializer(data=request.data)
@@ -77,11 +80,13 @@ class DocenteViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
         )
 
+    @jwt_required()
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return success_response(serializer.data)
 
+    @jwt_required(roles=["admin"])
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -90,6 +95,7 @@ class DocenteViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         return success_response(serializer.data, message="Docente actualizado")
 
+    @jwt_required(roles=["admin"])
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
@@ -102,6 +108,7 @@ class AlumnoViewSet(viewsets.ModelViewSet):
     serializer_class = AlumnoSerializer
     pagination_class = AGMPagination
 
+    @jwt_required(roles=["admin"])
     @action(detail=False, methods=['post'], url_path='importar/preview')
     def importar_preview(self, request):
         """Parsear archivo y retornar preview de datos válidos/errores."""
@@ -117,6 +124,7 @@ class AlumnoViewSet(viewsets.ModelViewSet):
             "total_errores": len(errores)
         })
 
+    @jwt_required(roles=["admin"])
     @action(detail=False, methods=['post'], url_path='importar/confirmar')
     def importar_confirmar(self, request):
         """Ejecutar upsert de alumnos confirmados."""
@@ -184,6 +192,7 @@ class AlumnoViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return error_response(f"Error durante la persistencia de datos: {str(e)}", status=500)
 
+    @jwt_required()
     @action(detail=False, methods=['get'], url_path='por-materia')
     def por_materia(self, request):
         """Listar alumnos activos en una materia específica."""
@@ -211,6 +220,7 @@ class AlumnoViewSet(viewsets.ModelViewSet):
         serializer = InscripcionMateriaSerializer(queryset, many=True)
         return success_response(serializer.data)
 
+    @jwt_required(roles=["admin"])
     @action(detail=True, methods=['post'], url_path='baja-materia')
     def baja_materia(self, request, pk=None):
         """Da de baja una materia de forma irreversible para un alumno."""

@@ -25,6 +25,7 @@
 | S-14 | ms-notificaciones | Epic 8 ISSUE-801–806: EmailService, REST, gRPC :50056, integración MS-1/3/4 | none | 0→20 passed; 0 failed | 1 | 0 |
 | S-15 | ms-reportes | Epic 9 ISSUE-901–907: REST reportes/stats, gRPC :50057, clientes MS-1..5, mocks MS-4/5 | none | 0→34 passed; 0 failed | 1 | 0 |
 | S-16 | ms-periodos | ISSUE-406: JWT en ms-periodos — @jwt_required decorator, ValidateToken via gRPC, mock auth [13 tests] | none | 11→13 passed; 0 failed | 1 | 0 |
+| S-17 | ms-alumnos | ISSUE-509: JWT en ms-alumnos — @jwt_required decorator, ValidateToken via gRPC, auth fix [18 tests] | none | 16→18 passed; 0 failed | 1 | 0 |
 
 ---
 
@@ -98,7 +99,7 @@
 | ~~ISSUE-506~~ | ~~Baja de materia — irreversible, `SendBajaNotif` gRPC MS-6~~ | ✅ cerrado | Alta |
 | ~~ISSUE-507~~ | ~~Servidor gRPC :50053 — 4 RPCs de `alumnos.proto`~~ | ✅ cerrado | Alta |
 | ISSUE-508 | `GET /api/alumnos/me/materias/` enriquecido con MS-2 | 🟡 pendiente | Media |
-| ISSUE-509 | JWT via gRPC MS-1 en todos los endpoints | 🔴 activo | Alta |
+| ~~ISSUE-509~~ | ~~JWT via gRPC MS-1 en todos los endpoints~~ | ✅ cerrado | Alta |
 
 ---
 

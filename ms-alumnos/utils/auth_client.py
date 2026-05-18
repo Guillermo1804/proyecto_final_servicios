@@ -1,8 +1,15 @@
 import logging
 import uuid
+import os
+import sys
 
 import grpc
 from decouple import config
+
+# Dynamically add proto_generated to sys.path to avoid ModuleNotFoundError
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(BASE_DIR, "proto_generated"))
+
 from proto_generated import auth_pb2, auth_pb2_grpc
 
 logger = logging.getLogger(__name__)
