@@ -26,6 +26,7 @@
 | S-15 | ms-reportes | Epic 9 ISSUE-901–907: REST reportes/stats, gRPC :50057, clientes MS-1..5, mocks MS-4/5 | none | 0→34 passed; 0 failed | 1 | 0 |
 | S-16 | ms-periodos | ISSUE-406: JWT en ms-periodos — @jwt_required decorator, ValidateToken via gRPC, mock auth [13 tests] | none | 11→13 passed; 0 failed | 1 | 0 |
 | S-17 | ms-alumnos | ISSUE-509: JWT en ms-alumnos — @jwt_required decorator, ValidateToken via gRPC, auth fix [18 tests] | none | 16→18 passed; 0 failed | 1 | 0 |
+| S-18 | ms-alumnos | ISSUE-502: Import PDF docentes — pdfplumber, CreateUser via gRPC MS-1, graceful error handling [21 tests] | none | 18→21 passed; 0 failed | 1 | 0 |
 
 ---
 
@@ -92,7 +93,8 @@
 | Issue | Descripción | Estado | Prioridad |
 |---|---|---|---|
 | ~~ISSUE-501~~ | ~~Modelos `Docente`, `Alumno`, `InscripcionMateria` + migraciones~~ | ✅ cerrado | Alta |
-| ISSUE-502 | Import PDF docentes → `CreateUser` MS-1 + seed `Docente` | 🔴 activo | Alta |
+| ~~ISSUE-502~~ | ~~Import PDF docentes → `CreateUser` MS-1 + seed `Docente`~~ | ✅ cerrado | Alta |
+
 | ~~ISSUE-503~~ | ~~CRUD docentes con paginación~~ | ✅ cerrado | Alta |
 | ~~ISSUE-504~~ | ~~Import alumnos Excel/CSV con preview + confirmación + `SendBienvenida`~~ | ✅ cerrado | Alta |
 | ~~ISSUE-505~~ | ~~Listado alumnos por materia (solo activos)~~ | ✅ cerrado | Alta |

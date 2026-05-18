@@ -391,3 +391,114 @@ class NotificacionesClientEnvTests(TestCase):
         from utils.notificaciones_client import _notificaciones_target
 
         self.assertEqual(_notificaciones_target(), 'ms-notificaciones:50056')
+
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+class DocenteImportTests(TestCase):
+    """Tests para el endpoint de importación de docentes POST /api/docentes/importar/."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.patcher_auth = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher_auth.start()
+        
+        self.mock_stub = MagicMock()
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=1, email="admin@buap.mx", rol="admin", nombre="Admin"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+
+    def tearDown(self):
+        self.patcher_auth.stop()
+
+    @patch("apps.core.views.parse_pdf_docentes")
+    @patch("apps.core.views.create_user_in_auth")
+    def test_import_pdf_docentes_exitoso(self, mock_create_user, mock_parse_pdf):
+        """Importar un PDF válido de docentes crea los usuarios e inserta los docentes."""
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_admin")
+        
+        # Mocking PDF parser result
+        mock_parse_pdf.return_value = ([
+            {
+                "nombre": "Evelia",
+                "apellido": "Perez Bonilla",
+                "email": "evelia.perez@correo.buap.mx",
+                "departamento": "Computación"
+            },
+            {
+                "nombre": "Adan",
+                "apellido": "Limon Faustino",
+                "email": "adan.limon@correo.buap.mx",
+                "departamento": "IA"
+            }
+        ], [])
+        
+        # Mocking gRPC MS-1 Auth CreateUser response: (user_id, error_message)
+        mock_create_user.side_effect = [
+            (9001, None),
+            (9002, None)
+        ]
+        
+        pdf_file = SimpleUploadedFile("trabajadores.pdf", b"%PDF-1.4...", content_type="application/pdf")
+        response = self.client.post("/api/docentes/importar/", {"file": pdf_file}, format="multipart")
+        
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body["success"])
+        self.assertEqual(body["data"]["creados"], 2)
+        self.assertEqual(body["data"]["omitidos"], 0)
+        self.assertEqual(body["data"]["errores"], 0)
+        
+        # Verificamos que se crearon en la BD
+        self.assertTrue(Docente.objects.filter(email="evelia.perez@correo.buap.mx").exists())
+        self.assertTrue(Docente.objects.filter(email="adan.limon@correo.buap.mx").exists())
+
+    @patch("apps.core.views.parse_pdf_docentes")
+    @patch("apps.core.views.create_user_in_auth")
+    def test_import_pdf_docentes_grpc_error_graceful(self, mock_create_user, mock_parse_pdf):
+        """Si falla gRPC MS-1 Auth para un docente, se maneja de forma graceful y continúa."""
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_admin")
+        
+        mock_parse_pdf.return_value = ([
+            {
+                "nombre": "Evelia",
+                "apellido": "Perez Bonilla",
+                "email": "evelia.perez@correo.buap.mx",
+                "departamento": "Computación"
+            },
+            {
+                "nombre": "Adan",
+                "apellido": "Limon Faustino",
+                "email": "adan.limon@correo.buap.mx",
+                "departamento": "IA"
+            }
+        ], [])
+        
+        # El primero falla en MS-1 Auth, el segundo tiene éxito
+        mock_create_user.side_effect = [
+            (None, "MS-1 Auth No Disponible"),
+            (9002, None)
+        ]
+        
+        pdf_file = SimpleUploadedFile("trabajadores.pdf", b"%PDF-1.4...", content_type="application/pdf")
+        response = self.client.post("/api/docentes/importar/", {"file": pdf_file}, format="multipart")
+        
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body["success"])
+        self.assertEqual(body["data"]["creados"], 1)
+        self.assertEqual(body["data"]["omitidos"], 0)
+        self.assertEqual(body["data"]["errores"], 1)
+        
+        # Se creó solo el segundo
+        self.assertFalse(Docente.objects.filter(email="evelia.perez@correo.buap.mx").exists())
+        self.assertTrue(Docente.objects.filter(email="adan.limon@correo.buap.mx").exists())
+
+    def test_import_pdf_docentes_sin_auth_retorna_401(self):
+        """Una petición sin JWT válido al endpoint de importar retorna 401."""
+        self.client.credentials()  # Sin token
+        pdf_file = SimpleUploadedFile("trabajadores.pdf", b"%PDF-1.4...", content_type="application/pdf")
+        response = self.client.post("/api/docentes/importar/", {"file": pdf_file}, format="multipart")
+        self.assertEqual(response.status_code, 401)
+

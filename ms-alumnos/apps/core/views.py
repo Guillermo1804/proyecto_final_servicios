@@ -6,6 +6,10 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+import uuid
+import tempfile
+import os
+from django.conf import settings
 from apps.core.models import Alumno, Docente, InscripcionMateria
 from apps.core.serializers import AlumnoSerializer, DocenteSerializer, InscripcionMateriaSerializer
 from utils.auth_client import create_user_alumno
@@ -15,6 +19,8 @@ from utils.notificaciones_client import send_baja_notif, send_bienvenida
 from utils.periodos_client import get_materia_docente_id
 from utils.responses import error_response, success_response
 from utils.auth import jwt_required
+from utils.pdf_docentes_parser import parse_pdf_docentes
+from utils.auth_ms1_client import create_user_in_auth
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +106,75 @@ class DocenteViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         return success_response(None, message="Docente eliminado", status=status.HTTP_200_OK)
+
+    @jwt_required(roles=["admin"])
+    @action(detail=False, methods=['post'], url_path='importar')
+    def importar(self, request):
+        pdf_file = request.FILES.get('file')
+        if not pdf_file:
+            return error_response("El archivo 'file' es requerido.", status=400)
+            
+        if not pdf_file.name.endswith('.pdf'):
+            return error_response("El archivo debe ser un PDF válido.", status=400)
+            
+        # Write to a temporary file inside workspace directory to parse safely
+        temp_dir = os.path.join(settings.BASE_DIR, 'temp')
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=temp_dir) as temp_file:
+            for chunk in pdf_file.chunks():
+                temp_file.write(chunk)
+            temp_file_path = temp_file.name
+
+        creados = 0
+        omitidos = 0
+        errores = []
+
+        try:
+            rows, parse_errors = parse_pdf_docentes(temp_file_path)
+            for pe in parse_errors:
+                errores.append({"error": pe})
+                
+            for row in rows:
+                nombre = row["nombre"]
+                apellido = row["apellido"]
+                email = row["email"]
+                departamento = row["departamento"]
+                
+                # Check duplicate by email locally
+                if Docente.objects.filter(email=email).exists():
+                    omitidos += 1
+                    continue
+                    
+                # Create user in MS-1 Auth
+                temp_pwd = str(uuid.uuid4())[:8]
+                user_id, err_msg = create_user_in_auth(email, f"{nombre} {apellido}".strip(), "docente", temp_pwd)
+                
+                if not user_id:
+                    errores.append({"email": email, "error": err_msg or "Error en gRPC de MS-1 Auth"})
+                    continue
+                    
+                try:
+                    Docente.objects.create(
+                        usuario_id=user_id,
+                        nombre=nombre,
+                        apellido=apellido,
+                        email=email,
+                        departamento=departamento
+                    )
+                    creados += 1
+                except Exception as e:
+                    errores.append({"email": email, "error": f"Error de BD local: {str(e)}"})
+        finally:
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+                
+        summary = {
+            "creados": creados,
+            "omitidos": omitidos,
+            "errores": len(errores)
+        }
+        return success_response(summary, message="Importación de docentes completada")
 
 
 class AlumnoViewSet(viewsets.ModelViewSet):
