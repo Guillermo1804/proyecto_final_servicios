@@ -47,18 +47,19 @@ export class CalificacionesScreen implements OnInit {
 
   ngOnInit(): void {
     const uid = this.facade.getUserId();
-    this.facade.listMaterias({ limit: 100 }).subscribe({
+    if (!uid) {
+      this.loading = false;
+      this.errorMessage = 'Sesión inválida.';
+      return;
+    }
+    this.facade.listMateriasDocente(uid, { limit: 100 }).subscribe({
       next: (body) => {
         const rows = this.facade.extractList<{
           id?: number;
           nombre?: string;
           nrc?: string;
-          docente_id?: number;
         }>(body);
-        const filtered = uid
-          ? rows.filter((m) => m.docente_id === uid)
-          : rows;
-        this.materias = filtered
+        this.materias = rows
           .filter((m) => m.id)
           .map((m) => ({
             id: m.id as number,
@@ -190,6 +191,30 @@ export class CalificacionesScreen implements OnInit {
       error: () => {
         this.saving = false;
         this.errorMessage = 'No se pudo publicar la lista.';
+      },
+    });
+  }
+
+  cerrarMateria(): void {
+    if (!this.selectedMateriaId) {
+      return;
+    }
+    const ok = confirm(
+      '¿Cerrar la materia? Se notificará a los alumnos y no podrá editarse el plan de evaluación.',
+    );
+    if (!ok) {
+      return;
+    }
+    this.saving = true;
+    this.errorMessage = '';
+    this.facade.cerrarMateriaCalificaciones(this.selectedMateriaId).subscribe({
+      next: () => {
+        this.saving = false;
+        this.successMessage = 'Materia cerrada; se envió notificación a alumnos (MS-6).';
+      },
+      error: () => {
+        this.saving = false;
+        this.errorMessage = 'No se pudo cerrar la materia.';
       },
     });
   }

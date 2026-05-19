@@ -190,7 +190,7 @@ class PeriodoViewSet(ViewSet):
 class MateriaViewSet(ModelViewSet):
     """
     ViewSet para CRUD de Materias.
-    Incluye filtrado por periodo_id, nrc, nombre, docente_nombre.
+    Incluye filtrado por periodo_id, docente_id, nrc, nombre, docente_nombre.
     """
     queryset = Materia.objects.all().order_by("-fecha_creacion")
     serializer_class = MateriaSerializer
@@ -200,13 +200,28 @@ class MateriaViewSet(ModelViewSet):
         qs = super().get_queryset()
         params = self.request.query_params
         
-        allowed_params = {"periodo_id", "nrc", "nombre", "docente_nombre", "page", "limit"}
+        allowed_params = {
+            "periodo_id",
+            "docente_id",
+            "nrc",
+            "nombre",
+            "docente_nombre",
+            "page",
+            "limit",
+        }
         # Quitamos la validación estricta de aquí porque raise ParseError rompe el envelope.
         # Lo haremos en list().
 
         periodo_id = params.get("periodo_id")
         if periodo_id:
             qs = qs.filter(periodo_id=periodo_id)
+
+        docente_id = params.get("docente_id")
+        if docente_id:
+            try:
+                qs = qs.filter(docente_id=int(docente_id))
+            except (TypeError, ValueError):
+                pass
             
         nrc = params.get("nrc")
         if nrc:
@@ -225,7 +240,15 @@ class MateriaViewSet(ModelViewSet):
     @jwt_required()
     def list(self, request, *args, **kwargs):
         params = request.query_params
-        allowed_params = {"periodo_id", "nrc", "nombre", "docente_nombre", "page", "limit"}
+        allowed_params = {
+            "periodo_id",
+            "docente_id",
+            "nrc",
+            "nombre",
+            "docente_nombre",
+            "page",
+            "limit",
+        }
         for p in params:
             if p not in allowed_params:
                 return error_response(f"Parámetro no reconocido: {p}", status=400)

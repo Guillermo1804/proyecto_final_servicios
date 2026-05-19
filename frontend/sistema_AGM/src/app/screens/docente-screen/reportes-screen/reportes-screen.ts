@@ -55,17 +55,18 @@ export class ReportesScreen implements OnInit {
   }
 
   private loadMaterias(): void {
-    this.facade.listMaterias({ limit: 200 }).subscribe({
+    const uid = this.facade.getUserId();
+    if (!uid) {
+      return;
+    }
+    this.facade.listMateriasDocente(uid, { limit: 200 }).subscribe({
       next: (body) => {
         const rows = this.facade.extractList<{
           id?: number;
           nrc?: string;
           nombre?: string;
-          docente_id?: number;
         }>(body);
-        const uid = this.facade.getUserId();
-        const mine = uid != null ? rows.filter((m) => m.docente_id === uid) : rows;
-        this.materiasOpciones = mine
+        this.materiasOpciones = rows
           .filter((m) => m.id)
           .map((m) => ({
             id: m.id as number,

@@ -46,7 +46,7 @@
 
 .actions-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: .7rem;
   margin-bottom: 1.7rem;
 
@@ -75,6 +75,11 @@
   background: white;
   color: #0057c2;
   border: 1.5px solid #0057c2;
+
+  &.danger {
+    color: #b91c1c;
+    border-color: #b91c1c;
+  }
 }
 
 .primary-btn {

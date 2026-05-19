@@ -25,7 +25,7 @@ Ver `.env.example`. Requiere **MySQL** (`agm_asistencias_db`), **Redis** y clien
 | DELETE | `/sesiones/{id}/cerrar/` | Cierra sesión |
 | GET | `/qr/generate/?materia_id=&alumno_id=` | Payload QR (30 s) |
 | POST | `/asistencias/registrar/` | Escaneo docente (`encoded_payload`) |
-| GET | `/registros/?sesion_id=` | Listado en vivo |
+| GET | `/registros/?sesion_id=` | Listado en vivo (`alumno_nombre`, `matricula` vía MS-3) |
 
 Autenticación: **Bearer JWT** validado vía gRPC MS-1 (`MsJwtAuthentication`).
 
@@ -35,6 +35,9 @@ Autenticación: **Bearer JWT** validado vía gRPC MS-1 (`MsJwtAuthentication`).
 docker compose up -d ms-asistencias db-asistencias redis ms-auth ms-alumnos
 docker compose build ms-asistencias
 docker exec agm-ms-asistencias python manage.py test apps.core.tests tests.test_grpc_utils
+
+# Cerrar sesiones expiradas (cron / manual)
+docker exec agm-ms-asistencias python manage.py cerrar_sesiones_expiradas
 ```
 
 Pulido y pruebas: [`docs/RESUMEN_CAMBIOS.md`](../docs/RESUMEN_CAMBIOS.md).  

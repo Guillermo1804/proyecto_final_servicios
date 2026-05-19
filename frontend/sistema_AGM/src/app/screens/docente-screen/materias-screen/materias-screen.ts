@@ -29,21 +29,21 @@ export class MateriasScreen implements OnInit {
 
   ngOnInit(): void {
     const docenteId = this.facade.getUserId();
-    this.facade.listMaterias({ limit: 200 }).subscribe({
+    if (!docenteId) {
+      this.loading = false;
+      this.errorMessage = 'Sesión inválida.';
+      return;
+    }
+    this.facade.listMateriasDocente(docenteId).subscribe({
       next: (body) => {
         this.loading = false;
         const rows = this.facade.extractList<{
           id?: number;
           nrc?: string;
           nombre?: string;
-          docente_id?: number;
           horario?: string;
         }>(body);
-        const filtered =
-          docenteId != null
-            ? rows.filter((m) => m.docente_id === docenteId)
-            : rows;
-        this.materias = filtered.map((m) => ({
+        this.materias = rows.map((m) => ({
           id: m.id ?? 0,
           codigo: m.nrc ?? '—',
           nombre: m.nombre ?? '—',

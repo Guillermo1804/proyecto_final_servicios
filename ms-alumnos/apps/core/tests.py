@@ -287,6 +287,26 @@ class AlumnoPorMateriaTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(response.json()["success"])
 
+    @patch("apps.core.views.get_materia_docente_id", return_value=10)
+    def test_por_materia_docente_titular_ok(self, _mock_titular):
+        """Docente titular (usuario_id = docente_id MS-2) puede listar."""
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=10, email="doc@buap.mx", rol="docente", nombre="Doc"
+        )
+        response = self.client.get("/api/alumnos/por-materia/?materia_id=1")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["success"])
+
+    @patch("apps.core.views.get_materia_docente_id", return_value=99)
+    def test_por_materia_docente_no_titular_403(self, _mock_titular):
+        """Docente que no es titular recibe 403."""
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=5, email="otro@buap.mx", rol="docente", nombre="Otro"
+        )
+        response = self.client.get("/api/alumnos/por-materia/?materia_id=1")
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(response.json()["success"])
+
 
 class AlumnoBajaMateriaTests(TestCase):
     """Tests para la baja irreversible de materias."""

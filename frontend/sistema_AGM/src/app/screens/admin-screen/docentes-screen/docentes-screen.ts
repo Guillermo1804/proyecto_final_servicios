@@ -8,6 +8,7 @@ import { FacadeService } from '../../../services/facade.service';
 interface DocenteCard {
   nombre: string;
   id: string;
+  usuarioId: number;
   facultad: string;
   estado: string;
   tipo: string;
@@ -51,6 +52,7 @@ export class DocentesScreen implements OnInit {
         this.docentes = rows.map((d) => ({
           nombre: [d.nombre, d.apellido].filter(Boolean).join(' ') || '—',
           id: d.usuario_id ? String(d.usuario_id) : String(d.id ?? '—'),
+          usuarioId: d.usuario_id ?? 0,
           facultad: d.departamento || 'AGM',
           estado: 'Activo',
           tipo: 'activo',
@@ -107,5 +109,26 @@ export class DocentesScreen implements OnInit {
   openImportPdf(): void {
     const el = document.getElementById('import-docentes-pdf') as HTMLInputElement | null;
     el?.click();
+  }
+
+  resetPasswordDocente(docente: DocenteCard): void {
+    if (!docente.usuarioId) {
+      this.errorMessage = 'Este docente no tiene usuario_id en MS-1.';
+      return;
+    }
+    if (!confirm(`¿Enviar enlace de restablecimiento a ${docente.nombre}?`)) {
+      return;
+    }
+    this.saving = true;
+    this.facade.resetUsuarioPassword(docente.usuarioId).subscribe({
+      next: () => {
+        this.saving = false;
+        this.successMessage = 'Se envió el correo de restablecimiento.';
+      },
+      error: () => {
+        this.saving = false;
+        this.errorMessage = 'No se pudo solicitar el reset de contraseña.';
+      },
+    });
   }
 }

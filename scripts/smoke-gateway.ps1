@@ -11,6 +11,10 @@ $paths = @(
     '/actividades/',
     '/calificaciones/',
     '/sesiones/',
+    '/qr/',
+    '/registros/',
+    '/asistencias/',
+    '/estadisticas/',
     '/notificaciones/',
     '/reportes/'
 )

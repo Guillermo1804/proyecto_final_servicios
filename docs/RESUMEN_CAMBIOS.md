@@ -77,7 +77,9 @@ Excel/PDF calificaciones y asistencias, stats docente/alumno RBAC, formato invá
 | MS-3 | Admin docentes, import alumnos, detalle materia | `/docentes/`, `/alumnos/*` | ✅ Conectado (pulido 18/05) |
 | MS-3 | Alumno horario/notas | `/alumnos/me/materias/` | ✅ Conectado |
 | MS-4 | Docente calificaciones | `/concentrado/`, `/calificaciones/`, ponderaciones | ✅ Conectado (pulido 18/05) |
-| MS-5 | Docente asistencias | `/sesiones/`, `/qr/`, `/registros/` | ✅ Conectado (pulido 18/05) |
+| MS-5 | Docente asistencias | `/sesiones/`, `/qr/`, `/registros/` | ✅ + nombres alumno en lista |
+| MS-1 | Forgot/reset, perfil | `/forgot-password`, `/alumno/perfil` | ✅ |
+| MS-2/7 | Dashboards admin/docente/alumno | varios | ✅ Fase 5 |
 | MS-7 | Docente reportes | `/reportes/`, `/estadisticas/` | ✅ Conectado (repaso 18/05) |
 | MS-6 | (interno) | `/notificaciones/` | N/A frontend |
 | MS-7 | Docente reportes, rendimiento | `/reportes/`, `/estadisticas/` | ✅ Conectado (descarga + stats) |
@@ -206,9 +208,7 @@ Excel/PDF calificaciones y asistencias, stats docente/alumno RBAC, formato invá
 
 ### Pendiente MS-3
 
-- UI baja de materia (alumno).
-- RBAC docente solo ve alumnos de sus materias.
-- `POST /docentes/:id/reset-password` en UI.
+- ~~RBAC docente solo ve alumnos de sus materias~~ → ✅ `por-materia` valida titular MS-2 (19/05).
 
 ---
 
@@ -271,9 +271,9 @@ Excel/PDF calificaciones y asistencias, stats docente/alumno RBAC, formato invá
 
 ### Pendiente MS-5
 
-- Portal alumno: pantalla que renueve `GET /qr/generate/` cada 30 s.
-- Worker/cron cierre automático por TTL Redis → MySQL.
-- Enriquecer lista con nombre alumno (MS-3).
+- ~~Portal alumno QR~~ → ✅ `/alumno/qr` (Fase 2).
+- Cron en producción: programar `cerrar_sesiones_expiradas` (comando listo).
+- ~~Enriquecer lista con nombre alumno~~ → ✅ gRPC MS-3 (Fase 6).
 
 ---
 

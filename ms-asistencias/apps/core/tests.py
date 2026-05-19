@@ -3,7 +3,7 @@
 import base64
 import json
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase, override_settings
 from django.utils import timezone
@@ -179,7 +179,16 @@ class RegistroQRTests(TestCase):
         )
         self.assertEqual(second.status_code, 400)
 
-    def test_list_registros_por_sesion(self):
+    @patch("apps.core.alumno_enrichment.get_alumno_by_id")
+    def test_list_registros_por_sesion(self, mock_get_alumno):
+        from apps.core.alumno_enrichment import clear_alumno_cache
+
+        clear_alumno_cache()
+        mock_alumno = MagicMock()
+        mock_alumno.nombre = "Ana López"
+        mock_alumno.matricula = "202600001"
+        mock_get_alumno.return_value = mock_alumno
+
         RegistroAsistencia.objects.create(
             sesion=self.sesion,
             alumno_id=8,
@@ -194,3 +203,5 @@ class RegistroQRTests(TestCase):
         data = response.json()
         self.assertTrue(isinstance(data, list))
         self.assertGreaterEqual(len(data), 1)
+        self.assertEqual(data[0]["alumno_nombre"], "Ana López")
+        self.assertEqual(data[0]["matricula"], "202600001")

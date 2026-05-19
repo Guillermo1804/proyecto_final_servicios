@@ -307,7 +307,24 @@ class AlumnoViewSet(viewsets.ModelViewSet):
             materia_id = int(materia_id)
         except ValueError:
             return error_response("El parámetro 'materia_id' debe ser un número entero.", status=400)
-            
+
+        user_rol = getattr(request, 'user_rol', None)
+        if user_rol == 'alumno':
+            return error_response('Sin permisos para listar alumnos por materia.', status=403)
+
+        if user_rol == 'docente':
+            titular_id = get_materia_docente_id(materia_id)
+            if titular_id is None:
+                return error_response(
+                    'No se pudo validar el docente titular de la materia (MS-2).',
+                    status=503,
+                )
+            if titular_id != request.user_id:
+                return error_response(
+                    'Solo puede consultar alumnos de sus propias materias.',
+                    status=403,
+                )
+
         # Filtrar inscripciones activas para la materia
         queryset = InscripcionMateria.objects.filter(
             materia_id=materia_id,

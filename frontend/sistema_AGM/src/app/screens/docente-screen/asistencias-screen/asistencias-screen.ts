@@ -15,6 +15,8 @@ interface MateriaOption {
 
 interface RegistroRow {
   alumnoId: number;
+  alumnoNombre: string;
+  matricula: string;
   hora: string;
   estado: string;
   tipo: 'puntual' | 'retardo' | 'ausente';
@@ -52,16 +54,19 @@ export class AsistenciasScreen implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const uid = this.facade.getUserId();
-    this.facade.listMaterias({ limit: 100 }).subscribe({
+    if (!uid) {
+      this.loading = false;
+      this.errorMessage = 'Sesión inválida.';
+      return;
+    }
+    this.facade.listMateriasDocente(uid, { limit: 100 }).subscribe({
       next: (body) => {
         const rows = this.facade.extractList<{
           id?: number;
           nombre?: string;
           nrc?: string;
-          docente_id?: number;
         }>(body);
-        const filtered = uid ? rows.filter((m) => m.docente_id === uid) : rows;
-        this.materias = filtered
+        this.materias = rows
           .filter((m) => m.id)
           .map((m) => ({
             id: m.id as number,
@@ -218,26 +223,7 @@ export class AsistenciasScreen implements OnInit, OnDestroy {
     });
     this.facade.listRegistrosAsistencia(this.sesionId).subscribe({
       next: (rows) => {
-        this.registros = (rows ?? []).map((r) => {
-          const row = r as {
-            alumno_id?: number;
-            estado?: string;
-            fecha_registro?: string;
-          };
-          const estado = (row.estado ?? 'presente').toLowerCase();
-          let tipo: RegistroRow['tipo'] = 'puntual';
-          if (estado === 'retardo') {
-            tipo = 'retardo';
-          } else if (estado === 'ausente') {
-            tipo = 'ausente';
-          }
-          return {
-            alumnoId: row.alumno_id ?? 0,
-            hora: this.formatHora(row.fecha_registro),
-            estado: estado.toUpperCase(),
-            tipo,
-          };
-        });
+        this.registros = this.mapRegistros(rows);
       },
     });
   }
@@ -264,26 +250,7 @@ export class AsistenciasScreen implements OnInit, OnDestroy {
           if (this.sesionId) {
             this.facade.listRegistrosAsistencia(this.sesionId).subscribe({
               next: (rows) => {
-                this.registros = (rows ?? []).map((r) => {
-                  const row = r as {
-                    alumno_id?: number;
-                    estado?: string;
-                    fecha_registro?: string;
-                  };
-                  const estado = (row.estado ?? 'presente').toLowerCase();
-                  let tipo: RegistroRow['tipo'] = 'puntual';
-                  if (estado === 'retardo') {
-                    tipo = 'retardo';
-                  } else if (estado === 'ausente') {
-                    tipo = 'ausente';
-                  }
-                  return {
-                    alumnoId: row.alumno_id ?? 0,
-                    hora: this.formatHora(row.fecha_registro),
-                    estado: estado.toUpperCase(),
-                    tipo,
-                  };
-                });
+                this.registros = this.mapRegistros(rows);
               },
             });
           }
@@ -294,6 +261,37 @@ export class AsistenciasScreen implements OnInit, OnDestroy {
   private stopPolling(): void {
     this.pollSub?.unsubscribe();
     this.pollSub = undefined;
+  }
+
+  private mapRegistros(rows: unknown[] | null | undefined): RegistroRow[] {
+    return (rows ?? []).map((r) => {
+      const row = r as {
+        alumno_id?: number;
+        alumno_nombre?: string;
+        matricula?: string;
+        estado?: string;
+        fecha_registro?: string;
+      };
+      const estado = (row.estado ?? 'presente').toLowerCase();
+      let tipo: RegistroRow['tipo'] = 'puntual';
+      if (estado === 'retardo') {
+        tipo = 'retardo';
+      } else if (estado === 'ausente') {
+        tipo = 'ausente';
+      }
+      const label =
+        row.alumno_nombre?.trim() ||
+        (row.matricula ? `Mat. ${row.matricula}` : '') ||
+        `Alumno #${row.alumno_id ?? '?'}`;
+      return {
+        alumnoId: row.alumno_id ?? 0,
+        alumnoNombre: label,
+        matricula: row.matricula ?? '—',
+        hora: this.formatHora(row.fecha_registro),
+        estado: estado.toUpperCase(),
+        tipo,
+      };
+    });
   }
 
   private formatHora(iso?: string): string {

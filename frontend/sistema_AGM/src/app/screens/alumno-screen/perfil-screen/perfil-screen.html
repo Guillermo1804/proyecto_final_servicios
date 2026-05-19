@@ -4,144 +4,88 @@
 
   <main class="content">
 
-    <!-- HERO -->
+    <p *ngIf="loading" class="loading-msg">Cargando perfil…</p>
+    <p *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</p>
 
-    <section class="profile-hero">
+    <section class="profile-hero" *ngIf="!loading && !errorMessage">
 
       <div class="avatar-wrapper">
-
-        <img
-          src="perfil.jpg"
-          alt="Perfil"
-        >
-
-        <button class="edit-btn">
-          <i class="bi bi-pencil"></i>
-        </button>
-
+        <div class="avatar-initials" aria-hidden="true">{{ iniciales }}</div>
       </div>
 
-      <h1>Alejandro García Martínez</h1>
-
-      <p>Ingeniería en Sistemas</p>
+      <h1>{{ nombreCompleto }}</h1>
+      <p>{{ carrera }}</p>
 
       <div class="hero-tags">
-
-        <span>Matrícula: 20210452</span>
-
-        <span>6to Semestre</span>
-
+        <span>Matrícula: {{ matricula }}</span>
+        <span>{{ semestreLabel }}</span>
       </div>
 
     </section>
 
-    <!-- INFO -->
-
-    <section class="info-card">
+    <section class="info-card" *ngIf="!loading && !errorMessage">
 
       <h2>INFORMACIÓN ACADÉMICA</h2>
 
       <article class="info-item">
-
-        <i class="bi bi-code-square"></i>
-
+        <i class="bi bi-envelope"></i>
         <div>
-          <span>Carrera</span>
-          <strong>Ingeniería en Sistemas Computacionales</strong>
+          <span>Correo institucional</span>
+          <strong>{{ email }}</strong>
         </div>
-
       </article>
 
       <article class="info-item">
-
-        <i class="bi bi-calendar3"></i>
-
+        <i class="bi bi-code-square"></i>
         <div>
-          <span>Ciclo Escolar</span>
-          <strong>Enero - Junio 2024</strong>
+          <span>Carrera</span>
+          <strong>{{ carrera }}</strong>
         </div>
-
       </article>
 
-      <div class="status-box">
+      <article class="info-item">
+        <i class="bi bi-calendar3"></i>
+        <div>
+          <span>Periodo activo</span>
+          <strong>{{ periodoNombre }}</strong>
+        </div>
+      </article>
 
+      <article class="info-item">
+        <i class="bi bi-book"></i>
+        <div>
+          <span>Materias inscritas</span>
+          <strong>{{ materiasActivas }}</strong>
+        </div>
+      </article>
+
+      <div class="status-box" [class.inactivo]="!activo">
         <div>
           <span>Estatus</span>
-          <strong>Regular</strong>
+          <strong>{{ estatus }}</strong>
         </div>
-
         <div class="status-dot"></div>
-
       </div>
 
     </section>
 
-    <!-- CONFIG -->
-
-    <section class="settings-card">
+    <section class="settings-card" *ngIf="!loading && !errorMessage">
 
       <h2>Configuración</h2>
 
-      <article class="setting-item">
-
+      <a class="setting-item" routerLink="/forgot-password">
         <div class="setting-left">
           <i class="bi bi-lock"></i>
-          <span>Cambio de contraseña</span>
+          <span>Recuperar / cambiar contraseña</span>
         </div>
-
         <i class="bi bi-chevron-right"></i>
-
-      </article>
-
-      <article class="setting-item">
-
-        <div class="setting-left">
-          <i class="bi bi-gear"></i>
-          <span>Ajustes de cuenta</span>
-        </div>
-
-        <i class="bi bi-chevron-right"></i>
-
-      </article>
-
-      <article class="setting-item">
-
-        <div class="setting-left">
-          <i class="bi bi-bell"></i>
-          <span>Notificaciones</span>
-        </div>
-
-        <i class="bi bi-chevron-right"></i>
-
-      </article>
+      </a>
 
       <hr>
 
-      <button class="logout-btn">
-
+      <button class="logout-btn" type="button" (click)="logout()">
         <i class="bi bi-box-arrow-right"></i>
-
-        Cerrar Sesión
-
-      </button>
-
-    </section>
-
-    <!-- SUPPORT -->
-
-    <section class="support-card">
-
-      <i class="bi bi-question-circle"></i>
-
-      <h2>Soporte Técnico</h2>
-
-      <p>
-        ¿Tienes problemas con tu cuenta o el portal?
-        Estamos aquí para ayudarte.
-      </p>
-
-      <button>
-        Contactar Soporte
+        Cerrar sesión
       </button>
 
     </section>
