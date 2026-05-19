@@ -59,7 +59,7 @@
 
         </div>
 
-        <div class="average-row">
+        <div class="average-row" (click)="toggleMateria(materia)" role="button" tabindex="0">
 
           <div>
             <span class="label">Promedio</span>
@@ -93,6 +93,14 @@
 
           </article>
 
+          <button
+            type="button"
+            class="baja-btn"
+            (click)="confirmarBaja(materia.materiaId); $event.stopPropagation()"
+          >
+            Dar de baja esta materia
+          </button>
+
         </section>
 
       </article>
@@ -105,9 +113,7 @@
 
       <h2>Resumen por Periodo</h2>
 
-      <a href="#">
-        Ver Historial Completo
-      </a>
+      <span class="historial-hint" *ngIf="historial.length">Datos desde MS-7</span>
 
     </section>
 

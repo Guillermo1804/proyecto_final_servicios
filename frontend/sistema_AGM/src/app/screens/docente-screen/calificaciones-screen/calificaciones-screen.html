@@ -35,6 +35,16 @@
         <i class="bi bi-upload"></i>
         Publicar notas (imprimir lista)
       </button>
+
+      <button
+        class="outline-btn danger"
+        type="button"
+        (click)="cerrarMateria()"
+        [disabled]="saving || !selectedMateriaId"
+      >
+        <i class="bi bi-lock"></i>
+        Cerrar materia
+      </button>
     </section>
 
     <section class="stats-grid" *ngIf="!loading">

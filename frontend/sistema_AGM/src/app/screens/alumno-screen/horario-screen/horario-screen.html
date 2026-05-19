@@ -4,24 +4,12 @@
 
   <main class="content">
 
-    <!-- DÍAS -->
-
-    <section class="days-row">
-
-      <article
-        class="day-card"
-        *ngFor="let dia of dias"
-        [ngClass]="{ active: dia.activo }"
-      >
-
-        <span>{{ dia.dia }}</span>
-        <h3>{{ dia.numero }}</h3>
-
-      </article>
-
+    <section class="hero">
+      <h1>Mi horario</h1>
+      <p>Materias inscritas en el periodo activo.</p>
     </section>
 
-    <!-- HORARIO -->
+    <p *ngIf="loading">Cargando…</p>
 
     <section class="schedule-list">
 
@@ -36,71 +24,9 @@
         </div>
 
         <div class="subject-card">
-
-          <div class="subject-top">
-
-            <h3>{{ item.materia }}</h3>
-
-            <span class="room-badge">
-              {{ item.aula }}
-            </span>
-
-          </div>
-
-          <p *ngIf="item.docente">
-            {{ item.docente }}
-          </p>
-
-          <div class="time-row">
-
-            <i class="bi" [ngClass]="item.icono"></i>
-
-            <span>{{ item.horario }}</span>
-
-          </div>
-
+          <h3>{{ item.materia }}</h3>
+          <span class="room-badge">{{ item.aula }}</span>
         </div>
-
-      </article>
-
-    </section>
-
-    <!-- RESUMEN -->
-
-    <section class="summary-title">
-      <h2>Resumen de la Semana</h2>
-    </section>
-
-    <section class="summary-card">
-
-      <i class="bi bi-book"></i>
-
-      <div class="summary-info">
-        <h3>18</h3>
-        <p>Horas lectivas totales</p>
-      </div>
-
-    </section>
-
-    <section class="stats-grid">
-
-      <article class="mini-card blue">
-
-        <i class="bi bi-calendar-check"></i>
-
-        <h3>4</h3>
-
-        <p>Proyectos</p>
-
-      </article>
-
-      <article class="mini-card">
-
-        <i class="bi bi-people"></i>
-
-        <h3>6</h3>
-
-        <p>Profesores</p>
 
       </article>
 

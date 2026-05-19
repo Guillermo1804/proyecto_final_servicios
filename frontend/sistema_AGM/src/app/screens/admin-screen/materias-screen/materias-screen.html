@@ -6,125 +6,142 @@
 
     <section class="hero">
       <h2>Gestión de Asignaturas</h2>
-
-      <p>
-        Administre el catálogo académico institucional, cursos y prerrequisitos.
-      </p>
+      <p>Administre el catálogo académico por periodo lectivo.</p>
     </section>
 
-    <button class="create-btn">
+    <p *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</p>
+    <p *ngIf="successMessage" class="alert-success">{{ successMessage }}</p>
+    <p *ngIf="loading">Cargando materias…</p>
+
+    <button class="create-btn" type="button" (click)="toggleCreateForm()" [disabled]="saving">
       <i class="bi bi-plus-lg"></i>
-      Nueva Materia
+      {{ showCreateForm ? 'Cancelar' : 'Nueva Materia' }}
     </button>
 
-    <section class="filters-card">
+    <section class="create-form" *ngIf="showCreateForm">
+      <label>
+        Periodo
+        <select [(ngModel)]="newMateria.periodo" name="periodo">
+          <option *ngFor="let p of periodos" [ngValue]="p.id">{{ p.nombre }}</option>
+        </select>
+      </label>
+      <label>
+        NRC
+        <input type="text" [(ngModel)]="newMateria.nrc" name="nrc" />
+      </label>
+      <label>
+        Nombre
+        <input type="text" [(ngModel)]="newMateria.nombre" name="nombre" />
+      </label>
+      <label>
+        Clave
+        <input type="text" [(ngModel)]="newMateria.clave" name="clave" />
+      </label>
+      <label>
+        Sección
+        <input type="text" [(ngModel)]="newMateria.seccion" name="seccion" />
+      </label>
+      <label>
+        Docente (nombre)
+        <input type="text" [(ngModel)]="newMateria.docente_nombre" name="docente_nombre" />
+      </label>
+      <label>
+        Docente usuario_id (MS-1, opcional)
+        <input type="number" [(ngModel)]="newMateria.docente_id" name="docente_id" />
+      </label>
+      <label>
+        Horario
+        <input type="text" [(ngModel)]="newMateria.horario" name="horario" placeholder="L 08:00-10:00" />
+      </label>
+      <button type="button" (click)="submitCreate()" [disabled]="saving">Guardar materia</button>
+    </section>
 
+    <section class="create-form" *ngIf="editMateria">
+      <h3>Editar materia</h3>
+      <label>
+        Periodo
+        <select [(ngModel)]="editMateria.periodoId" name="editPeriodo">
+          <option *ngFor="let p of periodos" [ngValue]="p.id">{{ p.nombre }}</option>
+        </select>
+      </label>
+      <label>
+        NRC
+        <input type="text" [(ngModel)]="editMateria.nrc" name="editNrc" />
+      </label>
+      <label>
+        Nombre
+        <input type="text" [(ngModel)]="editMateria.nombre" name="editNombre" />
+      </label>
+      <label>
+        Sección
+        <input type="text" [(ngModel)]="editMateria.seccion" name="editSeccion" />
+      </label>
+      <label>
+        Docente (nombre)
+        <input type="text" [(ngModel)]="editMateria.docenteNombre" name="editDocente" />
+      </label>
+      <label>
+        Horario
+        <input type="text" [(ngModel)]="editMateria.horario" name="editHorario" />
+      </label>
+      <button type="button" (click)="submitEdit()" [disabled]="saving">Guardar cambios</button>
+      <button type="button" class="btn-secondary" (click)="cancelEdit()">Cancelar</button>
+    </section>
+
+    <section class="filters-card">
       <div class="search-box">
         <i class="bi bi-search"></i>
-
         <input
           type="text"
           placeholder="Buscar por código o nombre..."
-        >
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+        />
       </div>
 
-      <select>
-        <option>Todas las Carreras</option>
-        <option>ITI</option>
-        <option>ICC</option>
-        <option>ITC</option>
+      <select [(ngModel)]="selectedPeriodoId" (ngModelChange)="onPeriodoFilterChange()">
+        <option [ngValue]="null">Todos los periodos</option>
+        <option *ngFor="let p of periodos" [ngValue]="p.id">{{ p.nombre }}</option>
       </select>
-
-      <button class="filter-btn">
-        <i class="bi bi-filter"></i>
-        Filtrar
-      </button>
-
     </section>
 
-    <section class="table-card">
-
+    <section class="table-card" *ngIf="!loading">
       <div class="table-head">
         <span>CÓDIGO</span>
         <span>NOMBRE DE ASIGNATURA</span>
-        <span>FACULTAD</span>
+        <span>DOCENTE</span>
+        <span>ACCIONES</span>
       </div>
 
-      <div
-        class="table-row"
-        *ngFor="let materia of materias"
-      >
-
-        <span class="codigo">
-          {{ materia.codigo }}
-        </span>
-
+      <div class="table-row" *ngFor="let materia of materiasFiltradas">
+        <span class="codigo">{{ materia.codigo }}</span>
         <div class="materia-info">
           <strong>{{ materia.nombre }}</strong>
-
-          <p>
-            Prerrequisito:
-            <br>
-            {{ materia.prerequisito }}
-          </p>
+          <p>Sección: {{ materia.prerequisito }}</p>
         </div>
-
-        <span
-          class="facultad"
-          [ngClass]="materia.tipo"
-        >
-          {{ materia.facultad }}
+        <span class="facultad" [ngClass]="materia.tipo">{{ materia.facultad }}</span>
+        <span class="row-actions">
+          <button type="button" class="btn-link" (click)="startEdit(materia)">Editar</button>
+          <button type="button" class="btn-link danger" (click)="deleteMateria(materia)">Eliminar</button>
         </span>
-
       </div>
 
-      <p class="table-footer">
-        Mostrando 1 a 4 de 128 materias
+      <p *ngIf="!materiasFiltradas.length" class="table-footer">No hay materias para este filtro.</p>
+      <p *ngIf="materiasFiltradas.length" class="table-footer">
+        Mostrando {{ materiasFiltradas.length }} de {{ materias.length }} materias
       </p>
-
     </section>
 
-    <section class="summary-grid">
-
+    <section class="summary-grid" *ngIf="!loading">
       <article class="summary-card">
-
         <div class="summary-icon azul">
           <i class="bi bi-book"></i>
         </div>
-
         <div>
           <p>TOTAL MATERIAS</p>
-          <h3>482</h3>
+          <h3>{{ materias.length }}</h3>
         </div>
-
       </article>
-
-      <article class="summary-card">
-
-        <div class="summary-icon naranja">
-          <i class="bi bi-bank"></i>
-        </div>
-
-        <div>
-          <p>FACULTADES</p>
-          <h3>8</h3>
-        </div>
-
-      </article>
-
-      <article class="summary-card">
-
-        <div class="summary-icon celeste">
-          <i class="bi bi-patch-check"></i>
-        </div>
-
-        <div>
-          <p>PLAN 2024</p>
-          <h3>94%</h3>
-        </div>
-
-      </article>
-
     </section>
 
   </main>

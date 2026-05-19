@@ -44,6 +44,22 @@
         >
           Cerrar sesión
         </button>
+        <button
+          type="button"
+          class="btn-secondary"
+          *ngIf="sesionActiva"
+          (click)="confirmarSesion()"
+        >
+          Confirmar lista
+        </button>
+        <button
+          type="button"
+          class="btn-outline"
+          *ngIf="sesionActiva"
+          (click)="solicitarNuevaLista()"
+        >
+          Nueva lista
+        </button>
       </div>
 
       <div class="tabs-control" *ngIf="sesionActiva">
@@ -127,7 +143,8 @@
 
           <div class="student-info">
             <div>
-              <strong>Alumno #{{ registro.alumnoId }}</strong>
+              <strong>{{ registro.alumnoNombre }}</strong>
+              <span class="matricula-tag">{{ registro.matricula }}</span>
               <p>Registro: {{ registro.hora }}</p>
             </div>
           </div>

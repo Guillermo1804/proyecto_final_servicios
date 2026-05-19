@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 
+from apps.core.alumno_enrichment import enrich_registros
 from apps.core.models import SesionAsistencia, RegistroAsistencia
 from apps.core.serializers import (
     SesionAsistenciaSerializer,
@@ -329,6 +330,15 @@ class RegistroAsistenciaViewSet(viewsets.ModelViewSet):
     queryset = RegistroAsistencia.objects.all()
     serializer_class = RegistroAsistenciaSerializer
     permission_classes = [IsAuthenticated]
+
+    def _registros_response(self, registros):
+        serializer = RegistroAsistenciaListSerializer(registros, many=True)
+        return Response(enrich_registros(serializer.data), status=status.HTTP_200_OK)
+
+    def list(self, request, *args, **kwargs):
+        """GET /registros/?sesion_id= — incluye nombre y matrícula (MS-3)."""
+        queryset = self.filter_queryset(self.get_queryset())
+        return self._registros_response(queryset)
     
     def get_queryset(self):
         """Filter by sesion_id or alumno_id if provided."""
@@ -383,9 +393,8 @@ class RegistroAsistenciaViewSet(viewsets.ModelViewSet):
             sesion__materia_id=materia_id,
             fecha_registro__date=today
         ).order_by('-fecha_registro')
-        
-        serializer = RegistroAsistenciaListSerializer(registros, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return self._registros_response(registros)
     
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def historial(self, request):
@@ -470,16 +479,16 @@ class RegistroAsistenciaViewSet(viewsets.ModelViewSet):
         # Calculate pagination
         offset = (page - 1) * limit
         registros = queryset[offset:offset + limit]
-        
-        serializer = RegistroAsistenciaListSerializer(registros, many=True)
-        
+
         return Response(
             {
                 'total': total,
                 'page': page,
                 'limit': limit,
                 'total_pages': (total + limit - 1) // limit,
-                'results': serializer.data
+                'results': enrich_registros(
+                    RegistroAsistenciaListSerializer(registros, many=True).data
+                ),
             },
             status=status.HTTP_200_OK
         )
@@ -526,9 +535,11 @@ class RegistroAsistenciaViewSet(viewsets.ModelViewSet):
         presentes = registros.filter(estado='presente').count()
         retardos = registros.filter(estado='retardo').count()
         ausentes = registros.filter(estado='ausente').count()
-        
-        serializer = RegistroAsistenciaListSerializer(registros, many=True)
-        
+
+        registros_data = enrich_registros(
+            RegistroAsistenciaListSerializer(registros, many=True).data
+        )
+
         return Response(
             {
                 'alumno_id': alumno_id,
@@ -538,7 +549,7 @@ class RegistroAsistenciaViewSet(viewsets.ModelViewSet):
                 'retardos': retardos,
                 'ausentes': ausentes,
                 'porcentaje_asistencia': (presentes / total * 100) if total > 0 else 0,
-                'registros': serializer.data
+                'registros': registros_data,
             },
             status=status.HTTP_200_OK
         )
@@ -582,6 +593,30 @@ class RegistroAsistenciaViewSet(viewsets.ModelViewSet):
                 {'error': f'Error obteniendo estadísticas: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def resumen_alumnos(self, request):
+        """
+        GET /registros/resumen_alumnos?materia_id=1
+
+        Resumen de asistencia por alumno (un solo query agregado).
+        """
+        materia_id = request.query_params.get('materia_id')
+        if not materia_id:
+            return Response(
+                {'error': 'materia_id es requerido'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            materia_id = int(materia_id)
+        except ValueError:
+            return Response(
+                {'error': 'materia_id debe ser un número'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data = EstadisticasService.resumen_alumnos_por_materia(materia_id)
+        return Response({'materia_id': materia_id, 'alumnos': data}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])

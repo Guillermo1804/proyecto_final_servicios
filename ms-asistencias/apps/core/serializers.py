@@ -82,12 +82,17 @@ class RegistroAsistenciaSerializer(serializers.ModelSerializer):
 
 class RegistroAsistenciaListSerializer(serializers.ModelSerializer):
     """Simplified serializer for listing attendance records."""
-    
+
+    alumno_nombre = serializers.CharField(read_only=True, required=False)
+    matricula = serializers.CharField(read_only=True, required=False)
+
     class Meta:
         model = RegistroAsistencia
         fields = [
             'id',
             'alumno_id',
+            'alumno_nombre',
+            'matricula',
             'estado',
             'minuto_registro',
             'fecha_registro',

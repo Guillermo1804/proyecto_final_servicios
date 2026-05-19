@@ -267,6 +267,33 @@ class MateriaCRUDTests(TestCase):
         self.assertEqual(body["data"]["count"], 15)
         self.assertEqual(len(body["data"]["results"]), 10)  # default limit es 10
 
+    def test_filtro_docente_id(self):
+        """Filtro ?docente_id= debe retornar solo materias del docente (usuario_id MS-1)."""
+        from apps.core.models import Materia
+
+        Materia.objects.create(
+            periodo=self.periodo,
+            nrc="D1",
+            nombre="Materia Docente 1",
+            clave="MD1",
+            seccion="1",
+            docente_id=10,
+        )
+        Materia.objects.create(
+            periodo=self.periodo,
+            nrc="D2",
+            nombre="Materia Docente 2",
+            clave="MD2",
+            seccion="1",
+            docente_id=20,
+        )
+        resp = self.client.get("/api/materias/?docente_id=10")
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+        self.assertTrue(body["success"])
+        self.assertEqual(body["data"]["count"], 1)
+        self.assertEqual(body["data"]["results"][0]["docente_id"], 10)
+
     def test_filtro_nombre(self):
         """Filtro ?nombre= debe retornar solo coincidencias y un param extraño debe dar 400."""
         from apps.core.models import Materia

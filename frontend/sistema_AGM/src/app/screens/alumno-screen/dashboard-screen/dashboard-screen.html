@@ -9,12 +9,9 @@
     <section class="hero-card">
 
       <p>Bienvenido de nuevo.</p>
-
-      <h2>Roberto García</h2>
-
-      <span>
-        Tienes 3 clases programadas para hoy y un examen parcial la próxima semana.
-        ¡Sigue con el excelente desempeño!
+      <h2>{{ nombreAlumno }}</h2>
+      <span *ngIf="!loading">
+        Tienes {{ materiasInscritas }} materia(s) inscrita(s) en el periodo actual.
       </span>
 
       <div class="hero-bg"></div>
@@ -27,11 +24,10 @@
 
       <p>PROMEDIO GENERAL</p>
 
-      <h3>9.4</h3>
-
-      <span>
+      <h3>{{ promedioGeneral }}</h3>
+      <span *ngIf="promedioGeneral !== '—'">
         <i class="bi bi-graph-up-arrow"></i>
-        Superior al ciclo anterior
+        Promedio redondeado (MS-7 / MS-4)
       </span>
 
     </section>
@@ -42,17 +38,22 @@
 
       <div>
         <h2>Materias de Hoy</h2>
-        <p>Viernes, 24 de Mayo</p>
+        <p>{{ materiasInscritas }} inscripción(es) activa(s)</p>
       </div>
 
-      <a href="#">
+      <a routerLink="/alumno/horario">
         Ver horario completo
         <i class="bi bi-arrow-right"></i>
       </a>
 
     </section>
 
-    <section class="subjects-list">
+    <p *ngIf="loading">Cargando…</p>
+    <p *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</p>
+
+    <section class="subjects-list" *ngIf="!loading">
+
+      <p *ngIf="!materiasHoy.length">No tienes materias inscritas.</p>
 
       <article
         class="subject-card"
@@ -87,11 +88,11 @@
 
     <!-- EVALUACIONES -->
 
-    <section class="section-heading">
-      <h2>Próximas Evaluaciones</h2>
+    <section class="section-heading" *ngIf="evaluaciones.length">
+      <h2>Resumen por materia</h2>
     </section>
 
-    <section class="table-card">
+    <section class="table-card" *ngIf="evaluaciones.length">
 
       <div class="table-head">
         <span>MATERIA</span>
@@ -115,50 +116,19 @@
 
     </section>
 
-    <!-- AVISOS -->
-
-    <section class="section-heading">
-      <h2>Avisos Campus</h2>
+    <section class="section-heading" *ngIf="!loading">
+      <h2>Accesos rápidos</h2>
     </section>
 
-    <section class="alerts-card">
-
-      <article class="alert-item">
-
-        <div class="alert-icon">
-          <i class="bi bi-wifi"></i>
-        </div>
-
-        <div>
-          <strong>Mantenimiento Red</strong>
-
-          <p>
-            Mañana de 02:00 a 05:00 AM.
-          </p>
-        </div>
-
-      </article>
-
-      <article class="alert-item">
-
-        <div class="alert-icon">
-          <i class="bi bi-journal-text"></i>
-        </div>
-
-        <div>
-          <strong>Libros Nuevos</strong>
-
-          <p>
-            Sección de Ingeniería actualizada.
-          </p>
-        </div>
-
-      </article>
-
-      <button>
-        Ver todos los avisos
-      </button>
-
+    <section class="alerts-card" *ngIf="!loading">
+      <a class="alert-item" routerLink="/alumno/notas">
+        <div class="alert-icon"><i class="bi bi-card-checklist"></i></div>
+        <div><strong>Mis notas</strong><p>Calificaciones por materia</p></div>
+      </a>
+      <a class="alert-item" routerLink="/alumno/qr">
+        <div class="alert-icon"><i class="bi bi-qr-code"></i></div>
+        <div><strong>QR asistencia</strong><p>Código para registrar asistencia</p></div>
+      </a>
     </section>
 
   </main>

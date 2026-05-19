@@ -6,6 +6,24 @@ import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FacadeService } from '../../../services/facade.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+interface RubroEvaluacion {
+  id?: number;
+  nombre: string;
+  descripcion: string;
+  porcentaje: number;
+}
+
+interface ActividadUi {
+  id?: number;
+  titulo: string;
+  descripcion: string;
+  rubro: string;
+  fechaEntrega: string;
+  ponderacionId?: number;
+}
 
 @Component({
   selector: 'app-detalle-materia-screen',
@@ -18,6 +36,10 @@ export class DetalleMateriaScreen implements OnInit {
   codigoMateria = '';
   materiaId = 0;
   loadingAlumnos = false;
+  loadingPlan = false;
+  savingPlan = false;
+  planMessage = '';
+  planError = '';
 
   alumnos: {
     iniciales: string;
@@ -38,27 +60,40 @@ export class DetalleMateriaScreen implements OnInit {
   ngOnInit(): void {
     if (this.materiaId) {
       this.loadAlumnos();
+      this.loadPlanEvaluacion();
+      this.loadActividades();
     }
   }
 
   private loadAlumnos(): void {
     this.loadingAlumnos = true;
-    this.facade.listAlumnosPorMateria(this.materiaId).subscribe({
-      next: (body) => {
+    forkJoin({
+      body: this.facade.listAlumnosPorMateria(this.materiaId),
+      asistencia: this.facade
+        .getAsistenciaResumenMateria(this.materiaId)
+        .pipe(catchError(() => of({ alumnos: [] }))),
+    }).subscribe({
+      next: ({ body, asistencia }) => {
         this.loadingAlumnos = false;
+        const asistMap = new Map<number, number>();
+        (asistencia.alumnos ?? []).forEach((row) => {
+          if (row.alumno_id != null) {
+            asistMap.set(row.alumno_id, row.porcentaje_asistencia ?? 0);
+          }
+        });
         const rows = this.facade.extractList<{
-          alumno?: { nombre?: string; apellido?: string; matricula?: string };
+          alumno?: { id?: number; nombre?: string; apellido?: string; matricula?: string };
         }>(body);
         this.alumnos = rows.map((row) => {
           const a = row.alumno ?? {};
           const nombre = [a.apellido, a.nombre].filter(Boolean).join(', ') || '—';
-          const ini =
-            (a.nombre?.[0] ?? '') + (a.apellido?.[0] ?? '') || '?';
+          const ini = (a.nombre?.[0] ?? '') + (a.apellido?.[0] ?? '') || '?';
+          const pct = a.id != null ? asistMap.get(a.id) : undefined;
           return {
             iniciales: ini.toUpperCase(),
             nombre,
             matricula: a.matricula ?? '—',
-            asistencia: '—',
+            asistencia: pct != null ? `${pct}%` : 'Sin registros',
           };
         });
       },
@@ -71,137 +106,178 @@ export class DetalleMateriaScreen implements OnInit {
 
   tabActiva: 'alumnos' | 'evaluacion' | 'actividades' = 'alumnos';
 
-cambiarTab(tab: 'alumnos' | 'evaluacion' | 'actividades'): void {
-  this.tabActiva = tab;
-}
-rubrosEvaluacion = [
-  {
-    nombre: 'Tareas',
-    descripcion: 'Actividades y entregas semanales',
-    porcentaje: 30
-  },
-  {
-    nombre: 'Proyecto',
-    descripcion: 'Proyecto integrador de la materia',
-    porcentaje: 30
-  },
-  {
-    nombre: 'Examen',
-    descripcion: 'Evaluaciones parciales o finales',
-    porcentaje: 40
+  cambiarTab(tab: 'alumnos' | 'evaluacion' | 'actividades'): void {
+    this.tabActiva = tab;
+    if (tab === 'evaluacion' && !this.rubrosEvaluacion.length) {
+      this.loadPlanEvaluacion();
+    }
+    if (tab === 'actividades') {
+      this.loadActividades();
+    }
   }
-];
 
-actividades = [
-  {
-    titulo: 'Tarea investigación',
-    descripcion: 'Investigación sobre conceptos principales de la unidad.',
-    rubro: 'Tareas',
-    fechaEntrega: '2024-06-05',
-    valorInterno: 40,
-    estado: 'Abierta',
-    tipo: 'abierta',
-    entregas: 12
-  },
-  {
-    titulo: 'Wireframes',
-    descripcion: 'Diseño de pantallas principales del sistema.',
-    rubro: 'Proyecto',
-    fechaEntrega: '2024-06-12',
-    valorInterno: 30,
-    estado: 'En revisión',
-    tipo: 'revision',
-    entregas: 8
-  },
-  {
-    titulo: 'Examen parcial',
-    descripcion: 'Evaluación correspondiente al primer bloque temático.',
-    rubro: 'Examen',
-    fechaEntrega: '2024-06-18',
-    valorInterno: 100,
-    estado: 'Cerrada',
-    tipo: 'cerrada',
-    entregas: 32
-  }
-];
+  rubrosEvaluacion: RubroEvaluacion[] = [];
+  actividades: ActividadUi[] = [];
 
-nuevaActividad = {
-  titulo: '',
-  descripcion: '',
-  rubro: '',
-  fechaEntrega: '',
-  valorInterno: 0,
-  estado: 'Abierta',
-  tipo: 'abierta',
-  entregas: 0
-};
-
-mostrarFormularioActividad = false;
-
-abrirFormularioActividad(): void {
-  this.mostrarFormularioActividad = true;
-}
-
-cancelarActividad(): void {
-  this.mostrarFormularioActividad = false;
-
-  this.nuevaActividad = {
+  nuevaActividad = {
     titulo: '',
     descripcion: '',
     rubro: '',
     fechaEntrega: '',
-    valorInterno: 0,
-    estado: 'Abierta',
-    tipo: 'abierta',
-    entregas: 0
-  };
-}
-
-crearActividad(): void {
-  if (!this.nuevaActividad.titulo || !this.nuevaActividad.rubro) {
-    alert('Completa el nombre de la actividad y el rubro.');
-    return;
-  }
-
-  this.actividades.push({ ...this.nuevaActividad });
-
-  this.cancelarActividad();
-}
-
-get totalEvaluacion(): number {
-  return this.rubrosEvaluacion.reduce(
-    (acc, item) => acc + Number(item.porcentaje),
-    0
-  );
-}
-
-agregarRubro(): void {
-
-  this.rubrosEvaluacion.push({
-    nombre: '',
-    descripcion: '',
-    porcentaje: 0
-  });
-
-}
-
-eliminarRubro(index: number): void {
-  this.rubrosEvaluacion.splice(index, 1);
-}
-guardarPlanEvaluacion(): void {
-  if (this.totalEvaluacion !== 100) {
-    alert('El total debe ser exactamente 100%');
-    return;
-  }
-
-  const payload = {
-    materia: this.codigoMateria,
-    rubros: this.rubrosEvaluacion
   };
 
-  console.log('Datos para backend:', payload);
+  mostrarFormularioActividad = false;
 
-  // después:
-  // this.materiaService.guardarPlanEvaluacion(payload).subscribe(...)
-}
+  private loadPlanEvaluacion(): void {
+    if (!this.materiaId) {
+      return;
+    }
+    this.loadingPlan = true;
+    this.planError = '';
+    this.facade.getPonderaciones(this.materiaId).subscribe({
+      next: (body) => {
+        this.loadingPlan = false;
+        const data = body?.data as {
+          ponderaciones?: {
+            id?: number;
+            nombre_categoria?: string;
+            porcentaje?: string | number;
+          }[];
+        };
+        const items = data?.ponderaciones ?? [];
+        if (items.length) {
+          this.rubrosEvaluacion = items.map((p) => ({
+            id: p.id,
+            nombre: p.nombre_categoria ?? '',
+            descripcion: '',
+            porcentaje: Number(p.porcentaje ?? 0),
+          }));
+        } else if (!this.rubrosEvaluacion.length) {
+          this.rubrosEvaluacion = [
+            { nombre: 'Tareas', descripcion: '', porcentaje: 30 },
+            { nombre: 'Examen', descripcion: '', porcentaje: 70 },
+          ];
+        }
+      },
+      error: () => {
+        this.loadingPlan = false;
+        if (!this.rubrosEvaluacion.length) {
+          this.rubrosEvaluacion = [
+            { nombre: 'Tareas', descripcion: '', porcentaje: 30 },
+            { nombre: 'Examen', descripcion: '', porcentaje: 70 },
+          ];
+        }
+      },
+    });
+  }
+
+  private loadActividades(): void {
+    if (!this.materiaId) {
+      return;
+    }
+    this.facade.listActividades(this.materiaId).subscribe({
+      next: (body) => {
+        const data = body?.data as {
+          categorias?: {
+            categoria_nombre?: string;
+            actividades?: {
+              id?: number;
+              nombre?: string;
+              descripcion?: string;
+              fecha?: string;
+              ponderacion_id?: number;
+            }[];
+          }[];
+        };
+        this.actividades = [];
+        (data?.categorias ?? []).forEach((cat) => {
+          (cat.actividades ?? []).forEach((act) => {
+            this.actividades.push({
+              id: act.id,
+              titulo: act.nombre ?? '—',
+              descripcion: act.descripcion ?? '',
+              rubro: cat.categoria_nombre ?? '',
+              fechaEntrega: act.fecha ?? '',
+              ponderacionId: act.ponderacion_id,
+            });
+          });
+        });
+      },
+      error: () => {
+        this.actividades = [];
+      },
+    });
+  }
+
+  abrirFormularioActividad(): void {
+    this.mostrarFormularioActividad = true;
+  }
+
+  cancelarActividad(): void {
+    this.mostrarFormularioActividad = false;
+    this.nuevaActividad = { titulo: '', descripcion: '', rubro: '', fechaEntrega: '' };
+  }
+
+  crearActividad(): void {
+    if (!this.nuevaActividad.titulo || !this.nuevaActividad.rubro) {
+      alert('Completa el nombre de la actividad y el rubro.');
+      return;
+    }
+    const rubro = this.rubrosEvaluacion.find((r) => r.nombre === this.nuevaActividad.rubro);
+    if (!rubro?.id) {
+      alert('Guarda primero el plan de evaluación (100%) para obtener IDs de rubros.');
+      return;
+    }
+    this.facade
+      .createActividad({
+        ponderacion_id: rubro.id,
+        nombre: this.nuevaActividad.titulo,
+        descripcion: this.nuevaActividad.descripcion,
+        fecha: this.nuevaActividad.fechaEntrega || null,
+      })
+      .subscribe({
+        next: () => {
+          this.cancelarActividad();
+          this.loadActividades();
+        },
+        error: () => alert('No se pudo crear la actividad.'),
+      });
+  }
+
+  get totalEvaluacion(): number {
+    return this.rubrosEvaluacion.reduce((acc, item) => acc + Number(item.porcentaje), 0);
+  }
+
+  agregarRubro(): void {
+    this.rubrosEvaluacion.push({ nombre: '', descripcion: '', porcentaje: 0 });
+  }
+
+  eliminarRubro(index: number): void {
+    this.rubrosEvaluacion.splice(index, 1);
+  }
+
+  guardarPlanEvaluacion(): void {
+    if (this.totalEvaluacion !== 100) {
+      alert('El total debe ser exactamente 100%');
+      return;
+    }
+    this.savingPlan = true;
+    this.planError = '';
+    this.planMessage = '';
+    const ponderaciones = this.rubrosEvaluacion.map((r) => ({
+      nombre_categoria: r.nombre.trim(),
+      porcentaje: String(r.porcentaje),
+    }));
+    this.facade.savePonderaciones(this.materiaId, ponderaciones).subscribe({
+      next: () => {
+        this.savingPlan = false;
+        this.planMessage = 'Plan de evaluación guardado en el servidor.';
+        this.loadPlanEvaluacion();
+      },
+      error: () => {
+        this.savingPlan = false;
+        this.planError = 'No se pudo guardar el plan (revise que la suma sea 100%).';
+      },
+    });
+  }
 }

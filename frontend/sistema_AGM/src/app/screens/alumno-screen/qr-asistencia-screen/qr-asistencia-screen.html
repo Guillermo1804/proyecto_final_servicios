@@ -1,0 +1,29 @@
+<div class="qr-page">
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+    <section class="hero">
+      <h1>Código QR de asistencia</h1>
+      <p>Muestra este código al docente. Se actualiza cada 30 segundos.</p>
+    </section>
+
+    <section class="materia-select" *ngIf="materias.length">
+      <label>
+        Materia
+        <select [(ngModel)]="selectedMateriaId" (ngModelChange)="onMateriaChange()">
+          <option *ngFor="let m of materias" [ngValue]="m.id">{{ m.label }}</option>
+        </select>
+      </label>
+    </section>
+
+    <p *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</p>
+    <p *ngIf="loading" class="loading">Generando QR…</p>
+
+    <section class="qr-card" *ngIf="encodedPayload && !loading">
+      <img [src]="qrImageUrl" alt="Código QR de asistencia" width="280" height="280" />
+      <p class="meta" *ngIf="sesionId">Sesión #{{ sesionId }} · válido ~{{ expiresIn }} s</p>
+    </section>
+  </main>
+
+  <app-bottom-navbar-alumno></app-bottom-navbar-alumno>
+</div>

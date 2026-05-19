@@ -34,6 +34,7 @@
 | S-23 | ms-calificaciones | Epic 6 ISSUE-601–609: README, Postman MS-4, fix tests CierreImpresion, frontend calificaciones-screen | none | 2→24 passed; 0 failed | 1 | 1 |
 | S-24 | ms-asistencias | Epic 7 ISSUE-701–708: JWT MS-1, README, Postman MS-5, tests REST, frontend asistencias-screen | none | 2→11 passed; 0 failed | 1 | 1 |
 | S-25 | ms-reportes | Epic 9 repaso: USE_MOCK_DATA=False, .env completo, verify_grpc_upstream, frontend reportes-screen sin mock UI | none | 34 passed; 0 failed | 1 | 0 |
+| S-26 | ms-asistencias + ms-alumnos + FE + docs | Fase 6 cierre: BE-02 nombres registros MS-3, BE-04 RBAC por-materia, BE-01 cerrar_sesiones_expiradas, matriz RESUMEN/Deuda | none | MS-5 11+ / MS-3 26+ | 1 | 0 |
 
 ---
 
@@ -139,6 +140,9 @@
 | ISSUE-704 | Listado asistencias por alumno y por materia | 🔴 activo | Alta |
 | ISSUE-705 | Servidor gRPC :50055 — 2 RPCs de `asistencias.proto` | 🔴 activo | Alta |
 | ISSUE-706 | Registro asistencias: retardo por tiempo (umbral configurable) | 🟡 pendiente | Media |
+| ~~BE-02~~ | ~~Nombres alumno en `GET /registros` (gRPC MS-3)~~ | ✅ cerrado 19/05 | Media |
+| ~~BE-04~~ | ~~RBAC docente en `GET /alumnos/por-materia`~~ | ✅ cerrado 19/05 | Media |
+| ~~BE-01~~ | ~~`manage.py cerrar_sesiones_expiradas`~~ | ✅ cerrado 19/05 | Baja |
 
 ---
 
@@ -185,12 +189,12 @@
 
 | Issue | Descripción | Estado | Prioridad |
 |---|---|---|---|
-| ISSUE-1001 | `FacadeService` con métodos HTTP para todos los MS | 🔴 activo | **CRÍTICA** |
-| ISSUE-1002 | Guards de autenticación y rol | 🔴 activo | Crítica |
-| ISSUE-1003 | Flujo login + persistencia JWT en localStorage | 🔴 activo | Crítica |
-| ISSUE-1004 | Pantallas admin: periodos, import PDF, materias | 🔴 activo | Alta |
-| ISSUE-1005 | Pantallas docente: materias, import alumnos, calificaciones, QR | 🔴 activo | Alta |
-| ISSUE-1006 | Pantallas alumno: notas, horario, QR, baja | 🔴 activo | Alta |
+| ~~ISSUE-1001~~ | ~~`FacadeService` con métodos HTTP para todos los MS~~ | ✅ cerrado cierre código | **CRÍTICA** |
+| ~~ISSUE-1002~~ | ~~Guards de autenticación y rol~~ | ✅ cerrado | Crítica |
+| ~~ISSUE-1003~~ | ~~Flujo login + persistencia JWT~~ | ✅ cerrado | Crítica |
+| ~~ISSUE-1004~~ | ~~Pantallas admin (periodos, materias, dashboard)~~ | ✅ cerrado | Alta |
+| ~~ISSUE-1005~~ | ~~Pantallas docente (materias, calificaciones, asistencias, QR, dashboard)~~ | ✅ cerrado | Alta |
+| ~~ISSUE-1006~~ | ~~Pantallas alumno (notas, horario, QR, baja, perfil, dashboard)~~ | ✅ cerrado | Alta |
 | ISSUE-1007 | Responsive mobile (punto extra según enunciado) | 🟡 pendiente | Baja |
 
 ---
