@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar proto y código del servicio
 COPY proto /proto
 COPY ms-auth /app
+COPY ms-auth/scripts/wait_grpc_port.sh /docker/scripts/wait_grpc_port.sh
 
 # Generar stubs gRPC durante el build: instalar grpcio-tools temporalmente
 RUN pip install --no-cache-dir grpcio-tools \
@@ -26,7 +27,8 @@ RUN pip install --no-cache-dir grpcio-tools \
  && pip uninstall -y grpcio-tools || true
 
 # Windows: entrypoint.sh suele tener CRLF; en Linux rompe el shebang ("no such file or directory")
-RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+RUN sed -i 's/\r$//' /app/entrypoint.sh /docker/scripts/wait_grpc_port.sh \
+ && chmod +x /app/entrypoint.sh /docker/scripts/wait_grpc_port.sh
 
 WORKDIR /app
 EXPOSE 8001 50051

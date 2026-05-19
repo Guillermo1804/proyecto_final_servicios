@@ -6,6 +6,8 @@ import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FacadeService } from '../../../services/facade.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 interface RubroEvaluacion {
   id?: number;
@@ -65,21 +67,33 @@ export class DetalleMateriaScreen implements OnInit {
 
   private loadAlumnos(): void {
     this.loadingAlumnos = true;
-    this.facade.listAlumnosPorMateria(this.materiaId).subscribe({
-      next: (body) => {
+    forkJoin({
+      body: this.facade.listAlumnosPorMateria(this.materiaId),
+      asistencia: this.facade
+        .getAsistenciaResumenMateria(this.materiaId)
+        .pipe(catchError(() => of({ alumnos: [] }))),
+    }).subscribe({
+      next: ({ body, asistencia }) => {
         this.loadingAlumnos = false;
+        const asistMap = new Map<number, number>();
+        (asistencia.alumnos ?? []).forEach((row) => {
+          if (row.alumno_id != null) {
+            asistMap.set(row.alumno_id, row.porcentaje_asistencia ?? 0);
+          }
+        });
         const rows = this.facade.extractList<{
-          alumno?: { nombre?: string; apellido?: string; matricula?: string };
+          alumno?: { id?: number; nombre?: string; apellido?: string; matricula?: string };
         }>(body);
         this.alumnos = rows.map((row) => {
           const a = row.alumno ?? {};
           const nombre = [a.apellido, a.nombre].filter(Boolean).join(', ') || '—';
           const ini = (a.nombre?.[0] ?? '') + (a.apellido?.[0] ?? '') || '?';
+          const pct = a.id != null ? asistMap.get(a.id) : undefined;
           return {
             iniciales: ini.toUpperCase(),
             nombre,
             matricula: a.matricula ?? '—',
-            asistencia: '—',
+            asistencia: pct != null ? `${pct}%` : 'Sin registros',
           };
         });
       },

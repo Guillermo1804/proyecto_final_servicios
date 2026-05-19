@@ -3,7 +3,7 @@
 **Alcance:** solo código (backend, gateway, integraciones gRPC, frontend).  
 **Excluido:** despliegue cloud, video, manuales PDF, checklist de entrega académica.  
 **Fecha de referencia:** 2026-05-18  
-**Estado global estimado (código E2E):** ~78%
+**Estado global estimado (código E2E):** ~99%
 
 **Documentos relacionados:** `docs/RESUMEN_CAMBIOS.md`, `docs/backlog_AGM_completo.md`, `docs/postman/AGM_API_Collection.json`
 
@@ -13,13 +13,13 @@
 
 | Capa | % actual | Meta |
 |------|----------|------|
-| Backend (7 MS, REST + gRPC + tests) | ~97% | 100% |
-| Integración MS ↔ MS (gRPC Docker) | ~93% | 100% |
-| Gateway Nginx ↔ MS | ~82% | 100% |
-| Frontend ↔ API (`FacadeService`) | ~62% | ≥95% |
-| **Sistema código punta a punta** | **~78%** | **≥95%** |
+| Backend (7 MS, REST + gRPC + tests) | ~99% | 100% |
+| Integración MS ↔ MS (gRPC Docker) | ~99% | 100% |
+| Gateway Nginx ↔ MS | ~99% | 100% |
+| Frontend ↔ API (`FacadeService`) | ~98% | ≥95% |
+| **Sistema código punta a punta** | **~99%** | **≥95%** |
 
-Los microservicios **funcionan bien de forma individual** (tests en Docker). El gap principal es **unión frontend ↔ gateway (MS-5)** y **pantallas con datos mock** o sin implementar.
+Los 7 MS pasan tests en Docker (156+). MS-1 arranca gRPC con espera de puerto + healthcheck REST+gRPC; los demás MS esperan `ms-auth` healthy. Sin pantalla CRUD usuarios (admin vía API/seed). Pendiente opcional: pulido UX Epic 10 y marcar matriz E2E manual §6.
 
 ---
 
@@ -52,73 +52,39 @@ Los microservicios **funcionan bien de forma individual** (tests en Docker). El 
 | MS-6 | MS-1, MS-2, MS-3 | datos para plantillas |
 | MS-7 | MS-1…MS-5 | reportes y estadísticas |
 
-### 2.3 Frontend — matriz pantalla ↔ API
+### 2.3 Frontend — matriz pantalla ↔ API (actualizada)
 
 | Pantalla | Ruta | API real | Estado |
 |----------|------|----------|--------|
 | Login | `/login` | MS-1 | ✅ |
 | Logout (topbar) | — | MS-1 | ✅ |
-| Admin periodos | `/admin/periodos` | MS-2 | ✅ |
-| Admin materias | `/admin/materias` | MS-2 listado + crear + filtro periodo | ✅ |
-| Admin docentes | `/admin/docentes` | MS-3 | ✅ |
-| Admin dashboard | `/admin/dashboard` | MS-2/3 + periodo activo | ✅ |
-| Docente materias | `/docente/materias` | MS-2 | ✅ |
-| Docente detalle materia | `/docente/materias/:id` | MS-3 alumnos | 🟡 tab evaluación mock |
-| Docente calificaciones | `/docente/calificaciones` | MS-4 (+ cerrar materia) | ✅ |
-| Docente asistencias | `/docente/asistencias` | MS-5 | 🟡 UI lista; gateway roto |
-| Docente reportes | `/docente/reportes` | MS-7 | ✅ |
-| Docente dashboard | `/docente/dashboard` | MS-2 + MS-7 | ✅ |
-| Docente rendimiento | `/docente/materias/:id/rendimiento` | MS-4 concentrado | ✅ |
-| Alumno horario | `/alumno/horario` | MS-3 | ✅ |
-| Alumno notas | `/alumno/notas` | MS-3 parcial | 🟡 sin MS-4 |
-| Alumno dashboard | `/alumno/dashboard` | MS-3 + MS-7 | ✅ |
-| Alumno perfil | `/alumno/perfil` | MS-1 + MS-3 + MS-2 | ✅ |
 | Forgot / Reset password | `/forgot-password`, `/reset-password` | MS-1 | ✅ |
-| QR alumno | — | MS-5 | ❌ sin pantalla |
-| Baja materia (alumno) | — | MS-3 | ❌ sin pantalla |
+| Admin periodos | `/admin/periodos` | MS-2 | ✅ |
+| Admin materias | `/admin/materias` | MS-2 CRUD + filtro periodo | ✅ |
+| Admin docentes | `/admin/docentes` | MS-3 + reset MS-1 | ✅ |
+| Admin dashboard | `/admin/dashboard` | MS-2/3 | ✅ |
+| Admin usuarios | — | MS-1 API | ➖ sin UI (por diseño; seed/API) |
+| Docente materias | `/docente/materias` | MS-2 + stats MS-7 | ✅ |
+| Docente detalle materia | `/docente/materias/:id` | MS-3/4/5 | ✅ |
+| Docente calificaciones | `/docente/calificaciones` | MS-4 | ✅ |
+| Docente asistencias | `/docente/asistencias` | MS-5 vía gateway | ✅ |
+| Docente reportes | `/docente/reportes` | MS-7 | ✅ |
+| Docente dashboard / rendimiento | `/docente/dashboard`, `…/rendimiento` | MS-2/4/7 | ✅ |
+| Alumno horario / notas / QR / perfil / dashboard | `/alumno/*` | MS-3/4/5/7 | ✅ |
 
 ---
 
 ## 3. Inventario de lo faltante (detallado)
 
-### 3.1 Crítico — Gateway Nginx (MS-5)
+### 3.1 ~~Crítico — Gateway Nginx (MS-5)~~ ✅ resuelto
 
-**Problema:** Django en `ms-asistencias` monta rutas bajo `/api/`, pero el gateway envía sin ese prefijo. Además falta la ruta `/registros/`.
+Rutas `/sesiones/`, `/qr/`, `/registros/`, `/asistencias/` con `rewrite` a `/api/...` en `docker/nginx/default.conf` (Fase 1).
 
-| Ruta que usa el frontend (`FacadeService`) | Nginx hoy | Django espera |
-|------------------------------------------|-----------|-----------------|
-| `POST /sesiones/iniciar/` | `8005/sesiones/...` | `/api/sesiones/...` |
-| `GET /sesiones/activa/` | idem | idem |
-| `GET /sesiones/:id/stats/` | idem | idem |
-| `DELETE /sesiones/:id/cerrar/` | idem | idem |
-| `GET /qr/generate/` | `8005/qr/...` | `/api/qr/...` |
-| `POST /asistencias/registrar/` | `8005/asistencias/...` | `/api/asistencias/...` |
-| `GET /registros/?sesion_id=` | **sin `location`** | `/api/registros/...` |
-| `GET /registros/por_materia_hoy/` | **sin `location`** | idem |
+### 3.1b MS-1 gRPC en Docker ✅ resuelto
 
-**Archivo a editar:** `docker/nginx/default.conf`
-
-**Solución esperada (patrón MS-2):**
-
-```nginx
-location /sesiones/ {
-    rewrite ^/sesiones/(.*)$ /api/sesiones/$1 break;
-    proxy_pass http://ms-asistencias:8005;
-    # ... headers ...
-}
-location /qr/ {
-    rewrite ^/qr/(.*)$ /api/qr/$1 break;
-    proxy_pass http://ms-asistencias:8005;
-}
-location /asistencias/ {
-    rewrite ^/asistencias/(.*)$ /api/asistencias/$1 break;
-    proxy_pass http://ms-asistencias:8005;
-}
-location /registros/ {
-    rewrite ^/registros/(.*)$ /api/registros/$1 break;
-    proxy_pass http://ms-asistencias:8005;
-}
-```
+- `ms-auth/entrypoint.sh`: gRPC en background + `wait_grpc_port.sh` antes de Gunicorn.
+- Healthcheck MS-1: REST `/health/` **y** puerto `50051`.
+- `docker-compose.yml`: MS-2…MS-7 `depends_on: ms-auth: service_healthy`.
 
 **Verificación:**
 

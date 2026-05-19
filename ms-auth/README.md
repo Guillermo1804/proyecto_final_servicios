@@ -50,7 +50,7 @@ Respuestas: envelope `{ success, data, message, errors? }`.
 | `CheckRole` | RBAC fino |
 | `CreateUser` | Importaciones MS-3 |
 
-Arranque: `python manage.py grpc_server` (también en `entrypoint.sh`).
+Arranque Docker: `entrypoint.sh` inicia gRPC, espera el puerto (`docker/scripts/wait_grpc_port.sh`) y luego Gunicorn. Healthcheck valida REST + `:50051`. Manual: `python manage.py grpc_server`.
 
 ## Integración para otros MS
 

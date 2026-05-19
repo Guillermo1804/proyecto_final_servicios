@@ -12,11 +12,11 @@
 
 | MS | Comando | Tests |
 |----|---------|-------|
-| MS-1 | `docker exec agm-ms-auth python manage.py test apps.core.tests` | 14 OK (T1–T10 REST + gRPC) |
+| MS-1 | `docker exec agm-ms-auth python manage.py test apps.core.tests` | 28 OK (T1–T10 REST + gRPC) |
 | MS-2 | `docker exec agm-ms-periodos python manage.py test apps.core.tests` | 13 OK (T1–T13) |
 | MS-3 | `docker exec agm-ms-alumnos python manage.py test apps.core.tests` | 24 OK |
 | MS-4 | `docker exec agm-ms-calificaciones python manage.py test apps.core.tests` | 24 OK |
-| MS-5 | `docker exec agm-ms-asistencias python manage.py test apps.core.tests tests.test_grpc_utils` | 10 OK |
+| MS-5 | `docker exec agm-ms-asistencias python manage.py test apps.core.tests` | 11 OK |
 | MS-6 | `docker exec agm-ms-notificaciones python manage.py test apps.notificaciones.tests` | 20 OK (P1–P10) |
 | MS-7 | `docker exec agm-ms-reportes python manage.py test apps.reportes.tests` | 34 OK (R1–R10) |
 

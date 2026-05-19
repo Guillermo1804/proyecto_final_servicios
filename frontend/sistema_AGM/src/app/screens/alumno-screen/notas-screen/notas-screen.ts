@@ -60,6 +60,9 @@ export class NotasScreen implements OnInit {
         if (first) {
           this.cargarCalificacionesMateria(first);
         }
+        if (this.alumnoId) {
+          this.cargarHistorial();
+        }
       },
       error: () => {
         this.loading = false;
@@ -100,7 +103,7 @@ export class NotasScreen implements OnInit {
           materia.promedio = alumnoRow.promedio_real ?? red;
           materia.promedioColor = red >= 6 ? 'verde' : 'rojo';
           materia.parciales = (alumnoRow.calificaciones ?? []).map((c) => ({
-            titulo: `Actividad ${c.actividad_id}`,
+            titulo: c.actividad_nombre ?? `Actividad ${c.actividad_id}`,
             valor: c.calificacion ?? '—',
           }));
           if (!materia.parciales.length) {
@@ -117,6 +120,38 @@ export class NotasScreen implements OnInit {
       },
       error: () => {
         materia.parciales = [{ titulo: 'Sin calificaciones', valor: '—' }];
+      },
+    });
+  }
+
+  private cargarHistorial(): void {
+    this.facade.getEstadisticasAlumno(this.alumnoId).subscribe({
+      next: (body) => {
+        const materias =
+          (body?.data as {
+            materias?: Array<{
+              periodo_nombre?: string;
+              promedio_redondeado?: number;
+            }>;
+          } | null)?.materias ?? [];
+        const byPeriodo = new Map<string, { materias: number; aprobadas: number }>();
+        materias.forEach((m) => {
+          const periodo = m.periodo_nombre?.trim() || 'Sin periodo';
+          const cur = byPeriodo.get(periodo) ?? { materias: 0, aprobadas: 0 };
+          cur.materias += 1;
+          if ((m.promedio_redondeado ?? 0) >= 6) {
+            cur.aprobadas += 1;
+          }
+          byPeriodo.set(periodo, cur);
+        });
+        this.historial = Array.from(byPeriodo.entries()).map(([periodo, stats]) => ({
+          periodo,
+          materias: stats.materias,
+          aprobadas: stats.aprobadas,
+        }));
+      },
+      error: () => {
+        this.historial = [];
       },
     });
   }

@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, of, tap } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { ErrorsService } from './tools/errors.service';
 import { ValidatorService } from './tools/validator.service';
 import { environment } from '../../environments/environment';
@@ -118,6 +119,37 @@ export class FacadeService {
       {},
       { headers: this.authHeaders() },
     );
+  }
+
+  public refreshAccessToken(): Observable<string | null> {
+    const refresh = this.getRefreshToken();
+    if (!refresh) {
+      return of(null);
+    }
+    return this.http
+      .post<AgmEnvelope<{ access?: string }>>(
+        this.buildApiUrl('/auth/refresh-token'),
+        { refresh },
+        { headers: jsonHeaders },
+      )
+      .pipe(
+        map((body) => {
+          const access =
+            body?.data?.access ??
+            (body as { access?: string }).access ??
+            (body as { access_token?: string }).access_token ??
+            null;
+          if (!access) {
+            return null;
+          }
+          const storage = localStorage.getItem(ACCESS_TOKEN_KEY)
+            ? localStorage
+            : sessionStorage;
+          storage.setItem(ACCESS_TOKEN_KEY, access);
+          return access;
+        }),
+        catchError(() => of(null)),
+      );
   }
 
   public storeTokens(response: AuthResponse, remember = false): string | null {
@@ -275,6 +307,24 @@ export class FacadeService {
     return this.http.post<AgmEnvelope<unknown>>(this.buildApiUrl('/materias/'), payload, {
       headers: this.authHeaders(),
     });
+  }
+
+  public updateMateria(
+    materiaId: number,
+    payload: Record<string, unknown>,
+  ): Observable<AgmEnvelope<unknown>> {
+    return this.http.put<AgmEnvelope<unknown>>(
+      this.buildApiUrl(`/materias/${materiaId}/`),
+      payload,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  public deleteMateria(materiaId: number): Observable<AgmEnvelope<unknown>> {
+    return this.http.delete<AgmEnvelope<unknown>>(
+      this.buildApiUrl(`/materias/${materiaId}/`),
+      { headers: this.authHeaders() },
+    );
   }
 
   // ── Alumnos (MS-3) ──────────────────────────────────────────────────
@@ -464,6 +514,22 @@ export class FacadeService {
     );
   }
 
+  public confirmarSesionAsistencia(sesionId: number): Observable<Record<string, unknown>> {
+    return this.http.post<Record<string, unknown>>(
+      this.buildApiUrl(`/sesiones/${sesionId}/confirmar/`),
+      {},
+      { headers: this.authHeaders() },
+    );
+  }
+
+  public solicitarNuevaListaAsistencia(sesionId: number): Observable<Record<string, unknown>> {
+    return this.http.post<Record<string, unknown>>(
+      this.buildApiUrl(`/sesiones/${sesionId}/solicitar-nueva/`),
+      {},
+      { headers: this.authHeaders() },
+    );
+  }
+
   public listRegistrosAsistencia(sesionId: number): Observable<unknown[]> {
     const params = new HttpParams().set('sesion_id', sesionId);
     return this.http.get<unknown[]>(this.buildApiUrl('/registros/'), {
@@ -503,6 +569,28 @@ export class FacadeService {
   public registrosAsistenciaHoy(materiaId: number): Observable<unknown[]> {
     const params = new HttpParams().set('materia_id', materiaId);
     return this.http.get<unknown[]>(this.buildApiUrl('/registros/por_materia_hoy/'), {
+      headers: this.authHeaders(),
+      params,
+    });
+  }
+
+  public getAsistenciaResumenMateria(materiaId: number): Observable<{
+    materia_id?: number;
+    alumnos?: Array<{
+      alumno_id?: number;
+      porcentaje_asistencia?: number;
+      presentes?: number;
+      total_registros?: number;
+    }>;
+  }> {
+    const params = new HttpParams().set('materia_id', materiaId);
+    return this.http.get<{
+      materia_id?: number;
+      alumnos?: Array<{
+        alumno_id?: number;
+        porcentaje_asistencia?: number;
+      }>;
+    }>(this.buildApiUrl('/registros/resumen_alumnos/'), {
       headers: this.authHeaders(),
       params,
     });

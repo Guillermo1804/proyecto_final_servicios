@@ -150,6 +150,50 @@ export class AsistenciasScreen implements OnInit, OnDestroy {
     });
   }
 
+  confirmarSesion(): void {
+    if (!this.sesionId) {
+      return;
+    }
+    if (!confirm('¿Confirmar la lista? No se podrán agregar más registros.')) {
+      return;
+    }
+    this.facade.confirmarSesionAsistencia(this.sesionId).subscribe({
+      next: () => {
+        this.successMessage = 'Lista confirmada y congelada.';
+        this.stopPolling();
+        this.detenerScanner();
+        this.sesionActiva = false;
+        this.sesionId = null;
+      },
+      error: (err) => {
+        this.errorMessage =
+          (err?.error?.error as string) || 'No se pudo confirmar la sesión.';
+      },
+    });
+  }
+
+  solicitarNuevaLista(): void {
+    if (!this.sesionId) {
+      return;
+    }
+    if (!confirm('¿Invalidar esta sesión e iniciar un nuevo pase de lista?')) {
+      return;
+    }
+    this.facade.solicitarNuevaListaAsistencia(this.sesionId).subscribe({
+      next: () => {
+        this.successMessage = 'Sesión invalidada. Puedes iniciar una nueva lista.';
+        this.stopPolling();
+        this.detenerScanner();
+        this.sesionActiva = false;
+        this.sesionId = null;
+      },
+      error: (err) => {
+        this.errorMessage =
+          (err?.error?.error as string) || 'No se pudo solicitar nueva lista.';
+      },
+    });
+  }
+
   cerrarSesion(): void {
     if (!this.sesionId) {
       return;

@@ -594,6 +594,30 @@ class RegistroAsistenciaViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def resumen_alumnos(self, request):
+        """
+        GET /registros/resumen_alumnos?materia_id=1
+
+        Resumen de asistencia por alumno (un solo query agregado).
+        """
+        materia_id = request.query_params.get('materia_id')
+        if not materia_id:
+            return Response(
+                {'error': 'materia_id es requerido'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            materia_id = int(materia_id)
+        except ValueError:
+            return Response(
+                {'error': 'materia_id debe ser un número'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data = EstadisticasService.resumen_alumnos_por_materia(materia_id)
+        return Response({'materia_id': materia_id, 'alumnos': data}, status=status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

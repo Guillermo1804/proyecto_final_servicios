@@ -2,6 +2,7 @@
 
 import json
 import base64
+from decouple import config
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import transaction, IntegrityError
@@ -20,6 +21,8 @@ class AsistenciaRegistroService:
     """Service for registering attendance via QR token."""
     
     QR_ANTI_REPLAY_TTL = 120  # 2 minutes window for anti-replay
+    PRESENTE_MAX_MINUTOS = config('ASISTENCIA_PRESENTE_MAX_MINUTOS', default=5, cast=int)
+    SESION_DURACION_MINUTOS = config('ASISTENCIA_SESION_DURACION_MINUTOS', default=10, cast=int)
     
     @staticmethod
     @transaction.atomic
@@ -109,14 +112,16 @@ class AsistenciaRegistroService:
         
         # 9. Calculate attendance state based on elapsed time
         minutos_transcurridos = sesion.minutos_transcurridos()
-        
-        if minutos_transcurridos <= 5:
+        presente_max = max(1, AsistenciaRegistroService.PRESENTE_MAX_MINUTOS)
+        sesion_max = max(presente_max, AsistenciaRegistroService.SESION_DURACION_MINUTOS)
+
+        if minutos_transcurridos <= presente_max:
             estado = 'presente'
-        elif minutos_transcurridos <= 10:
+        elif minutos_transcurridos <= sesion_max:
             estado = 'retardo'
         else:
             raise ValidationError(
-                f"Fuera de ventana: sesión pasó los 10 minutos ({minutos_transcurridos}m)"
+                f"Fuera de ventana: sesión pasó los {sesion_max} minutos ({minutos_transcurridos}m)"
             )
         
         # 10. Create or update attendance record

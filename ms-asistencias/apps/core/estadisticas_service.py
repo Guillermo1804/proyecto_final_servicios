@@ -116,6 +116,41 @@ class EstadisticasService:
             'porcentaje_asistencia': round(porcentaje_asistencia, 2),
             'porcentaje_retardo': round(porcentaje_retardo, 2),
         }
+
+    @staticmethod
+    def resumen_alumnos_por_materia(materia_id: int) -> list[dict]:
+        """Porcentaje de asistencia (presente/total registros) por alumno en la materia."""
+        from collections import defaultdict
+
+        buckets: dict[int, dict[str, int]] = defaultdict(
+            lambda: {'presentes': 0, 'retardos': 0, 'total': 0}
+        )
+        rows = RegistroAsistencia.objects.filter(
+            sesion__materia_id=materia_id,
+        ).values('alumno_id', 'estado')
+        for row in rows:
+            aid = row['alumno_id']
+            buckets[aid]['total'] += 1
+            if row['estado'] == 'presente':
+                buckets[aid]['presentes'] += 1
+            elif row['estado'] == 'retardo':
+                buckets[aid]['retardos'] += 1
+
+        resumen = []
+        for alumno_id, counts in buckets.items():
+            total = counts['total']
+            pct = round((counts['presentes'] / total) * 100, 1) if total else 0.0
+            resumen.append(
+                {
+                    'alumno_id': alumno_id,
+                    'porcentaje_asistencia': pct,
+                    'presentes': counts['presentes'],
+                    'retardos': counts['retardos'],
+                    'total_registros': total,
+                }
+            )
+        resumen.sort(key=lambda item: item['alumno_id'])
+        return resumen
     
     @staticmethod
     def obtener_stats_materia_resumen(materia_id: int) -> Dict:

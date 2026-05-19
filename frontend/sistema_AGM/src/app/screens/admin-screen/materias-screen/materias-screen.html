@@ -56,6 +56,38 @@
       <button type="button" (click)="submitCreate()" [disabled]="saving">Guardar materia</button>
     </section>
 
+    <section class="create-form" *ngIf="editMateria">
+      <h3>Editar materia</h3>
+      <label>
+        Periodo
+        <select [(ngModel)]="editMateria.periodoId" name="editPeriodo">
+          <option *ngFor="let p of periodos" [ngValue]="p.id">{{ p.nombre }}</option>
+        </select>
+      </label>
+      <label>
+        NRC
+        <input type="text" [(ngModel)]="editMateria.nrc" name="editNrc" />
+      </label>
+      <label>
+        Nombre
+        <input type="text" [(ngModel)]="editMateria.nombre" name="editNombre" />
+      </label>
+      <label>
+        Sección
+        <input type="text" [(ngModel)]="editMateria.seccion" name="editSeccion" />
+      </label>
+      <label>
+        Docente (nombre)
+        <input type="text" [(ngModel)]="editMateria.docenteNombre" name="editDocente" />
+      </label>
+      <label>
+        Horario
+        <input type="text" [(ngModel)]="editMateria.horario" name="editHorario" />
+      </label>
+      <button type="button" (click)="submitEdit()" [disabled]="saving">Guardar cambios</button>
+      <button type="button" class="btn-secondary" (click)="cancelEdit()">Cancelar</button>
+    </section>
+
     <section class="filters-card">
       <div class="search-box">
         <i class="bi bi-search"></i>
@@ -78,6 +110,7 @@
         <span>CÓDIGO</span>
         <span>NOMBRE DE ASIGNATURA</span>
         <span>DOCENTE</span>
+        <span>ACCIONES</span>
       </div>
 
       <div class="table-row" *ngFor="let materia of materiasFiltradas">
@@ -87,6 +120,10 @@
           <p>Sección: {{ materia.prerequisito }}</p>
         </div>
         <span class="facultad" [ngClass]="materia.tipo">{{ materia.facultad }}</span>
+        <span class="row-actions">
+          <button type="button" class="btn-link" (click)="startEdit(materia)">Editar</button>
+          <button type="button" class="btn-link danger" (click)="deleteMateria(materia)">Eliminar</button>
+        </span>
       </div>
 
       <p *ngIf="!materiasFiltradas.length" class="table-footer">No hay materias para este filtro.</p>
