@@ -12,15 +12,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
-COPY requirements.txt .
+# Copiar requirements desde el contexto raíz (build context debe ser la raíz del repo)
+COPY ms-auth/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Copiar proto y código del servicio
+COPY proto /proto
+COPY ms-auth /app
+
+# Generar stubs gRPC durante el build: instalar grpcio-tools temporalmente
+RUN pip install --no-cache-dir grpcio-tools \
+ && bash /app/generate_proto.sh \
+ && pip uninstall -y grpcio-tools || true
 
 # Windows: entrypoint.sh suele tener CRLF; en Linux rompe el shebang ("no such file or directory")
-RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
+WORKDIR /app
 EXPOSE 8001 50051
 
 ENTRYPOINT ["./entrypoint.sh"]

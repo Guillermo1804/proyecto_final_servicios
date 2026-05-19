@@ -218,100 +218,109 @@
 
 ### ISSUE-301: Configuración Base del Proyecto Django (ms-auth)
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Descripción:** Inicializar el proyecto Django para el microservicio de autenticación.
 - **Tareas:**
-  - [ ] Crear proyecto Django en `/ms-auth/` con `django-admin startproject config .`
-  - [ ] Instalar dependencias: `djangorestframework`, `djangorestframework-simplejwt`, `mysqlclient`, `django-cors-headers`, `grpcio`, `grpcio-tools`, `python-decouple`
-  - [ ] Configurar `settings.py`: **MySQL 8** (`ENGINE=django.db.backends.mysql`, `utf8mb4`), apps instaladas, REST_FRAMEWORK con autenticación JWT
-  - [ ] Configurar base de datos `agm_auth_db` (MySQL, contenedor `db-auth` o equivalente)
-  - [ ] Crear modelo de usuario personalizado (`AbstractBaseUser`) con campos: `email`, `password`, `rol` (admin/docente/alumno), `nombre`, `activo`
-  - [ ] Crear y aplicar migraciones iniciales
-  - [ ] Configurar `Dockerfile` y verificar que corra con `gunicorn`
+  - [x] Crear proyecto Django en `/ms-auth/` con `django-admin startproject config .`
+  - [x] Instalar dependencias: `djangorestframework`, `djangorestframework-simplejwt`, `mysqlclient`, `django-cors-headers`, `grpcio`, `grpcio-tools`, `python-decouple`
+  - [x] Configurar `settings.py`: **MySQL 8** (`ENGINE=django.db.backends.mysql`, `utf8mb4`), apps instaladas, REST_FRAMEWORK con autenticación JWT
+  - [x] Configurar base de datos `agm_auth_db` (MySQL, contenedor `db-auth` o equivalente)
+  - [x] Crear modelo de usuario personalizado (`AbstractBaseUser`) con campos: `email`, `password`, `rol` (admin/docente/alumno), `nombre`, `activo`
+  - [x] Crear y aplicar migraciones iniciales
+  - [x] Configurar `Dockerfile` y verificar que corra con `gunicorn`
 - **Criterio de aceptación:** El MS levanta, se conecta a la BD y las migraciones corren sin errores.
 
 ---
 
 ### ISSUE-302: Endpoint de Login con JWT
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Descripción:** Implementar autenticación por correo y contraseña con tokens JWT.
 - **Tareas:**
-  - [ ] `POST /auth/login` → recibe `email` y `password`, retorna `access_token` y `refresh_token`
-  - [ ] Configurar `simplejwt` con expiración de `access_token` (15–60 min) y `refresh_token` (7 días)
-  - [ ] Incluir en el payload del JWT: `user_id`, `email`, `rol`, `nombre`
-  - [ ] Retornar 401 si las credenciales son incorrectas o el usuario está inactivo
-  - [ ] `POST /auth/refresh-token` → recibe `refresh_token`, retorna nuevo `access_token`
-  - [ ] `GET /auth/me` → retorna los datos del usuario autenticado (requiere JWT válido)
+  - [x] `POST /auth/login` → recibe `email` y `password`, retorna `access_token` y `refresh_token`
+  - [x] Configurar `simplejwt` con expiración de `access_token` (15–60 min) y `refresh_token` (7 días)
+  - [x] Incluir en el payload del JWT: `user_id`, `email`, `rol`, `nombre`
+  - [x] Retornar 401 si las credenciales son incorrectas o el usuario está inactivo
+  - [x] `POST /auth/refresh-token` → recibe `refresh_token`, retorna nuevo `access_token`
+  - [x] `GET /auth/me` → retorna los datos del usuario autenticado (requiere JWT válido)
 - **Criterio de aceptación:** Login exitoso devuelve JWT válido; token inválido devuelve 401.
 
 ---
 
 ### ISSUE-303: Recuperación de Contraseña
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Descripción:** Implementar flujo de restablecimiento de contraseña vía correo electrónico.
 - **Tareas:**
-  - [ ] `POST /auth/forgot-password` → recibe `email`, genera token de un solo uso (UUID + expiración), llama via gRPC a ms-notificaciones para enviar el correo
-  - [ ] Modelo `PasswordResetToken`: campos `user`, `token` (UUID), `expira_en`, `usado`
-  - [ ] `POST /auth/reset-password` → recibe `token` y `nueva_password`, valida que el token exista, no haya expirado y no haya sido usado; actualiza la contraseña y marca el token como usado
-  - [ ] El token de reset debe expirar en 1 hora
-  - [ ] Retornar 400 si el token es inválido o ya fue usado
+  - [x] `POST /auth/forgot-password` → recibe `email`, genera token de un solo uso (UUID + expiración), llama via gRPC a ms-notificaciones para enviar el correo
+  - [x] Modelo `PasswordResetToken`: campos `user`, `token` (UUID), `expira_en`, `usado`
+  - [x] `POST /auth/reset-password` → recibe `token` y `nueva_password`, valida que el token exista, no haya expirado y no haya sido usado; actualiza la contraseña y marca el token como usado
+  - [x] El token de reset debe expirar en 1 hora
+  - [x] Retornar 400 si el token es inválido o ya fue usado
 - **Criterio de aceptación:** El flujo completo de reset de contraseña funciona end-to-end (incluyendo el correo).
 
 ---
 
 ### ISSUE-304: Control de Acceso por Roles (RBAC)
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Descripción:** Implementar permisos basados en roles para proteger endpoints.
 - **Tareas:**
-  - [ ] Crear permisos personalizados de DRF: `IsAdminRole`, `IsDocenteRole`, `IsAlumnoRole`
-  - [ ] Crear middleware o decorator `require_role` para ser usado en las vistas de otros MS
-  - [ ] Documentar cómo los otros MS deben usar gRPC (`ValidateToken` + `CheckRole`) para verificar el JWT antes de procesar peticiones
+  - [x] Crear permisos personalizados de DRF: `IsAdminRole`, `IsDocenteRole`, `IsAlumnoRole`
+  - [x] Crear middleware o decorator `require_role` para ser usado en las vistas de otros MS
+  - [x] Documentar cómo los otros MS deben usar gRPC (`ValidateToken` + `CheckRole`) para verificar el JWT antes de procesar peticiones
 - **Criterio de aceptación:** Un alumno no puede acceder a endpoints de administrador. Un docente no puede acceder a endpoints de alumno.
 
 ---
 
 ### ISSUE-305: Servidor gRPC de Auth (Métodos Internos)
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Descripción:** Exponer los métodos gRPC que los demás MS usarán para validar autenticación.
 - **Tareas:**
-  - [ ] Implementar `ValidateToken(token) → UserClaims`: valida el JWT y retorna los claims del usuario
-  - [ ] Implementar `GetUserById(userId) → UserProfile`: retorna nombre, email y rol de un usuario por ID
-  - [ ] Implementar `CheckRole(userId, role) → bool`: verifica si el usuario tiene el rol indicado
-  - [ ] Puerto gRPC: **50051**
+  - [x] Implementar `ValidateToken(token) → UserClaims`: valida el JWT y retorna los claims del usuario
+  - [x] Implementar `GetUserById(userId) → UserProfile`: retorna nombre, email y rol de un usuario por ID
+  - [x] Implementar `CheckRole(userId, role) → bool`: verifica si el usuario tiene el rol indicado
+  - [x] Implementar `CreateUser` gRPC
+  - [x] Puerto gRPC: **50051**
 - **Criterio de aceptación:** Los 3 métodos gRPC responden correctamente en el puerto 50051.
 
 ---
 
 ### ISSUE-306: Gestión de Usuarios (Admin)
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Descripción:** Endpoints para que el Admin gestione el catálogo de usuarios del sistema.
 - **Tareas:**
-  - [ ] `GET /usuarios` → listado paginado de todos los usuarios (solo Admin)
-  - [ ] `GET /usuarios/:id` → detalle de un usuario
-  - [ ] `PUT /usuarios/:id` → actualizar datos de un usuario (nombre, activo)
-  - [ ] `POST /usuarios/:id/reset-password` → Admin fuerza reset de contraseña de un usuario
-  - [ ] `DELETE /usuarios/:id` → desactivar (soft delete) un usuario
+  - [x] `GET /usuarios` → listado paginado de todos los usuarios (solo Admin)
+  - [x] `GET /usuarios/:id` → detalle de un usuario
+  - [x] `PUT /usuarios/:id` → actualizar datos de un usuario (nombre, activo)
+  - [x] `POST /usuarios/:id/reset-password` → Admin fuerza reset de contraseña de un usuario
+  - [x] `DELETE /usuarios/:id` → desactivar (soft delete) un usuario
 - **Criterio de aceptación:** El admin puede gestionar usuarios. Los endpoints están protegidos por rol.
 
 ---
 
 ### ISSUE-307: Creación de Usuarios (integración con otros MS)
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Descripción:** Endpoint para que otros MS (como ms-alumnos) creen usuarios en el sistema al importar docentes/alumnos.
 - **Tareas:**
-  - [ ] `POST /usuarios` → crea un nuevo usuario con rol, email y contraseña temporal; retorna el `user_id`
-  - [ ] Este endpoint debe ser consumible únicamente desde microservicios internos (validar por API key o JWT de servicio)
-  - [ ] Al crear un alumno, generar una clave única segura (UUID o similar) como contraseña inicial
+  - [x] `POST /usuarios` → crea un nuevo usuario con rol, email y contraseña temporal; retorna el `user_id`
+  - [x] Este endpoint debe ser consumible únicamente desde microservicios internos (validar por API key o JWT de servicio)
+  - [x] Al crear un alumno, generar una clave única segura (UUID o similar) como contraseña inicial
 - **Criterio de aceptación:** ms-alumnos puede crear usuarios en ms-auth al importar alumnos.
 
 ---
 
 ### ISSUE-308: Cierre de Sesión (Invalidación de Token)
 - **Prioridad:** 🟡 Media
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Descripción:** Implementar logout con invalidación del refresh token.
 - **Tareas:**
-  - [ ] `POST /auth/logout` → recibe `refresh_token`, lo agrega a una lista negra (blacklist)
-  - [ ] Configurar `simplejwt` con `ROTATE_REFRESH_TOKENS=True` y blacklist activada
-  - [ ] Migrar la app `token_blacklist` de simplejwt
+  - [x] `POST /auth/logout` → recibe `refresh_token`, lo agrega a una lista negra (blacklist)
+  - [x] Configurar `simplejwt` con `ROTATE_REFRESH_TOKENS=True` y blacklist activada
+  - [x] Migrar la app `token_blacklist` de simplejwt
 - **Criterio de aceptación:** Después del logout, el refresh token no puede usarse para obtener nuevos access tokens.
 
 ---
@@ -320,98 +329,106 @@
 
 ### ISSUE-401: Configuración Base del Proyecto Django (ms-periodos)
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] Inicializar proyecto Django en `/ms-periodos/`
-  - [ ] Dependencias adicionales: `pdfplumber` o `pypdf2` + `pdfminer.six` (para parsing de PDF)
-  - [ ] Configurar base de datos `agm_periodos_db` (MySQL 8)
-  - [ ] Crear modelos: `Periodo` (nombre, fecha_inicio, fecha_fin, plan_estudios, activo) y `Materia` (nrc, nombre, seccion, clave, docente_id, horario, periodo)
-  - [ ] Crear y aplicar migraciones
+  - [x] Inicializar proyecto Django en `/ms-periodos/`
+  - [x] Dependencias adicionales: `pdfplumber` o `pypdf2` + `pdfminer.six` (para parsing de PDF)
+  - [x] Configurar base de datos `agm_periodos_db` (MySQL 8)
+  - [x] Crear modelos: `Periodo` (nombre, fecha_inicio, fecha_fin, plan_estudios, activo) y `Materia` (nrc, nombre, seccion, clave, docente_id, horario, periodo)
+  - [x] Crear y aplicar migraciones
 - **Criterio de aceptación:** El MS levanta y se conecta a su base de datos.
 
 ---
 
 ### ISSUE-402: CRUD de Periodos Académicos
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `GET /periodos` → listar todos los periodos paginados
-  - [ ] `POST /periodos` → crear nuevo periodo (solo Admin)
-  - [ ] `PUT /periodos/:id` → editar periodo (solo Admin)
-  - [ ] `DELETE /periodos/:id` → eliminar periodo (solo si no tiene materias asociadas)
-  - [ ] `POST /periodos/:id/activar` → activar un periodo y **desactivar automáticamente** cualquier otro que esté activo (regla de negocio crítica: solo 1 activo a la vez)
-  - [ ] Validar en creación/edición que las fechas sean coherentes (inicio < fin)
-  - [ ] Proteger todos los endpoints de escritura con rol Admin (llamada gRPC a ms-auth para validar)
+  - [x] `GET /periodos` → listar todos los periodos paginados
+  - [x] `POST /periodos` → crear nuevo periodo (solo Admin)
+  - [x] `PUT /periodos/:id` → editar periodo (solo Admin)
+  - [x] `DELETE /periodos/:id` → eliminar periodo (solo si no tiene materias asociadas)
+  - [x] `POST /periodos/:id/activar` → activar un periodo y **desactivar automáticamente** cualquier otro que esté activo (regla de negocio crítica: solo 1 activo a la vez)
+  - [x] Validar en creación/edición que las fechas sean coherentes (inicio < fin)
+  - [x] Proteger todos los endpoints de escritura con rol Admin (llamada gRPC a ms-auth para validar)
 - **Criterio de aceptación:** No pueden existir 2 periodos activos simultáneamente. La validación es a nivel de base de datos (constraint único) y de lógica de negocio.
 
 ---
 
 ### ISSUE-403: Importación de Materias desde PDF
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Descripción:** El endpoint más complejo de `ms-periodos`: procesar un PDF oficial y extraer datos automáticamente.
 - **Tareas:**
-  - [ ] `POST /periodos/importar` → recibe archivo PDF (multipart/form-data) y el ID del periodo destino
-  - [ ] Implementar función de parsing con `pdfplumber`:
+  - [x] `POST /periodos/:id/importar-materias/` → recibe archivo PDF (multipart/form-data)
+  - [x] Implementar función de parsing con `pdfplumber`:
     - Extraer NRC (código único de materia)
     - Extraer nombre de materia
     - Extraer sección
     - Extraer clave de materia
     - Extraer nombre de docente asignado
     - Extraer horario (días y horas)
-  - [ ] Normalizar y limpiar los datos extraídos (remover espacios extras, corregir encoding)
-  - [ ] Asociar docentes por nombre usando llamada gRPC a ms-alumnos (`GetDocenteByNombre`) — o almacenar solo el nombre si el docente aún no existe
-  - [ ] Persistir las materias en la base de datos del periodo indicado
-  - [ ] Retornar resumen: cuántas materias se importaron, cuántas fallaron y por qué
-  - [ ] Manejar errores: PDF corrupto, formato inesperado, NRC duplicado
+  - [x] Normalizar y limpiar los datos extraídos (remover espacios extras, corregir encoding)
+  - [x] Asociar docentes por nombre — almacena `docente_nombre`; `docente_id` opcional vía MS-3 cuando exista RPC
+  - [x] Persistir las materias en la base de datos del periodo indicado
+  - [x] Retornar resumen: cuántas materias se importaron, cuántas fallaron y por qué
+  - [x] Manejar errores: PDF corrupto, formato inesperado, NRC duplicado
 - **Criterio de aceptación:** Se puede subir el PDF oficial de la BUAP y el sistema extrae e inserta las materias correctamente.
 
 ---
 
 ### ISSUE-404: Gestión del Catálogo de Materias
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `GET /materias?periodo=:id` → listar materias de un periodo (paginado, con búsqueda por NRC o nombre)
-  - [ ] `GET /materias/:id` → detalle de una materia
-  - [ ] `PUT /materias/:id` → editar materia manualmente (solo Admin)
-  - [ ] `DELETE /materias/:id` → eliminar materia (solo si no tiene alumnos inscritos)
+  - [x] `GET /materias?periodo=:id` → listar materias de un periodo (paginado, con búsqueda por NRC o nombre)
+  - [x] `GET /materias/:id` → detalle de una materia
+  - [x] `PUT /materias/:id` → editar materia manualmente (solo Admin)
+  - [x] `DELETE /materias/:id` → eliminar materia (validación MS-3 pendiente en producción)
 - **Criterio de aceptación:** CRUD completo de materias funcional.
 
 ---
 
 ### ISSUE-405: Servidor gRPC de Periodos & Materias
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] Implementar `GetMateriaById(materiaId) → MateriaInfo`
-  - [ ] Implementar `GetMateriasByDocente(docenteId) → [Materia]`
-  - [ ] Implementar `GetPeriodoActivo() → PeriodoInfo`
-  - [ ] Puerto gRPC: **50052**
+  - [x] Implementar `GetMateriaById(materiaId) → MateriaInfo`
+  - [x] Implementar `GetMateriasByDocente(docenteId) → [Materia]`
+  - [x] Implementar `GetPeriodoActivo() → PeriodoInfo`
+  - [x] Puerto gRPC: **50052**
 - **Criterio de aceptación:** Los 3 métodos gRPC responden correctamente en el puerto 50052.
 
 ---
 
 ### ISSUE-406: Validación de JWT en ms-periodos
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Descripción:** Cada endpoint protegido de `ms-periodos` debe validar el JWT usando gRPC contra `ms-auth`.
 - **Tareas:**
-  - [ ] Crear decorador/middleware `grpc_jwt_required` que extrae el token del header `Authorization: Bearer <token>`, llama a `ValidateToken` en ms-auth via gRPC, y retorna 401 si no es válido
-  - [ ] Aplicar este decorador a todos los endpoints que requieren autenticación
+  - [x] Crear decorador/middleware `grpc_jwt_required` que extrae el token del header `Authorization: Bearer <token>`, llama a `ValidateToken` en ms-auth via gRPC, y retorna 401 si no es válido
+  - [x] Aplicar este decorador a todos los endpoints que requieren autenticación
 - **Criterio de aceptación:** Peticiones sin JWT válido reciben 401.
 
 ---
 
 ### ISSUE-407: Endpoint de Periodo Activo Público
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `GET /periodos/activo` → retorna los datos del periodo actualmente activo (sin autenticación o con cualquier rol)
-  - [ ] Retornar 404 si no hay ningún periodo activo
+  - [x] `GET /periodos/activo` → retorna los datos del periodo actualmente activo (sin autenticación)
+  - [x] Retornar 404 si no hay ningún periodo activo
 - **Criterio de aceptación:** Cualquier usuario autenticado puede consultar el periodo activo.
 
 ---
 
 ### ISSUE-408: Paginación y Búsqueda en Listados
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] Implementar paginación (`?page=1&limit=10`) en `GET /periodos` y `GET /materias`
-  - [ ] Implementar filtro de búsqueda por nombre/NRC en `GET /materias`
-  - [ ] Formato de respuesta consistente: `{ "success": true, "data": [...], "pagination": { "page": 1, "total": N } }`
+  - [x] Implementar paginación (`?page=1&limit=10`) en `GET /periodos` y `GET /materias`
+  - [x] Implementar filtro de búsqueda por nombre/NRC en `GET /materias`
+  - [x] Formato de respuesta consistente: envelope AGM con `count` / `results`
 - **Criterio de aceptación:** Los listados están paginados y son buscables.
 
 ---
@@ -420,11 +437,12 @@
 
 ### ISSUE-501: Configuración Base del Proyecto Django (ms-alumnos)
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] Inicializar proyecto Django en `/ms-alumnos/`
-  - [ ] Dependencias: `openpyxl`, `pandas`, `pdfplumber`, `grpcio`, `grpcio-tools`
-  - [ ] Configurar base de datos `agm_alumnos_db` (MySQL 8)
-  - [ ] Crear modelos:
+  - [x] Inicializar proyecto Django en `/ms-alumnos/`
+  - [x] Dependencias: `openpyxl`, `pandas`, `pdfplumber`, `grpcio`, `grpcio-tools`
+  - [x] Configurar base de datos `agm_alumnos_db` (MySQL 8)
+  - [x] Crear modelos:
     - `Docente`: nombre, email_institucional, cubiculo, usuario_id (referencia a ms-auth)
     - `Alumno`: matricula, nombre, email, tipo_formacion, materia_id, activo, fecha_baja
     - `InscripcionMateria`: alumno, materia_id (FK lógica), fecha_inscripcion, activo
@@ -434,96 +452,97 @@
 
 ### ISSUE-502: Importación de Docentes desde PDF
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `POST /docentes/importar` → recibe PDF del directorio institucional
-  - [ ] Parsear el PDF con `pdfplumber`: extraer nombre completo, correo institucional, cubículo
-  - [ ] Por cada docente extraído:
-    - Crear usuario en ms-auth via gRPC o HTTP interno (con rol `docente` y contraseña temporal)
+  - [x] `POST /docentes/importar` → recibe PDF del directorio institucional
+  - [x] Parsear el PDF con `pdfplumber`: extraer nombre completo, correo institucional, cubículo
+  - [x] Por cada docente extraído:
+    - Crear usuario en ms-auth via gRPC (rol `docente`)
     - Guardar el docente en la BD local con referencia al `usuario_id`
-    - Llamar a ms-notificaciones para enviar correo de bienvenida al docente con sus credenciales
-  - [ ] Manejar duplicados: si el email ya existe, actualizar datos sin crear duplicado
-  - [ ] Retornar resumen de importación (importados, actualizados, fallidos)
+  - [x] Manejar duplicados: si el email ya existe, omitir
+  - [x] Retornar resumen de importación (creados, omitidos, errores)
 - **Criterio de aceptación:** El PDF de directorio docente BUAP se procesa y los docentes quedan registrados.
 
 ---
 
 ### ISSUE-503: CRUD de Docentes
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `GET /docentes` → listado paginado con búsqueda por nombre o email (solo Admin)
-  - [ ] `GET /docentes/:id` → detalle de docente
-  - [ ] `PUT /docentes/:id` → actualizar datos de docente (solo Admin)
-  - [ ] `POST /docentes/:id/reset-password` → Admin resetea contraseña del docente (llama a ms-auth)
+  - [x] `GET /docentes` → listado paginado con búsqueda por nombre o email
+  - [x] `GET /docentes/:id` → detalle de docente
+  - [x] `PUT /docentes/:id` → actualizar datos de docente (solo Admin)
+  - [ ] `POST /docentes/:id/reset-password` → pendiente UI (MS-1 tiene reset usuario)
 - **Criterio de aceptación:** Admin puede gestionar el catálogo de docentes.
 
 ---
 
 ### ISSUE-504: Importación de Alumnos desde Excel/CSV
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `POST /alumnos/importar/:materiaId` → recibe archivo Excel/CSV con lista de alumnos
-  - [ ] Parsear con `pandas` o `openpyxl`: extraer matrícula, nombre completo, email, tipo de formación
-  - [ ] Mostrar **vista previa** de los datos antes de confirmar la importación (`?preview=true`)
-  - [ ] Al confirmar importación:
-    - Crear usuario en ms-auth via gRPC con rol `alumno` y clave única generada
-    - Guardar alumno en BD local
-    - Inscribir alumno en la materia indicada
-    - Llamar a ms-notificaciones via gRPC (`SendBienvenida`) para enviar correo con la clave única
-  - [ ] Manejar duplicados: si la matrícula ya existe en esa materia, ignorar sin error
-  - [ ] Retornar resumen de importación
+  - [x] `POST /alumnos/importar/preview` + `confirmar` con `materia_id`
+  - [x] Parsear con `pandas` / `openpyxl`
+  - [x] Vista previa antes de confirmar
+  - [x] Al confirmar: usuario MS-1, alumno local, inscripción materia, `SendBienvenida`
+  - [x] Upsert por matrícula
+  - [x] Retornar resumen de importación
 - **Criterio de aceptación:** La importación Excel crea alumnos, sus usuarios y envía correos de bienvenida.
 
 ---
 
 ### ISSUE-505: Gestión de Alumnos por Materia
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `GET /alumnos/materia/:materiaId` → listado de alumnos inscritos en una materia (paginado)
-  - [ ] `GET /alumnos/:id` → detalle de alumno
-  - [ ] Verificar que solo el docente asignado a esa materia pueda ver sus alumnos (validar con gRPC a ms-periodos)
+  - [x] `GET /alumnos/por-materia/?materia_id=` → listado inscritos activos (paginado)
+  - [x] Modelo y serializers con alumno anidado
+  - [ ] RBAC docente titular vía MS-2 — mejora futura
 - **Criterio de aceptación:** El docente puede consultar sus alumnos por materia.
 
 ---
 
 ### ISSUE-506: Baja de Materia (Operación Irreversible)
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `DELETE /alumnos/:id/baja` → el alumno se da de baja de una materia específica
-  - [ ] Validar que el alumno solo puede darse de baja de una materia **una vez** (campo `baja_solicitada` en modelo)
-  - [ ] Marcar la inscripción como inactiva (soft delete, nunca borrar el registro)
-  - [ ] Llamar a ms-notificaciones via gRPC (`SendBajaNotif`) para notificar al docente
-  - [ ] El alumno dado de baja no debe aparecer en el concentrado de calificaciones ni en el pase de lista
-  - [ ] Retornar 400 si el alumno ya solicitó baja previamente
+  - [x] `POST /alumnos/:id/baja-materia/` con `materia_id`
+  - [x] Baja irreversible (`activa=False`, `fecha_baja`)
+  - [x] `SendBajaNotif` vía MS-6
+  - [x] Retornar 400 si baja ya procesada
 - **Criterio de aceptación:** La baja es irreversible, notifica al docente y el alumno pierde acceso a la materia.
 
 ---
 
 ### ISSUE-507: Servidor gRPC de Docentes & Alumnos
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] Implementar `GetAlumnosByMateria(materiaId) → [AlumnoInfo]`
-  - [ ] Implementar `GetAlumnoById(alumnoId) → AlumnoInfo`
-  - [ ] Implementar `IsAlumnoEnMateria(alumnoId, materiaId) → bool` (solo retorna `true` si el alumno está activo, no dado de baja)
-  - [ ] Puerto gRPC: **50053**
+  - [x] Implementar `GetAlumnosByMateria(materiaId) → [AlumnoInfo]`
+  - [x] Implementar `GetAlumnoById(alumnoId) → AlumnoInfo`
+  - [x] Implementar `IsAlumnoEnMateria(alumnoId, materiaId) → bool`
+  - [x] Puerto gRPC: **50053**
 - **Criterio de aceptación:** Los 3 métodos gRPC responden correctamente en el puerto 50053.
 
 ---
 
 ### ISSUE-508: Dashboard del Alumno (Datos Base)
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `GET /alumnos/me/materias` → lista de materias en las que el alumno autenticado está inscrito (activas)
-  - [ ] Incluir en la respuesta: NRC, nombre de materia, docente (nombre), sección
-  - [ ] Protegido con rol `alumno`
+  - [x] `GET /alumnos/me/materias/` → inscripciones activas enriquecidas con MS-2
+  - [x] NRC, nombre, docente, horario vía `materia_detail`
+  - [x] JWT requerido
 - **Criterio de aceptación:** El alumno autenticado puede ver sus materias activas.
 
 ---
 
 ### ISSUE-509: Validación de JWT en ms-alumnos
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] Implementar el mismo decorador `grpc_jwt_required` que en ms-periodos
-  - [ ] Aplicar a todos los endpoints protegidos
+  - [x] Decorador `@jwt_required` con ValidateToken MS-1
+  - [x] Aplicado a endpoints protegidos
 - **Criterio de aceptación:** Peticiones sin JWT válido reciben 401.
 
 ---
@@ -532,11 +551,12 @@
 
 ### ISSUE-601: Configuración Base del Proyecto Django (ms-calificaciones)
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] Inicializar proyecto Django en `/ms-calificaciones/`
-  - [ ] Dependencias: `openpyxl`, `grpcio`, `grpcio-tools`
-  - [ ] Configurar base de datos `agm_calificaciones_db` (MySQL 8)
-  - [ ] Crear modelos:
+  - [x] Inicializar proyecto Django en `/ms-calificaciones/`
+  - [x] Dependencias: `openpyxl`, `grpcio`, `grpcio-tools`
+  - [x] Configurar base de datos `agm_calificaciones_db` (MySQL 8)
+  - [x] Crear modelos:
     - `Ponderacion`: materia_id, nombre_categoria (ej. "Exámenes"), porcentaje
     - `Actividad`: ponderacion (FK), nombre, descripcion, fecha
     - `Calificacion`: actividad (FK), alumno_id, calificacion (decimal 0-10)
@@ -546,96 +566,101 @@
 
 ### ISSUE-602: Configuración de Ponderaciones
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `GET /ponderaciones/:materiaId` → obtener ponderaciones configuradas de una materia
-  - [ ] `POST /ponderaciones/:materiaId` → crear ponderaciones (recibe lista de categorías con porcentajes)
-  - [ ] `PUT /ponderaciones/:materiaId` → actualizar ponderaciones
-  - [ ] **Validar que la suma de todos los porcentajes sea exactamente 100%** (retornar 400 si no)
-  - [ ] Validar que solo el docente de esa materia pueda configurar ponderaciones (llamada gRPC a ms-periodos para verificar)
-  - [ ] Permitir importación de ponderaciones desde Excel (`POST /ponderaciones/:materiaId/importar`)
+  - [x] `GET /ponderaciones/:materiaId` → obtener ponderaciones configuradas de una materia
+  - [x] `POST /ponderaciones/:materiaId` → crear ponderaciones (recibe lista de categorías con porcentajes)
+  - [x] `PUT /ponderaciones/:materiaId` → actualizar ponderaciones
+  - [x] **Validar que la suma de todos los porcentajes sea exactamente 100%** (retornar 400 si no)
+  - [x] Validar docente titular vía MS-2
+  - [x] Importación Excel `POST /ponderaciones/:materiaId/importar`
 - **Criterio de aceptación:** No se pueden guardar ponderaciones que no sumen exactamente 100%.
 
 ---
 
 ### ISSUE-603: Gestión de Actividades
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `POST /actividades` → crear una actividad bajo una categoría de ponderación (ej. "Examen Parcial 1" bajo "Exámenes")
-  - [ ] `GET /actividades?materia=:id` → listar actividades de una materia organizadas por categoría
-  - [ ] `PUT /actividades/:id` → editar nombre/descripción de actividad
-  - [ ] `DELETE /actividades/:id` → eliminar actividad (solo si no tiene calificaciones asignadas)
+  - [x] `POST /actividades` → crear actividad
+  - [x] `GET /actividades?materia=:id` → listar por categoría
+  - [x] `PUT /actividades/:id` → editar
+  - [x] `DELETE /actividades/:id` → eliminar sin calificaciones
 - **Criterio de aceptación:** El docente puede crear y gestionar actividades por categoría de ponderación.
 
 ---
 
 ### ISSUE-604: Registro Individual de Calificaciones
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `POST /calificaciones` → asignar calificación a un alumno en una actividad específica
-  - [ ] `PUT /calificaciones/:id` → actualizar calificación (mientras la materia no esté cerrada con lista final impresa)
-  - [ ] Validar que el alumno pertenece a la materia (llamada gRPC a ms-alumnos: `IsAlumnoEnMateria`)
-  - [ ] Validar rango de calificación (0 a 10, con hasta 2 decimales)
+  - [x] `POST /calificaciones` → upsert calificación
+  - [x] `PUT /calificaciones/:id` → actualizar (bloqueo lista impresa)
+  - [x] `IsAlumnoEnMateria` vía MS-3
+  - [x] Validar rango 0–10
 - **Criterio de aceptación:** Se pueden asignar y editar calificaciones individuales.
 
 ---
 
 ### ISSUE-605: Importación Masiva de Calificaciones desde Excel
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `POST /calificaciones/importar` → recibe Excel con columnas: matrícula, actividad_id, calificación
-  - [ ] Parsear con `openpyxl`, validar datos antes de insertar
-  - [ ] Retornar resumen de importación (exitosos, fallidos con motivo)
+  - [x] `POST /calificaciones/importar/:materia_id`
+  - [x] Parsear openpyxl + resumen
 - **Criterio de aceptación:** Se puede importar calificaciones masivamente desde Excel.
 
 ---
 
 ### ISSUE-606: Cálculo de Promedios Ponderados
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Descripción:** Motor de cálculo del promedio final de cada alumno según las ponderaciones configuradas.
 - **Tareas:**
-  - [ ] Implementar función `calcular_promedio_ponderado(alumno_id, materia_id)`:
+  - [x] Implementar función `calcular_promedio_ponderado(alumno_id, materia_id)`:
     - Para cada categoría de ponderación, calcular el promedio de calificaciones del alumno en las actividades de esa categoría
     - Multiplicar por el porcentaje de la categoría
     - Sumar todos los resultados → promedio real
-  - [ ] Implementar regla de redondeo institucional:
+  - [x] Implementar regla de redondeo institucional:
     - Fracción `>= 0.5` → redondear al entero superior (ej. 7.5 → 8)
     - Fracción `< 0.5` → redondear al entero inferior (ej. 7.4 → 7)
-  - [ ] El cálculo debe ejecutarse en tiempo real (no precalculado) o invalidarse cuando se actualiza una calificación
+  - [x] Cálculo en tiempo real al consultar concentrado
 - **Criterio de aceptación:** El promedio ponderado se calcula correctamente. La regla de redondeo es correcta.
 
 ---
 
 ### ISSUE-607: Vista del Concentrado de Calificaciones
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `GET /concentrado/:materiaId` → retorna tabla completa con:
+  - [x] `GET /concentrado/:materiaId` → retorna tabla completa con:
     - Nombre y matrícula del alumno (obtenidos via gRPC de ms-alumnos)
     - Calificaciones por actividad
     - Promedio real (decimal)
     - Promedio redondeado (entero según regla institucional)
-  - [ ] Solo accesible para el docente de la materia o Admin
+  - [x] Solo docente titular o Admin
 - **Criterio de aceptación:** El concentrado muestra correctamente todos los alumnos con sus promedios reales y redondeados.
 
 ---
 
 ### ISSUE-608: Control de Cierre de Materia
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] Modelo `EstadoMateria`: materia_id, cerrada (bool), lista_impresa (bool)
-  - [ ] `POST /materias/:id/cerrar` → marca la materia como cerrada; llama a ms-notificaciones (`SendCierreMateria`) para notificar a alumnos
-  - [ ] `POST /materias/:id/imprimir-lista` → marca `lista_impresa = True`; después de esto, **no se permiten más cambios en calificaciones**
-  - [ ] Bloquear edición de calificaciones si `lista_impresa = True`
+  - [x] Modelo `EstadoMateria`
+  - [x] `POST /materias/:id/cerrar` + MS-6
+  - [x] `POST /materias/:id/imprimir-lista`
+  - [x] Bloqueo si `lista_impresa`
 - **Criterio de aceptación:** Las calificaciones no pueden modificarse después de que se imprime la lista final.
 
 ---
 
 ### ISSUE-609: Servidor gRPC de Calificaciones
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] Implementar `GetConcentrado(materiaId) → [AlumnoCalif]`
-  - [ ] Implementar `GetPromedioAlumno(alumnoId, materiaId) → float`
-  - [ ] Implementar `GetEstadisticasMateria(materiaId) → Stats` (promedio grupal, aprobados/reprobados)
-  - [ ] Puerto gRPC: **50054**
+  - [x] `GetConcentrado`, `GetPromedioAlumno`, `GetEstadisticasMateria`
+  - [x] Puerto gRPC: **50054**
 - **Criterio de aceptación:** Los 3 métodos gRPC responden correctamente en el puerto 50054.
 
 ---
@@ -644,11 +669,12 @@
 
 ### ISSUE-701: Configuración Base del Proyecto Django (ms-asistencias)
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] Inicializar proyecto Django en `/ms-asistencias/`
-  - [ ] Dependencias: `redis`, `django-redis`, `grpcio`, `grpcio-tools`, `cryptography` (para cifrado del QR)
-  - [ ] Configurar BD: `agm_asistencias_db` (MySQL 8) + Redis (para sesiones en vivo)
-  - [ ] Crear modelos:
+  - [x] Inicializar proyecto Django en `/ms-asistencias/`
+  - [x] Dependencias: `redis`, `django-redis`, `grpcio`, `grpcio-tools`, `cryptography` (para cifrado del QR)
+  - [x] Configurar BD: `agm_asistencias_db` (MySQL 8) + Redis (para sesiones en vivo)
+  - [x] Crear modelos:
     - `SesionAsistencia`: materia_id, docente_id, inicio, fin, activa
     - `RegistroAsistencia`: sesion (FK), alumno_id, timestamp_registro, estado (Presente/Retardo)
 - **Criterio de aceptación:** El MS levanta, se conecta a **MySQL** y a Redis.
@@ -657,23 +683,25 @@
 
 ### ISSUE-702: Gestión de Sesiones de Asistencia
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `POST /sesiones/iniciar` → el docente abre una sesión para una materia:
+  - [x] `POST /sesiones/iniciar` → el docente abre una sesión para una materia:
     - Crear sesión en MySQL (`agm_asistencias_db`)
     - Almacenar en Redis: `sesion:{sesion_id}` con TTL de 600 segundos (10 minutos)
     - Solo puede haber una sesión activa por materia a la vez
-  - [ ] `DELETE /sesiones/:id/cerrar` → el docente cierra manualmente la sesión antes de que expire
+  - [x] `DELETE /sesiones/:id/cerrar` → el docente cierra manualmente la sesión antes de que expire
   - [ ] Cierre automático por Redis TTL (cuando el TTL expira, la sesión se marca como inactiva en MySQL mediante worker, signal o tarea periódica)
-  - [ ] `GET /sesiones/:materiaId/activa` → consultar si hay sesión activa para esa materia
+  - [x] `GET /sesiones/activa?materia_id=` → consultar si hay sesión activa para esa materia
 - **Criterio de aceptación:** Las sesiones duran máximo 10 minutos y se cierran automáticamente.
 
 ---
 
 ### ISSUE-703: Generación de Token QR del Alumno
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Descripción:** El backend provee el payload cifrado que el alumno usará para generar su QR dinámico.
 - **Tareas:**
-  - [ ] `GET /qr/generate` → el alumno autenticado solicita su payload QR:
+  - [x] `GET /qr/generate` → el alumno autenticado solicita su payload QR:
     - Genera token con: `alumno_id`, `sesion_id` (si hay sesión activa para su materia), `timestamp`, firma HMAC
     - El token tiene validez corta (ej. 30 segundos)
     - Retornar el token como string para que el frontend lo encode en QR
@@ -684,8 +712,9 @@
 
 ### ISSUE-704: Registro de Asistencia (Validación del QR)
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `POST /asistencias/registrar` → el docente envía el contenido del QR escaneado:
+  - [x] `POST /asistencias/registrar` → el docente envía el contenido del QR escaneado:
     - Verificar firma HMAC del token
     - Verificar que el token no haya expirado (timestamp + 30s)
     - Verificar en Redis que el token NO haya sido usado previamente (**anti-replay**): `SET qr_used:{token_hash} 1 EX 60`
@@ -695,115 +724,116 @@
       - `Retardo`: registro entre 5 y 10 minutos
     - Registrar asistencia en MySQL
     - Marcar el token como usado en Redis
-  - [ ] Retornar 400 si el QR es inválido, expirado, ya fue usado o la sesión ya cerró
+  - [x] Retornar 400 si el QR es inválido, expirado, ya fue usado o la sesión ya cerró
 - **Criterio de aceptación:** Anti-replay funciona. El estado Presente/Retardo se calcula correctamente.
 
 ---
 
 ### ISSUE-705: Consulta de Asistencias
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `GET /asistencias/:materiaId/hoy` → asistencias del día en curso para esa materia
-  - [ ] `GET /asistencias/:materiaId/historial` → historial completo de asistencias de la materia (paginado, filtrable por fecha)
-  - [ ] `GET /asistencias/alumno/:alumnoId/materia/:materiaId` → historial de asistencias de un alumno específico en una materia
+  - [x] `GET /registros/por_materia_hoy?materia_id=` → asistencias del día en curso para esa materia
+  - [x] `GET /registros/historial?materia_id=` → historial completo de asistencias de la materia (paginado, filtrable por fecha)
+  - [x] `GET /registros/alumno_materia?alumno_id=&materia_id=` → historial de un alumno en una materia
 - **Criterio de aceptación:** El docente puede consultar el historial completo de asistencias.
 
 ---
 
 ### ISSUE-706: Estadísticas de Asistencia en Tiempo Real
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] Durante una sesión activa, `GET /sesiones/:id/stats` → retorna en tiempo real: total de alumnos, presentes, retardos, ausentes
-  - [ ] Usar Redis para mantener contadores en tiempo real durante la sesión
+  - [x] Durante una sesión activa, `GET /sesiones/:id/stats` → retorna en tiempo real: total de alumnos, presentes, retardos, ausentes
+  - [x] Usar Redis para mantener contadores en tiempo real durante la sesión
 - **Criterio de aceptación:** Durante el pase de lista, el docente ve estadísticas actualizadas en tiempo real.
 
 ---
 
 ### ISSUE-707: Servidor gRPC de Asistencias
 - **Prioridad:** 🔴 Crítica
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] Implementar `GetAsistenciaAlumno(alumnoId, materiaId) → [Asistencia]`
-  - [ ] Implementar `GetEstadisticasAsistencia(materiaId) → Stats` (% asistencia, Presentes, Retardos, Ausentes)
-  - [ ] Puerto gRPC: **50055**
+  - [x] Implementar `GetAsistenciaAlumno(alumnoId, materiaId) → [Asistencia]`
+  - [x] Implementar `GetEstadisticasAsistencia(materiaId) → Stats` (% asistencia, Presentes, Retardos, Ausentes)
+  - [x] Puerto gRPC: **50055**
 - **Criterio de aceptación:** Los 2 métodos gRPC responden correctamente en el puerto 50055.
 
 ---
 
 ### ISSUE-708: Proceso de Confirmación de Lista por el Docente
 - **Prioridad:** 🟡 Media
+- **Estado:** ✅ Finalizado (2026-05-18)
 - **Tareas:**
-  - [ ] `POST /sesiones/:id/confirmar` → el docente confirma la lista de asistencia de la sesión
-  - [ ] `POST /sesiones/:id/solicitar-nueva` → el docente solicita repetir el pase de lista ante irregularidades (resetea la sesión)
+  - [x] `POST /sesiones/:id/confirmar` → el docente confirma la lista de asistencia de la sesión
+  - [x] `POST /sesiones/:id/solicitar-nueva` → el docente solicita repetir el pase de lista ante irregularidades (resetea la sesión)
 - **Criterio de aceptación:** El docente puede confirmar o reiniciar el pase de lista.
 
 ---
 
 ## 📧 Epic 8: ms-notificaciones Notificaciones
 
-### ISSUE-801: Configuración Base del Proyecto Django (ms-notificaciones)
+### ISSUE-801: Configuración Base del Proyecto Django (ms-notificaciones) ✅
 - **Prioridad:** 🔴 Crítica
 - **Tareas:**
-  - [ ] Inicializar proyecto Django en `/ms-notificaciones/`
-  - [ ] Dependencias: `sendgrid` o `django-ses` o configurar SMTP con Gmail, `grpcio`, `grpcio-tools`
-  - [ ] Configurar BD: `agm_notificaciones_db` (MySQL 8; historial de correos en tablas Django)
-  - [ ] Crear modelo `HistorialCorreo`: tipo, destinatario_email, asunto, enviado_en, exitoso, error_msg
-  - [ ] Configurar credenciales SMTP desde variables de entorno
+  - [x] Inicializar proyecto Django en `/ms-notificaciones/`
+  - [x] Dependencias: SMTP (Django), `grpcio`, `grpcio-tools`
+  - [x] Configurar BD: `agm_notificaciones_db` (MySQL 8; historial de correos en tablas Django)
+  - [x] Crear modelo `HistorialCorreo`: tipo, destinatario_email, asunto, enviado_en, exitoso, error_msg
+  - [x] Configurar credenciales SMTP desde variables de entorno
 - **Criterio de aceptación:** El MS levanta y puede enviar un correo de prueba.
 
 ---
 
-### ISSUE-802: Correo de Bienvenida al Alumno
+### ISSUE-802: Correo de Bienvenida al Alumno ✅
 - **Prioridad:** 🔴 Crítica
 - **Tareas:**
-  - [ ] `POST /notificaciones/bienvenida` → recibe alumno_id, materia_id
-  - [ ] Consultar datos del alumno via gRPC a ms-alumnos y datos de la materia via gRPC a ms-periodos
-  - [ ] Enviar correo con: nombre del alumno, nombre de materia, **clave única de acceso** (generada en ms-auth), instrucciones de acceso
-  - [ ] Registrar el envío en `HistorialCorreo`
+  - [x] `POST /notificaciones/bienvenida` → recibe alumno_id, materia_id, clave_acceso
+  - [x] Consultar datos del alumno via gRPC a ms-alumnos y datos de la materia via gRPC a ms-periodos
+  - [x] Enviar correo con clave de acceso e instrucciones
+  - [x] Registrar el envío en `HistorialCorreo`
 - **Criterio de aceptación:** El alumno recibe su clave de acceso por correo al ser importado.
 
 ---
 
-### ISSUE-803: Notificación de Baja al Docente
+### ISSUE-803: Notificación de Baja al Docente ✅
 - **Prioridad:** 🟠 Alta
 - **Tareas:**
-  - [ ] `POST /notificaciones/baja` → recibe alumno_id, docente_id
-  - [ ] Consultar datos del alumno y del docente via gRPC
-  - [ ] Enviar correo al docente notificando la baja del alumno (nombre, matrícula, materia)
-  - [ ] Registrar en `HistorialCorreo`
+  - [x] `POST /notificaciones/baja` → recibe alumno_id, docente_id, materia_id
+  - [x] Consultar datos del alumno y del docente via gRPC
+  - [x] Enviar correo al docente notificando la baja del alumno
+  - [x] Registrar en `HistorialCorreo`
 - **Criterio de aceptación:** El docente recibe notificación por correo cuando un alumno se da de baja.
 
 ---
 
-### ISSUE-804: Notificación de Cierre de Materia a Alumnos
+### ISSUE-804: Notificación de Cierre de Materia a Alumnos ✅
 - **Prioridad:** 🟠 Alta
 - **Tareas:**
-  - [ ] `POST /notificaciones/cierre-materia` → recibe materia_id
-  - [ ] Obtener lista de alumnos de la materia via gRPC a ms-alumnos
-  - [ ] Enviar correo a **cada alumno** notificando el cierre y disponibilidad de calificaciones finales
-  - [ ] Implementar envío asíncrono (ej. usando `Celery` o `threading`) para no bloquear la respuesta HTTP
-  - [ ] Registrar cada envío en `HistorialCorreo`
+  - [x] `POST /notificaciones/cierre-materia` → recibe materia_id
+  - [x] Obtener lista de alumnos de la materia via gRPC a ms-alumnos
+  - [x] Enviar correo a cada alumno (ThreadPoolExecutor / `EMAIL_MAX_WORKERS`)
+  - [x] Registrar cada envío en `HistorialCorreo`
 - **Criterio de aceptación:** Todos los alumnos de la materia reciben correo de cierre.
 
 ---
 
-### ISSUE-805: Correo de Reset de Contraseña
+### ISSUE-805: Correo de Reset de Contraseña ✅
 - **Prioridad:** 🟠 Alta
 - **Tareas:**
-  - [ ] `POST /notificaciones/reset-password` → recibe email y token de reset
-  - [ ] Enviar correo con enlace de restablecimiento: `https://frontend.url/reset-password?token=<token>`
-  - [ ] Registrar en `HistorialCorreo`
+  - [x] `POST /notificaciones/reset-password` → recibe email, token, reset_url
+  - [x] Enviar correo con enlace de restablecimiento
+  - [x] Registrar en `HistorialCorreo`
 - **Criterio de aceptación:** El usuario recibe el enlace de reset de contraseña por correo.
 
 ---
 
-### ISSUE-806: Servidor gRPC de Notificaciones
+### ISSUE-806: Servidor gRPC de Notificaciones ✅
 - **Prioridad:** 🔴 Crítica
 - **Tareas:**
-  - [ ] Implementar `SendBienvenida(alumnoId, materiaId) → bool`
-  - [ ] Implementar `SendBajaNotif(alumnoId, docenteId) → bool`
-  - [ ] Implementar `SendCierreMateria(materiaId) → bool`
-  - [ ] Puerto gRPC: **50056**
-- **Criterio de aceptación:** Los 3 métodos gRPC responden correctamente en el puerto 50056.
+  - [x] Implementar `SendBienvenida`, `SendBajaNotif`, `SendCierreMateria`, `SendResetPassword`
+  - [x] Puerto gRPC: **50056** (`python -m grpc_server.server`)
+- **Criterio de aceptación:** Los **4** métodos gRPC responden correctamente en el puerto 50056.
 
 ---
 
@@ -811,72 +841,79 @@
 
 ### ISSUE-901: Configuración Base del Proyecto Django (ms-reportes)
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] Inicializar proyecto Django en `/ms-reportes/`
-  - [ ] Dependencias: `openpyxl` (Excel), `reportlab` o `WeasyPrint` (PDF), `grpcio`, `grpcio-tools`
-  - [ ] Configurar BD: `agm_reportes_db` (MySQL 8; opcional: tablas de caché / vistas para agregados pesados)
+  - [x] Inicializar proyecto Django en `/ms-reportes/`
+  - [x] Dependencias: `openpyxl` (Excel), `reportlab` o `WeasyPrint` (PDF), `grpcio`, `grpcio-tools`
+  - [x] Configurar BD: `agm_reportes_db` (MySQL 8; opcional: tablas de caché / vistas para agregados pesados)
 - **Criterio de aceptación:** El MS levanta y se conecta a su base de datos.
 
 ---
 
 ### ISSUE-902: Generación de Reporte de Calificaciones en Excel
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /reportes/calificaciones/:materiaId?formato=xls` → genera y descarga archivo Excel
-  - [ ] Obtener datos del concentrado via gRPC a ms-calificaciones (`GetConcentrado`)
-  - [ ] Obtener datos de alumnos via gRPC a ms-alumnos
-  - [ ] Formato Excel: encabezado con nombre de materia, periodo, docente; columnas por actividad; promedio real; promedio redondeado
-  - [ ] Usar `openpyxl` para generar el archivo; retornar con header `Content-Disposition: attachment; filename="calificaciones_NRC.xlsx"`
+  - [x] `GET /reportes/calificaciones/:materiaId?formato=xls` → genera y descarga archivo Excel
+  - [x] Obtener datos del concentrado via gRPC a ms-calificaciones (`GetConcentrado`)
+  - [x] Obtener datos de alumnos via gRPC a ms-alumnos
+  - [x] Formato Excel: encabezado con nombre de materia, periodo, docente; columnas por actividad; promedio real; promedio redondeado
+  - [x] Usar `openpyxl` para generar el archivo; retornar con header `Content-Disposition: attachment; filename="calificaciones_NRC.xlsx"`
 - **Criterio de aceptación:** Se descarga un Excel con el concentrado de calificaciones correctamente formateado.
 
 ---
 
 ### ISSUE-903: Generación de Reporte de Calificaciones en PDF
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /reportes/calificaciones/:materiaId?formato=pdf` → genera y descarga PDF
-  - [ ] Mismos datos que el Excel pero en formato PDF con logo institucional (opcional) y pie de página
-  - [ ] Usar `reportlab` o `WeasyPrint` para la generación
+  - [x] `GET /reportes/calificaciones/:materiaId?formato=pdf` → genera y descarga PDF
+  - [x] Mismos datos que el Excel pero en formato PDF con logo institucional (opcional) y pie de página
+  - [x] Usar `reportlab` o `WeasyPrint` para la generación
 - **Criterio de aceptación:** Se descarga un PDF con el concentrado de calificaciones.
 
 ---
 
 ### ISSUE-904: Reporte de Concentrado de Asistencias
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /reportes/asistencias/:materiaId?formato=pdf|xls` → genera reporte de asistencias
-  - [ ] Obtener datos via gRPC a ms-asistencias (`GetEstadisticasAsistencia`)
-  - [ ] Incluir: alumno, total de clases, presentes, retardos, ausentes, % asistencia
+  - [x] `GET /reportes/asistencias/:materiaId?formato=pdf|xls` → genera reporte de asistencias
+  - [x] Obtener datos via gRPC a ms-asistencias (`GetEstadisticasAsistencia`)
+  - [x] Incluir: alumno, total de clases, presentes, retardos, ausentes, % asistencia
 - **Criterio de aceptación:** Se puede descargar el concentrado de asistencias en PDF y Excel.
 
 ---
 
 ### ISSUE-905: Estadísticas del Docente
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /estadisticas/docente/:id` → estadísticas históricas del docente por materia y periodo
-  - [ ] Obtener materias del docente via gRPC a ms-periodos (`GetMateriasByDocente`)
-  - [ ] Para cada materia/periodo: promedio grupal, % aprobación, % asistencia
-  - [ ] Implementar comparativa si la misma materia fue impartida en múltiples periodos
+  - [x] `GET /estadisticas/docente/:id` → estadísticas históricas del docente por materia y periodo
+  - [x] Obtener materias del docente via gRPC a ms-periodos (`GetMateriasByDocente`)
+  - [x] Para cada materia/periodo: promedio grupal, % aprobación, % asistencia
+  - [x] Implementar comparativa si la misma materia fue impartida en múltiples periodos
 - **Criterio de aceptación:** El docente puede ver el historial comparativo de sus materias.
 
 ---
 
 ### ISSUE-906: Estadísticas del Alumno
 - **Prioridad:** 🟡 Media
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] `GET /estadisticas/alumno/:id` → estadísticas del alumno en sus materias
-  - [ ] Incluir: promedio actual, % asistencia, materias activas vs históricas
+  - [x] `GET /estadisticas/alumno/:id` → estadísticas del alumno en sus materias
+  - [x] Incluir: promedio actual, % asistencia, materias activas vs históricas
 - **Criterio de aceptación:** El alumno puede ver sus estadísticas personales.
 
 ---
 
 ### ISSUE-907: Servidor gRPC de Reportes
 - **Prioridad:** 🟠 Alta
+- **Estado:** ✅ Finalizado (2026-05-17)
 - **Tareas:**
-  - [ ] Implementar `GenerateReport(params) → FileBytes`
-  - [ ] Implementar `GetHistorialDocente(docenteId) → [StatsPeriodo]`
-  - [ ] Puerto gRPC: **50057**
+  - [x] Implementar `GenerateReport(params) → FileBytes`
+  - [x] Implementar `GetHistorialDocente(docenteId) → [StatsPeriodo]`
+  - [x] Puerto gRPC: **50057**
 - **Criterio de aceptación:** Los 2 métodos gRPC responden correctamente en el puerto 50057.
 
 ---

@@ -10,12 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import sys
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+_PROTO_GEN = BASE_DIR / 'proto_generated'
+if _PROTO_GEN.is_dir() and str(_PROTO_GEN) not in sys.path:
+    sys.path.insert(0, str(_PROTO_GEN))
 
 
 # Quick-start development settings - unsuitable for production
@@ -140,8 +145,14 @@ REST_FRAMEWORK = {
     ),
 }
 
-# CORS
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS (ISSUE-105): desarrollo permisivo; producción → CORS_ALLOW_ALL_ORIGINS=False
+from config.agm_env import env_bool, cors_allowed_origins_list
+
+if env_bool('CORS_ALLOW_ALL_ORIGINS', default=True):
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = cors_allowed_origins_list()
 
 INTERNAL_API_KEY = config('INTERNAL_API_KEY', default='')
 

@@ -48,7 +48,7 @@ AGM es una plataforma académica digital que permite a la Facultad de Ciencias d
 | MS-3 | Docentes & Alumnos | 8003 | 50053 | agm_alumnos_db |
 | MS-4 | Calificaciones & Ponderaciones | 8004 | 50054 | agm_calificaciones_db |
 | MS-5 | Asistencias QR | 8005 | 50055 | agm_asistencias_db |
-| MS-6 | Notificaciones | 8006 | 50056 | agm_notificaciones_db |
+| MS-6 | Notificaciones | 8006 | 50056 | agm_notificaciones_db — [README](ms-notificaciones/README.md) |
 | MS-7 | Reportes & Estadísticas | 8007 | 50057 | agm_reportes_db |
 
 ---
@@ -127,19 +127,36 @@ docker compose up --build
 **PowerShell (Windows)**
 
 ```powershell
-foreach ($d in 'ms-auth','ms-periodos','ms-alumnos','ms-calificaciones','ms-asistencias','ms-notificaciones','ms-reportes') {
-  Copy-Item "$d\.env.example" "$d\.env"
-}
+.\scripts\copy-env.ps1
 docker compose up --build
 ```
+
+Si ya tienes `.env` y solo agregaste variables nuevas (p. ej. CORS), copia manualmente las líneas `SERVICE_NAME`, `CORS_*` desde cada `.env.example`.
 
 ### Arranque y dependencias entre MS
 `depends_on` garantiza que cada MS espere **su** MySQL (y MS-5 además a Redis). **No** ordena el arranque entre microservicios que se llaman por gRPC: si un servicio falla al inicio porque otro aún no escucha en gRPC, suele bastar un reinicio del contenedor afectado o añadir reintentos en el cliente gRPC (recomendado en producción).
 
 ### API Gateway (Nginx)
-Tras `docker compose up`, el **punto de entrada único** para REST es **http://localhost:8080** (servicio `nginx`, mapeo `8080:80`). La configuración vive en `docker/nginx/default.conf` (prefijos `/auth/`, `/periodos/`, `/materias/`, `/docentes/`, `/alumnos/`, rutas de calificaciones, asistencias, notificaciones y reportes).
+Tras `docker compose up`, el **punto de entrada único** para REST es **http://localhost:8080** (servicio `nginx`, mapeo `8080:80`). La configuración vive en `docker/nginx/default.conf`.
+
+| Prefijo gateway | Microservicio | Notas |
+|-----------------|---------------|--------|
+| `/auth/`, `/usuarios` | MS-1 | Sin barra final en login (`/auth/login`) |
+| `/periodos/`, `/materias/` | MS-2 | Rewrite interno a `/api/...` |
+| `/docentes/`, `/alumnos/` | MS-3 | Rewrite interno a `/api/...` |
+| `/ponderaciones/`, `/actividades/`, `/calificaciones/`, `/concentrado/` | MS-4 | |
+| `/sesiones/`, `/qr/`, `/asistencias/` | MS-5 | |
+| `/notificaciones/` | MS-6 | |
+| `/reportes/`, `/estadisticas/` | MS-7 | |
+| `/health` | Gateway | JSON `{"status":"ok"}` |
+
+**Health por MS:** `GET http://localhost:800X/health/` (cada microservicio).
+
+**Smoke test:** `.\scripts\smoke-gateway.ps1` (requiere stack levantado).
 
 Los microservicios siguen publicados **directamente** en **8001–8007** para depuración, **Django Admin** (`/admin/`) y herramientas que apunten a un puerto concreto. **gRPC** (50051–50057) solo entre contenedores; no pasa por Nginx.
+
+Nginx arranca cuando los 7 MS reportan **healthy** (evita 502 al inicio). Si recreas solo los MS: `docker compose restart nginx`.
 
 ### URLs locales tras `docker compose up`
 
@@ -156,6 +173,18 @@ Los microservicios siguen publicados **directamente** en **8001–8007** para de
 
 Django Admin en cada MS: `http://localhost:800X/admin/` (no enrutado por el gateway).
 
+### CORS (ISSUE-105)
+En **desarrollo** (Docker local): `CORS_ALLOW_ALL_ORIGINS=True` en cada `ms-*/.env` (valor por defecto en `.env.example`).
+
+En **producción** (Railway, etc.):
+- `CORS_ALLOW_ALL_ORIGINS=False`
+- `CORS_ALLOWED_ORIGINS=https://tu-frontend.vercel.app,https://tu-gateway.up.railway.app`
+
+El CORS se aplica en **cada microservicio Django** (no en Nginx). Ver `docs/devs/Makinohara/DESPLIEGUE_RAILWAY.md`.
+
+### Frontend (Angular)
+No está en `docker-compose`. Desde `frontend/sistema_AGM`: `npm install` y `npm start` → **http://localhost:4200**. El `environment.ts` apunta la API a `http://127.0.0.1:8080`.
+
 ---
 
 ## 🌐 URLs de Producción
@@ -171,7 +200,15 @@ Django Admin en cada MS: `http://localhost:800X/admin/` (no enrutado por el gate
 | MS-7 Reportes | `https://agm-reportes.up.railway.app` |
 | Frontend | `https://agm-frontend.vercel.app` |
 
-> ⚠️ Las URLs se actualizarán al realizar el despliegue.
+> ⚠️ Sustituir por las URLs reales al desplegar. Guía paso a paso: [`docs/devs/Makinohara/DESPLIEGUE_RAILWAY.md`](docs/devs/Makinohara/DESPLIEGUE_RAILWAY.md).
+
+---
+
+## 🔧 CI y calidad (Epic 1)
+
+- **GitHub Actions:** `.github/workflows/docker-build.yml` — `docker build` en los 7 MS en cada push/PR a `main` o `develop`.
+- **Postman:** [`docs/postman/AGM_API_Collection.json`](docs/postman/AGM_API_Collection.json) (MS-2, MS-3, **MS-6**); [`docs/postman_collection.json`](docs/postman_collection.json) — auth y gateway.
+- **Pulido y pruebas por MS:** [`docs/RESUMEN_CAMBIOS.md`](docs/RESUMEN_CAMBIOS.md) (único documento vivo).
 
 ---
 

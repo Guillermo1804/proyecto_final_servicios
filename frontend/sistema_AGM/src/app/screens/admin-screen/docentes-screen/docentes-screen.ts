@@ -1,50 +1,111 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 import { BottomNavbarAdmin } from '../../../partials/bottom-navbar-admin/bottom-navbar-admin';
+import { FacadeService } from '../../../services/facade.service';
+
+interface DocenteCard {
+  nombre: string;
+  id: string;
+  facultad: string;
+  estado: string;
+  tipo: string;
+}
 
 @Component({
   selector: 'app-docentes-screen',
   standalone: true,
-  imports: [CommonModule, TopbarAdmin, BottomNavbarAdmin],
+  imports: [CommonModule, FormsModule, TopbarAdmin, BottomNavbarAdmin],
   templateUrl: './docentes-screen.html',
-  styleUrl: './docentes-screen.scss'
+  styleUrl: './docentes-screen.scss',
 })
-export class DocentesScreen {
+export class DocentesScreen implements OnInit {
+  docentes: DocenteCard[] = [];
+  docentesFiltrados: DocenteCard[] = [];
+  loading = true;
+  errorMessage = '';
+  successMessage = '';
+  searchTerm = '';
+  saving = false;
 
-  docentes = [
-    {
-      nombre: 'Dr. Alejandro Vargas',
-      id: '44920-B',
-      facultad: 'Ciencias Exactas',
-      estado: 'Activo',
-      tipo: 'activo',
-      foto: '/assets/docente1.jpg'
-    },
-    {
-      nombre: 'Dra. Beatriz Mendoza',
-      id: '31255-C',
-      facultad: 'Ingeniería',
-      estado: 'Licencia',
-      tipo: 'licencia',
-      foto: '/assets/docente2.jpg'
-    },
-    {
-      nombre: 'Mgter. Carlos Ruiz',
-      id: '55621-A',
-      facultad: 'Artes y Humanidades',
-      estado: 'Activo',
-      tipo: 'activo',
-      foto: '/assets/docente3.jpg'
-    },
-    {
-      nombre: 'Dra. Diana Soto',
-      id: '22091-E',
-      facultad: 'Ciencias de la Salud',
-      estado: 'Inactivo',
-      tipo: 'inactivo',
-      foto: '/assets/docente4.jpg'
+  constructor(private facade: FacadeService) {}
+
+  ngOnInit(): void {
+    this.loadDocentes();
+  }
+
+  loadDocentes(): void {
+    this.loading = true;
+    this.errorMessage = '';
+    this.facade.listDocentes({ limit: 100 }).subscribe({
+      next: (body) => {
+        this.loading = false;
+        const rows = this.facade.extractList<{
+          id?: number;
+          nombre?: string;
+          apellido?: string;
+          departamento?: string;
+          usuario_id?: number;
+        }>(body);
+        this.docentes = rows.map((d) => ({
+          nombre: [d.nombre, d.apellido].filter(Boolean).join(' ') || '—',
+          id: d.usuario_id ? String(d.usuario_id) : String(d.id ?? '—'),
+          facultad: d.departamento || 'AGM',
+          estado: 'Activo',
+          tipo: 'activo',
+        }));
+        this.applySearch();
+      },
+      error: () => {
+        this.loading = false;
+        this.errorMessage = 'No se pudieron cargar los docentes.';
+      },
+    });
+  }
+
+  applySearch(): void {
+    const q = this.searchTerm.trim().toLowerCase();
+    this.docentesFiltrados = q
+      ? this.docentes.filter(
+          (d) =>
+            d.nombre.toLowerCase().includes(q) ||
+            d.id.toLowerCase().includes(q) ||
+            d.facultad.toLowerCase().includes(q),
+        )
+      : [...this.docentes];
+  }
+
+  onSearchChange(): void {
+    this.applySearch();
+  }
+
+  onImportPdf(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
     }
-  ];
+    this.saving = true;
+    this.errorMessage = '';
+    this.facade.importDocentesPdf(file).subscribe({
+      next: (body) => {
+        this.saving = false;
+        const data = body?.data as { creados?: number; omitidos?: number; errores?: number } | undefined;
+        this.successMessage = `Importación: ${data?.creados ?? 0} creados, ${data?.omitidos ?? 0} omitidos.`;
+        input.value = '';
+        this.loadDocentes();
+      },
+      error: () => {
+        this.saving = false;
+        this.errorMessage = 'Error al importar el PDF de docentes.';
+        input.value = '';
+      },
+    });
+  }
 
+  openImportPdf(): void {
+    const el = document.getElementById('import-docentes-pdf') as HTMLInputElement | null;
+    el?.click();
+  }
 }

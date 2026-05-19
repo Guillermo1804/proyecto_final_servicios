@@ -156,12 +156,17 @@ Entregar una base **reproducible, segura y desplegable** para los siete microser
 
 ## 6. Checklist final (calidad “a prueba de errores”)
 
-- [ ] `docker compose up --build` desde cero (sin volúmenes previos) completado al menos una vez grabado o documentado.
-- [ ] Ningún `.env` en el historial reciente (`git log --all --full-history -- .env`).
-- [ ] Puertos 8001–8007 y 50051–50057 sin colisiones en documentación.
-- [ ] Gateway: una URL base prueba los 7 prefijos (aunque la respuesta sea 401 sin token).
-- [ ] README o wiki interna: “cómo copiar envs” y “cómo levantar”.
-- [ ] Alineación con **ISSUE-1106** (pre-entrega): Compose funcional, sin credenciales hardcodeadas.
+- [x] `docker compose up --build` documentado en README + script `scripts/copy-env.ps1`.
+- [x] `.env` en `.gitignore`; variables en `.env.example` (incl. `CORS_*`, `SERVICE_NAME`).
+- [x] Puertos 8001–8007 y 50051–50057 documentados en README.
+- [x] Gateway: `scripts/smoke-gateway.ps1` + tabla de prefijos en README.
+- [x] Health REST `GET /health/` en los 7 MS + `/health` en Nginx; healthchecks en Compose.
+- [x] CORS por env en los 7 MS (`CORS_ALLOW_ALL_ORIGINS` / `CORS_ALLOWED_ORIGINS`).
+- [x] CI: `.github/workflows/docker-build.yml`.
+- [x] Guía cloud: `docs/devs/Makinohara/DESPLIEGUE_RAILWAY.md`.
+- [ ] **ISSUE-106:** desplegar en Railway y pegar URLs HTTPS reales en README (acción manual con cuenta cloud).
+- [ ] Verificar `git log --all --full-history -- .env` antes de entregar.
+- [ ] Alineación **ISSUE-1106**: smoke en máquina limpia antes de presentación.
 
 ---
 

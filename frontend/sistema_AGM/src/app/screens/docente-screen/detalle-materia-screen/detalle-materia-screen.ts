@@ -5,50 +5,68 @@ import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bot
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { FacadeService } from '../../../services/facade.service';
+
 @Component({
   selector: 'app-detalle-materia-screen',
   standalone: true,
-  imports: [CommonModule, BottomNavbarDocente, TopbarAdmin,RouterLink,FormsModule],
+  imports: [CommonModule, BottomNavbarDocente, TopbarAdmin, RouterLink, FormsModule],
   templateUrl: './detalle-materia-screen.html',
-  styleUrl: './detalle-materia-screen.scss'
+  styleUrl: './detalle-materia-screen.scss',
 })
 export class DetalleMateriaScreen implements OnInit {
+  codigoMateria = '';
+  materiaId = 0;
+  loadingAlumnos = false;
+
+  alumnos: {
+    iniciales: string;
+    nombre: string;
+    matricula: string;
+    asistencia: string;
+  }[] = [];
+
+  constructor(
+    private route: ActivatedRoute,
+    private facade: FacadeService,
+  ) {
+    this.codigoMateria = this.route.snapshot.paramMap.get('id') ?? '';
+    const id = Number(this.codigoMateria);
+    this.materiaId = Number.isFinite(id) ? id : 0;
+  }
 
   ngOnInit(): void {
-    // Aquí podrías cargar los datos de la materia usando el código obtenido de la ruta
-    // Ejemplo: this.materiaService.getMateria(this.codigoMateria).subscribe(...)
-  }
-  codigoMateria = '';
-
-  alumnos = [
-    {
-      iniciales: 'AG',
-      nombre: 'Alonso García, Roberto',
-      matricula: '202300124',
-      asistencia: '98%'
-    },
-    {
-      iniciales: 'BC',
-      nombre: 'Barrera Cruz, Sofía',
-      matricula: '202300456',
-      asistencia: '85%'
-    },
-    {
-      iniciales: 'DV',
-      nombre: 'Díaz Valdés, Marco',
-      matricula: '202300891',
-      asistencia: '62%'
-    },
-    {
-      iniciales: 'LM',
-      nombre: 'López Mora, Elena',
-      matricula: '202300321',
-      asistencia: '100%'
+    if (this.materiaId) {
+      this.loadAlumnos();
     }
-  ];
+  }
 
-  constructor(private route: ActivatedRoute) {
-    this.codigoMateria = this.route.snapshot.paramMap.get('id') ?? '';
+  private loadAlumnos(): void {
+    this.loadingAlumnos = true;
+    this.facade.listAlumnosPorMateria(this.materiaId).subscribe({
+      next: (body) => {
+        this.loadingAlumnos = false;
+        const rows = this.facade.extractList<{
+          alumno?: { nombre?: string; apellido?: string; matricula?: string };
+        }>(body);
+        this.alumnos = rows.map((row) => {
+          const a = row.alumno ?? {};
+          const nombre = [a.apellido, a.nombre].filter(Boolean).join(', ') || '—';
+          const ini =
+            (a.nombre?.[0] ?? '') + (a.apellido?.[0] ?? '') || '?';
+          return {
+            iniciales: ini.toUpperCase(),
+            nombre,
+            matricula: a.matricula ?? '—',
+            asistencia: '—',
+          };
+        });
+      },
+      error: () => {
+        this.loadingAlumnos = false;
+        this.alumnos = [];
+      },
+    });
   }
 
   tabActiva: 'alumnos' | 'evaluacion' | 'actividades' = 'alumnos';

@@ -3,6 +3,7 @@ from datetime import timedelta
 import secrets
 
 from decouple import config
+from django.db import transaction
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, permission_classes
@@ -333,12 +334,18 @@ def alumno_only(request):
 @permission_classes([AllowAny])
 def usuarios(request):
     if request.method == 'GET':
-        if not (request.user and request.user.is_authenticated and request.user.rol == 'admin'):
+        if not request.user or not request.user.is_authenticated:
             return Response({
                 'success': False,
                 'data': None,
-                'message': 'No autorizado'
+                'message': 'Token requerido',
             }, status=status.HTTP_401_UNAUTHORIZED)
+        if request.user.rol != 'admin':
+            return Response({
+                'success': False,
+                'data': None,
+                'message': 'Sin permisos',
+            }, status=status.HTTP_403_FORBIDDEN)
 
         page = max(int(request.query_params.get('page', 1)), 1)
         limit = max(int(request.query_params.get('limit', 10)), 1)

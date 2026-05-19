@@ -29,7 +29,8 @@ export interface User {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8001/auth';
+  /** @deprecated Usar FacadeService (gateway :8080). Se mantiene por compatibilidad. */
+  private apiUrl = 'http://localhost:8080/auth';
   private currentUser = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUser.asObservable();
 

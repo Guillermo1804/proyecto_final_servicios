@@ -4,108 +4,56 @@
 
   <main class="content">
 
-<section class="filters-card">
+    <section class="filters-card" *ngIf="periodosUnicos.length">
+      <div class="filter-field">
+        <label>Periodo académico</label>
+        <select [value]="periodoFiltro" (change)="onPeriodoFiltroChange($event)">
+          <option value="">Todos los periodos</option>
+          <option *ngFor="let p of periodosUnicos" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+    </section>
 
-  <div class="filter-field">
-    <label>Periodo Académico</label>
-    <select>
-      <option>Ciclo Lectivo 2024-1 (Actual)</option>
-    </select>
-  </div>
+    <p *ngIf="loadingStats" class="loading-hint">Cargando estadísticas del docente…</p>
 
-  <div class="filter-field">
-    <label>Materia</label>
-    <select>
-      <option>Todas las materias</option>
-    </select>
-  </div>
-
-  <button>
-    <i class="bi bi-filter"></i>
-    Aplicar Filtros
-  </button>
-
-</section>
-
-    <section class="metrics-grid">
+    <section class="metrics-grid" *ngIf="!loadingStats">
 
       <article class="metric-card azul">
-        <p>Promedio General</p>
-        <h3>8.42</h3>
-        <span class="positivo">↗ +0.3 vs periodo anterior</span>
+        <p>Promedio general</p>
+        <h3>{{ promedioGeneral }}</h3>
+        <span>MS-7 · calificaciones MS-4</span>
       </article>
 
       <article class="metric-card azul">
-        <p>Índice de Aprobación</p>
-        <h3>91.5%</h3>
-        <span class="positivo">↗ 542 alumnos aprobados</span>
-      </article>
-
-      <article class="metric-card rojo">
-        <p>Índice de Deserción</p>
-        <h3>2.4%</h3>
-        <span class="negativo">⚠ 12 alumnos en riesgo</span>
+        <p>Índice de aprobación</p>
+        <h3>{{ indiceAprobacion }}</h3>
+        <span>sobre materias del filtro</span>
       </article>
 
       <article class="metric-card oscuro">
-        <p>Materias Activas</p>
-        <h3>4</h3>
-        <span>○ 148 horas lectivas totales</span>
+        <p>Materias en historial</p>
+        <h3>{{ materiasActivas }}</h3>
+        <span>datos vía gRPC MS-2/4/5</span>
       </article>
 
     </section>
 
-    <section class="chart-card">
+    <section class="chart-card" *ngIf="chartBars.length">
 
       <div class="chart-header">
-        <h3>Rendimiento por Materia</h3>
-
+        <h3>Rendimiento por materia</h3>
         <div class="legend">
-          <span><i></i> Promedio</span>
-          <span><i></i> % Aprobación</span>
+          <span><i></i> Promedio (escala)</span>
+          <span><i></i> % aprobación</span>
         </div>
       </div>
 
       <div class="chart-bars">
-        <div>
-          <span style="height: 64%"></span>
-          <span style="height: 64%"></span>
-          <p>IA I</p>
+        <div *ngFor="let bar of chartBars">
+          <span [style.height.%]="bar.promedioPct"></span>
+          <span [style.height.%]="bar.aprobacionPct"></span>
+          <p>{{ bar.label }}</p>
         </div>
-
-        <div>
-          <span style="height: 45%"></span>
-          <span style="height: 45%"></span>
-          <p>Estructuras</p>
-        </div>
-
-        <div>
-          <span style="height: 78%"></span>
-          <span style="height: 78%"></span>
-          <p>Sistemas Op.</p>
-        </div>
-
-        <div>
-          <span style="height: 56%"></span>
-          <span style="height: 56%"></span>
-          <p>Redes</p>
-        </div>
-      </div>
-
-      <div class="insight-card">
-        <strong>Observación Clave</strong>
-        <p>
-          Inteligencia Artificial I presenta el mayor índice de aprobación (94%)
-          pero un promedio de calificaciones conservador (7.8).
-        </p>
-      </div>
-
-      <div class="insight-card">
-        <strong>Acción Sugerida</strong>
-        <p>
-          Revisar criterios de evaluación en Estructuras de Datos, el promedio
-          descendió 0.5 puntos este mes.
-        </p>
       </div>
 
     </section>
@@ -114,72 +62,72 @@
 
       <h3>
         <i class="bi bi-file-earmark-text"></i>
-        Exportación de Actas
+        Exportación de reportes
       </h3>
 
-      <p>
-        Genere las actas oficiales de calificaciones finales para su entrega administrativa.
-      </p>
+      <p>Descarga concentrado de calificaciones (MS-4) o asistencias (MS-5) en PDF o Excel.</p>
 
-      <label>Seleccione Materia</label>
-      <select>
-        <option>Inteligencia Artificial I - Secc. A</option>
+      <label>Tipo de reporte</label>
+      <div class="format-row">
+        <button
+          type="button"
+          [class.active]="tipoReporte === 'calificaciones'"
+          (click)="setTipoReporte('calificaciones')"
+        >
+          Calificaciones
+        </button>
+        <button
+          type="button"
+          [class.active]="tipoReporte === 'asistencias'"
+          (click)="setTipoReporte('asistencias')"
+        >
+          Asistencias
+        </button>
+      </div>
+
+      <label>Seleccione materia</label>
+      <select [value]="selectedMateriaId" (change)="onMateriaChange($event)">
+        <option *ngFor="let m of materiasOpciones" [value]="m.id">{{ m.label }}</option>
       </select>
 
-      <label>Formato de Archivo</label>
-
+      <label>Formato de archivo</label>
       <div class="format-row">
-        <button>
+        <button type="button" [class.active]="formato === 'pdf'" (click)="setFormato('pdf')">
           <i class="bi bi-file-earmark-pdf"></i>
           PDF
         </button>
-
-        <button>
+        <button type="button" [class.active]="formato === 'xlsx'" (click)="setFormato('xlsx')">
           <i class="bi bi-table"></i>
           Excel
         </button>
       </div>
 
-      <button class="generate-btn">
-        <i class="bi bi-download"></i>
-        Generar Documento Final
-      </button>
+      <p *ngIf="errorMessage" class="error-text">{{ errorMessage }}</p>
 
-      <div class="note">
-        <i class="bi bi-link-45deg"></i>
-        Las actas generadas incluyen firma digital docente automática.
-      </div>
+      <button type="button" class="generate-btn" (click)="generarReporte()" [disabled]="loading">
+        <i class="bi bi-download"></i>
+        {{ loading ? 'Generando…' : 'Generar documento' }}
+      </button>
 
     </section>
 
-    <section class="history-card">
+    <section class="history-card" *ngIf="historial.length">
 
       <div class="history-header">
-        <h3>Historial de Exportaciones</h3>
-
-        <a href="#">
-          Ver todo el historial
-          <i class="bi bi-chevron-right"></i>
-        </a>
+        <h3>Últimas exportaciones (sesión)</h3>
       </div>
 
       <div class="history-table">
-
         <div class="table-head">
           <span>Documento</span>
           <span>Materia</span>
-          <span>Fecha de Generación</span>
+          <span>Fecha</span>
         </div>
-
-        <div
-          class="table-row"
-          *ngFor="let item of historial"
-        >
+        <div class="table-row" *ngFor="let item of historial">
           <span>{{ item.documento }}</span>
           <span>{{ item.materia }}</span>
           <span>{{ item.fecha }}</span>
         </div>
-
       </div>
 
     </section>
