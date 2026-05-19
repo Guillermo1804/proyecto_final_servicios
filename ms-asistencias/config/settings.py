@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'apps.core.apps.CoreConfig',
 ]
 
 MIDDLEWARE = [
@@ -65,6 +66,24 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ===== REDIS CONFIGURATION =====
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f"redis://{config('REDIS_HOST', default='localhost')}:{config('REDIS_PORT', default='6379')}/1",
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'IGNORE_EXCEPTIONS': True,
+        }
+    }
+}
+
+# QR Secret Key for HMAC signing
+QR_HMAC_SECRET = config('QR_HMAC_SECRET', default='clave-secreta-para-hmac-cambiar-en-produccion')
 
 if env_bool('CORS_ALLOW_ALL_ORIGINS', default=True):
     CORS_ALLOW_ALL_ORIGINS = True
