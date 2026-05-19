@@ -1,0 +1,30 @@
+name: gRPC Smoke Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  smoke-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and run services and run smoke tests
+        env:
+          COMPOSE_DOCKER_CLI_BUILD: 1
+          DOCKER_BUILDKIT: 1
+        run: |
+          set -euxo pipefail
+          docker compose pull || true
+          docker compose up --build -d ms-alumnos ms-auth ms-calificaciones ms-asistencias
+          # give services a moment
+          sleep 8
+          bash scripts/grpc_smoke_tests.sh
+          docker compose down --rmi local -v --remove-orphans || true

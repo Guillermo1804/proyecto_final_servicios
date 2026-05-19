@@ -1,3 +1,15 @@
 #!/bin/bash
-python -m grpc_tools.protoc -I../proto --python_out=./proto_generated --grpc_python_out=./proto_generated ../proto/reportes.proto
-echo 'Stubs generados en proto_generated/'
+set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+PROTO_ROOT="${REPO_ROOT}/proto"
+OUT_DIR="${SCRIPT_DIR}/proto_generated"
+
+mkdir -p "${OUT_DIR}"
+
+python -m grpc_tools.protoc -I"${PROTO_ROOT}" \
+	--python_out="${OUT_DIR}" \
+	--grpc_python_out="${OUT_DIR}" \
+	"${PROTO_ROOT}/reportes.proto"
+
+echo "Stubs generados en ${OUT_DIR}/"
