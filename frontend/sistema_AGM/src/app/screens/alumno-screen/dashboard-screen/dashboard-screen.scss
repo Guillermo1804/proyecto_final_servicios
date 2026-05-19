@@ -307,6 +307,17 @@
 
 /* ALERTS */
 
+.alert-error {
+  color: #b91c1c;
+  margin: 0.5rem 0;
+}
+
+.alerts-card .alert-item {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+}
+
 .alerts-card {
   background: white;
 

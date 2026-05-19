@@ -66,6 +66,7 @@
         <span>Docente</span>
         <span>Facultad</span>
         <span>Estado</span>
+        <span>Acciones</span>
       </div>
 
       <div
@@ -74,11 +75,6 @@
       >
 
         <div class="teacher-info">
-
-          <img
-            [src]="docente.foto"
-            [alt]="docente.nombre"
-          >
 
           <div>
             <strong>{{ docente.nombre }}</strong>
@@ -97,6 +93,15 @@
         >
           {{ docente.estado }}
         </span>
+
+        <button
+          type="button"
+          class="filter-btn"
+          (click)="resetPasswordDocente(docente)"
+          [disabled]="saving || !docente.usuarioId"
+        >
+          <i class="bi bi-key"></i>
+        </button>
 
       </div>
 

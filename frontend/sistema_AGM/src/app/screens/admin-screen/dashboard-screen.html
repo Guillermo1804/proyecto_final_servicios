@@ -6,173 +6,68 @@
 
     <section class="hero">
       <h2>Resumen <br> Administrativo</h2>
-
-      <p>
-        Gestión global del sistema académico y estadísticas en tiempo real.
+      <p>Gestión global del sistema académico y estadísticas en tiempo real.</p>
+      <p *ngIf="periodoActivoNombre !== '—'">
+        Periodo activo: <strong>{{ periodoActivoNombre }}</strong>
       </p>
     </section>
 
-    <!-- STATS -->
+    <p *ngIf="loading">Cargando estadísticas…</p>
+    <p *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</p>
 
-    <section class="stats-grid">
-
-      <article
-        class="stat-card"
-        *ngFor="let item of estadisticas"
-      >
-
+    <section class="stats-grid" *ngIf="!loading">
+      <article class="stat-card" *ngFor="let item of estadisticas">
         <div class="stat-header">
-
-          <div
-            class="stat-icon"
-            [ngClass]="item.color"
-          >
-            <i
-              class="bi"
-              [ngClass]="item.icono"
-            ></i>
+          <div class="stat-icon" [ngClass]="item.color">
+            <i class="bi" [ngClass]="item.icono"></i>
           </div>
-
-          <span
-            class="badge"
-            [ngClass]="item.tipo"
-          >
-            {{ item.estado }}
-          </span>
-
+          <span class="badge" [ngClass]="item.tipo">{{ item.estado }}</span>
         </div>
-
         <p>{{ item.titulo }}</p>
-
         <h3>{{ item.valor }}</h3>
-
       </article>
-
     </section>
 
-    <!-- ACTIVIDAD -->
-
-    <section class="activity-card">
-
+    <section class="activity-card" *ngIf="!loading">
       <div class="activity-title">
-
-        <h3>Lista de actividad reciente</h3>
-
-        <a href="#">
-          Ver todo
-        </a>
-
+        <h3>Accesos rápidos</h3>
       </div>
-
       <div class="activity-table">
-
-        <div class="table-head">
-          <span>Acción</span>
-          <span>Usuario</span>
-          <span>Fecha</span>
-        </div>
-
-        <div
-          class="table-row"
-          *ngFor="let actividad of actividades"
-        >
-
-          <div class="action-cell">
-
-            <i
-              class="bi"
-              [ngClass]="[actividad.icono, actividad.color]"
-            ></i>
-
-            <span>
-              {{ actividad.accion }}
-            </span>
-
-          </div>
-
-          <span>
-            {{ actividad.usuario }}
-          </span>
-
-          <span>
-            {{ actividad.fecha }}
-          </span>
-
-        </div>
-
+        <a class="table-row" routerLink="/admin/periodos">
+          <span><i class="bi bi-calendar"></i> Gestionar periodos</span>
+        </a>
+        <a class="table-row" routerLink="/admin/materias">
+          <span><i class="bi bi-journal-bookmark"></i> Gestionar materias</span>
+        </a>
+        <a class="table-row" routerLink="/admin/docentes">
+          <span><i class="bi bi-mortarboard"></i> Gestionar docentes</span>
+        </a>
       </div>
-
     </section>
-
-    <!-- PERIODO -->
 
     <section class="period-card">
-
       <div>
-
         <h3>Crear Periodo</h3>
-
-        <p>
-          Inicia un nuevo ciclo académico configurando fechas y parámetros base.
-        </p>
-
-        <button>
-
+        <p>Inicia un nuevo ciclo académico configurando fechas y parámetros base.</p>
+        <a class="period-btn" routerLink="/admin/periodos">
           <i class="bi bi-plus-circle"></i>
-
           Configurar ahora
-
-        </button>
-
+        </a>
       </div>
-
       <i class="bi bi-calendar2-week period-bg"></i>
-
     </section>
 
-    <!-- DOCENTE -->
-
     <section class="teacher-card">
-
       <div class="teacher-icon">
         <i class="bi bi-person-plus"></i>
       </div>
-
       <h3>Registrar Docente</h3>
-
-      <p>
-        Da de alta a nuevos docentes y asígnalos a sus facultades correspondientes.
-      </p>
-
-      <button>
-        Nueva alta docente
-      </button>
-
-    </section>
-
-    <!-- SEDE -->
-
-    <section class="campus-card">
-
-      <img
-        src="/assets/sede.jpg"
-        alt="Sede principal"
-      >
-
-      <div class="campus-info">
-
-        <h3>Sede Principal</h3>
-
-        <p>
-          Mantenimiento programado: 12 Oct
-        </p>
-
-      </div>
-
+      <p>Da de alta a nuevos docentes e impórtalos desde PDF.</p>
+      <a class="teacher-btn" routerLink="/admin/docentes">Gestionar docentes</a>
     </section>
 
   </main>
 
   <app-bottom-navbar-admin></app-bottom-navbar-admin>
-  
+
 </div>

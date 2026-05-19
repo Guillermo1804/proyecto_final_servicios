@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, of, tap } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { ErrorsService } from './tools/errors.service';
 import { ValidatorService } from './tools/validator.service';
 import { environment } from '../../environments/environment';
@@ -55,14 +56,14 @@ export class FacadeService {
     const data = { username, password };
     const error: Record<string, string> = {};
     if (!this.validatorService.required(data.username)) {
-      error.username = this.errorService.required;
+      error['username'] = this.errorService.required;
     } else if (!this.validatorService.max(data.username, 40)) {
-      error.username = this.errorService.max(40);
+      error['username'] = this.errorService.max(40);
     } else if (!this.validatorService.email(data.username)) {
-      error.username = this.errorService.email;
+      error['username'] = this.errorService.email;
     }
     if (!this.validatorService.required(data.password)) {
-      error.password = this.errorService.required;
+      error['password'] = this.errorService.required;
     }
     return error;
   }
@@ -94,6 +95,61 @@ export class FacadeService {
     return this.http.get<AgmEnvelope<AuthUser>>(this.buildApiUrl('/auth/me'), {
       headers: this.authHeaders(),
     });
+  }
+
+  public forgotPassword(email: string): Observable<AgmEnvelope<null>> {
+    return this.http.post<AgmEnvelope<null>>(
+      this.buildApiUrl('/auth/forgot-password'),
+      { email },
+      { headers: jsonHeaders },
+    );
+  }
+
+  public resetPassword(token: string, password: string): Observable<AgmEnvelope<null>> {
+    return this.http.post<AgmEnvelope<null>>(
+      this.buildApiUrl('/auth/reset-password'),
+      { token, password },
+      { headers: jsonHeaders },
+    );
+  }
+
+  public resetUsuarioPassword(userId: number): Observable<AgmEnvelope<null>> {
+    return this.http.post<AgmEnvelope<null>>(
+      this.buildApiUrl(`/usuarios/${userId}/reset-password`),
+      {},
+      { headers: this.authHeaders() },
+    );
+  }
+
+  public refreshAccessToken(): Observable<string | null> {
+    const refresh = this.getRefreshToken();
+    if (!refresh) {
+      return of(null);
+    }
+    return this.http
+      .post<AgmEnvelope<{ access?: string }>>(
+        this.buildApiUrl('/auth/refresh-token'),
+        { refresh },
+        { headers: jsonHeaders },
+      )
+      .pipe(
+        map((body) => {
+          const access =
+            body?.data?.access ??
+            (body as { access?: string }).access ??
+            (body as { access_token?: string }).access_token ??
+            null;
+          if (!access) {
+            return null;
+          }
+          const storage = localStorage.getItem(ACCESS_TOKEN_KEY)
+            ? localStorage
+            : sessionStorage;
+          storage.setItem(ACCESS_TOKEN_KEY, access);
+          return access;
+        }),
+        catchError(() => of(null)),
+      );
   }
 
   public storeTokens(response: AuthResponse, remember = false): string | null {
@@ -152,10 +208,10 @@ export class FacadeService {
 
   public getUserRole(): string | null {
     const payload = this.getJwtPayload(this.getAccessToken());
-    const roleFromJwt =
-      payload?.['rol'] ?? payload?.['role'] ?? payload?.['user']?.['rol'];
-    if (roleFromJwt) {
-      return this.normalizeRole(roleFromJwt);
+    const userPayload = payload?.['user'] as Record<string, unknown> | undefined;
+    const rawRole = payload?.['rol'] ?? payload?.['role'] ?? userPayload?.['rol'];
+    if (typeof rawRole === 'string' && rawRole.trim()) {
+      return this.normalizeRole(rawRole);
     }
     const stored = sessionStorage.getItem('user_role') || localStorage.getItem('user_role');
     return this.normalizeRole(stored);
@@ -182,6 +238,26 @@ export class FacadeService {
   public getPeriodoActivo(): Observable<AgmEnvelope<unknown>> {
     return this.http.get<AgmEnvelope<unknown>>(this.buildApiUrl('/periodos/activo/'), {
       headers: this.authHeaders(),
+    });
+  }
+
+  public listMateriasDocente(
+    docenteUsuarioId: number,
+    extra: Record<string, string | number> = {},
+  ): Observable<AgmEnvelope<unknown>> {
+    return this.listMaterias({ ...extra, docente_id: docenteUsuarioId, limit: 200 });
+  }
+
+  public listAlumnos(query: Record<string, string | number> = {}): Observable<AgmEnvelope<unknown>> {
+    let params = new HttpParams();
+    Object.entries(query).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') {
+        params = params.set(k, String(v));
+      }
+    });
+    return this.http.get<AgmEnvelope<unknown>>(this.buildApiUrl('/alumnos/'), {
+      headers: this.authHeaders(),
+      params,
     });
   }
 
@@ -231,6 +307,24 @@ export class FacadeService {
     return this.http.post<AgmEnvelope<unknown>>(this.buildApiUrl('/materias/'), payload, {
       headers: this.authHeaders(),
     });
+  }
+
+  public updateMateria(
+    materiaId: number,
+    payload: Record<string, unknown>,
+  ): Observable<AgmEnvelope<unknown>> {
+    return this.http.put<AgmEnvelope<unknown>>(
+      this.buildApiUrl(`/materias/${materiaId}/`),
+      payload,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  public deleteMateria(materiaId: number): Observable<AgmEnvelope<unknown>> {
+    return this.http.delete<AgmEnvelope<unknown>>(
+      this.buildApiUrl(`/materias/${materiaId}/`),
+      { headers: this.authHeaders() },
+    );
   }
 
   // ── Alumnos (MS-3) ──────────────────────────────────────────────────
@@ -293,6 +387,14 @@ export class FacadeService {
       headers: this.authHeaders(),
       params,
     });
+  }
+
+  public bajaMateriaAlumno(alumnoId: number, materiaId: number): Observable<AgmEnvelope<unknown>> {
+    return this.http.post<AgmEnvelope<unknown>>(
+      this.buildApiUrl(`/alumnos/${alumnoId}/baja-materia/`),
+      { materia_id: materiaId },
+      { headers: this.authHeaders() },
+    );
   }
 
   // ── Calificaciones (MS-4) ───────────────────────────────────────────
@@ -366,6 +468,17 @@ export class FacadeService {
     );
   }
 
+  public createActividad(payload: {
+    ponderacion_id: number;
+    nombre: string;
+    descripcion?: string;
+    fecha?: string | null;
+  }): Observable<AgmEnvelope<unknown>> {
+    return this.http.post<AgmEnvelope<unknown>>(this.buildApiUrl('/actividades/'), payload, {
+      headers: this.authHeaders(),
+    });
+  }
+
   // ── Asistencias (MS-5) ────────────────────────────────────────────────
 
   public iniciarSesionAsistencia(
@@ -401,6 +514,22 @@ export class FacadeService {
     );
   }
 
+  public confirmarSesionAsistencia(sesionId: number): Observable<Record<string, unknown>> {
+    return this.http.post<Record<string, unknown>>(
+      this.buildApiUrl(`/sesiones/${sesionId}/confirmar/`),
+      {},
+      { headers: this.authHeaders() },
+    );
+  }
+
+  public solicitarNuevaListaAsistencia(sesionId: number): Observable<Record<string, unknown>> {
+    return this.http.post<Record<string, unknown>>(
+      this.buildApiUrl(`/sesiones/${sesionId}/solicitar-nueva/`),
+      {},
+      { headers: this.authHeaders() },
+    );
+  }
+
   public listRegistrosAsistencia(sesionId: number): Observable<unknown[]> {
     const params = new HttpParams().set('sesion_id', sesionId);
     return this.http.get<unknown[]>(this.buildApiUrl('/registros/'), {
@@ -417,9 +546,51 @@ export class FacadeService {
     );
   }
 
+  public generateQr(materiaId: number, alumnoId: number): Observable<{
+    encoded_payload?: string;
+    expires_in?: number;
+    sesion_id?: number;
+    error?: string;
+  }> {
+    const params = new HttpParams()
+      .set('materia_id', materiaId)
+      .set('alumno_id', alumnoId);
+    return this.http.get<{
+      encoded_payload?: string;
+      expires_in?: number;
+      sesion_id?: number;
+      error?: string;
+    }>(this.buildApiUrl('/qr/generate/'), {
+      headers: this.authHeaders(),
+      params,
+    });
+  }
+
   public registrosAsistenciaHoy(materiaId: number): Observable<unknown[]> {
     const params = new HttpParams().set('materia_id', materiaId);
     return this.http.get<unknown[]>(this.buildApiUrl('/registros/por_materia_hoy/'), {
+      headers: this.authHeaders(),
+      params,
+    });
+  }
+
+  public getAsistenciaResumenMateria(materiaId: number): Observable<{
+    materia_id?: number;
+    alumnos?: Array<{
+      alumno_id?: number;
+      porcentaje_asistencia?: number;
+      presentes?: number;
+      total_registros?: number;
+    }>;
+  }> {
+    const params = new HttpParams().set('materia_id', materiaId);
+    return this.http.get<{
+      materia_id?: number;
+      alumnos?: Array<{
+        alumno_id?: number;
+        porcentaje_asistencia?: number;
+      }>;
+    }>(this.buildApiUrl('/registros/resumen_alumnos/'), {
       headers: this.authHeaders(),
       params,
     });
@@ -452,6 +623,18 @@ export class FacadeService {
       this.buildApiUrl(`/estadisticas/alumno/${alumnoId}`),
       { headers: this.authHeaders() },
     );
+  }
+
+  /** Total paginado (`count`) o longitud del listado. */
+  public extractCount(body: AgmEnvelope<unknown> | null | undefined): number {
+    const data = body?.data;
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      const count = (data as { count?: number }).count;
+      if (count != null) {
+        return count;
+      }
+    }
+    return this.extractList(body).length;
   }
 
   /** Extrae array de envelope paginado o plano. */

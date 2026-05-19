@@ -186,7 +186,9 @@ services:
   # ============================================
 
   ms-auth:
-    build: ./ms-auth
+    build:
+      context: .
+      dockerfile: ms-auth/Dockerfile
     container_name: agm-ms-auth
     env_file: ./ms-auth/.env
     ports:
@@ -197,7 +199,11 @@ services:
         condition: service_healthy
     healthcheck:
       <<: *ms-healthcheck
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health/')\""]
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request,socket; urllib.request.urlopen('http://127.0.0.1:8001/health/'); s=socket.create_connection(('127.0.0.1',50051),3); s.close()\"",
+        ]
     networks:
       - agm-network
 
@@ -210,6 +216,8 @@ services:
       - "50052:50052"
     depends_on:
       db-periodos:
+        condition: service_healthy
+      ms-auth:
         condition: service_healthy
     healthcheck:
       <<: *ms-healthcheck
@@ -227,6 +235,8 @@ services:
     depends_on:
       db-alumnos:
         condition: service_healthy
+      ms-auth:
+        condition: service_healthy
     healthcheck:
       <<: *ms-healthcheck
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8003/health/')\""]
@@ -242,6 +252,8 @@ services:
       - "50054:50054"
     depends_on:
       db-calificaciones:
+        condition: service_healthy
+      ms-auth:
         condition: service_healthy
     healthcheck:
       <<: *ms-healthcheck
@@ -261,6 +273,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      ms-auth:
+        condition: service_healthy
     healthcheck:
       <<: *ms-healthcheck
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8005/health/')\""]
@@ -277,6 +291,8 @@ services:
     depends_on:
       db-notificaciones:
         condition: service_healthy
+      ms-auth:
+        condition: service_healthy
     healthcheck:
       <<: *ms-healthcheck
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8006/health/')\""]
@@ -292,6 +308,8 @@ services:
       - "50057:50057"
     depends_on:
       db-reportes:
+        condition: service_healthy
+      ms-auth:
         condition: service_healthy
     healthcheck:
       <<: *ms-healthcheck

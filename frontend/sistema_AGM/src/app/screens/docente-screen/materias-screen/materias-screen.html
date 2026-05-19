@@ -29,7 +29,7 @@
         </div>
 
         <h3>{{ materia.nombre }}</h3>
-        <p class="faculty">{{ materia.facultad }}</p>
+        <p class="faculty">{{ materia.periodo }}</p>
 
         <div class="students">
           <i class="bi bi-people"></i>
@@ -89,11 +89,9 @@
 
       <h3>Resumen Semanal</h3>
 
-      <p>
-        Has calificado el 92% de las actividades pendientes esta semana.
-      </p>
+      <p>{{ resumenSemanal || 'Cargando resumen…' }}</p>
 
-      <button>Ver Reporte Detallado</button>
+      <a routerLink="/docente/reportes" class="link-reportes">Ver reportes y estadísticas</a>
 
     </section>
 

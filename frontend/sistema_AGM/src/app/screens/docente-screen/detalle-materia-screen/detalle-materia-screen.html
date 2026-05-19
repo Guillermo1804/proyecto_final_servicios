@@ -226,9 +226,9 @@
       Agregar Rubro
     </button>
 
-    <button class="save-btn" (click)="guardarPlanEvaluacion()">
+    <button class="save-btn" (click)="guardarPlanEvaluacion()" [disabled]="savingPlan">
       <i class="bi bi-check-circle"></i>
-      Guardar Plan
+      {{ savingPlan ? 'Guardando…' : 'Guardar Plan' }}
     </button>
 
   </div>
@@ -243,6 +243,9 @@
     El total de ponderación debe ser exactamente 100%.
 
   </div>
+
+  <p *ngIf="planMessage" style="color: #067647; margin-top: 0.5rem">{{ planMessage }}</p>
+  <p *ngIf="planError" style="color: #b42318; margin-top: 0.5rem">{{ planError }}</p>
 
 </section>
 
@@ -289,12 +292,6 @@
       [(ngModel)]="nuevaActividad.fechaEntrega"
     >
 
-    <input
-      type="number"
-      placeholder="Valor dentro del rubro (%)"
-      [(ngModel)]="nuevaActividad.valorInterno"
-    >
-
     <div class="form-actions">
       <button class="cancel-btn" (click)="cancelarActividad()">
         Cancelar
@@ -315,33 +312,17 @@
     >
 
       <div class="activity-header">
-        <span class="activity-status" [ngClass]="actividad.tipo">
-          {{ actividad.estado }}
-        </span>
-
-        <span class="activity-rubro">
-          {{ actividad.rubro }}
-        </span>
+        <span class="activity-rubro">{{ actividad.rubro }}</span>
       </div>
 
       <h3>{{ actividad.titulo }}</h3>
 
       <p>{{ actividad.descripcion }}</p>
 
-      <div class="activity-meta">
+      <div class="activity-meta" *ngIf="actividad.fechaEntrega">
         <span>
           <i class="bi bi-calendar"></i>
           {{ actividad.fechaEntrega }}
-        </span>
-
-        <span>
-          <i class="bi bi-percent"></i>
-          {{ actividad.valorInterno }}% del rubro
-        </span>
-
-        <span>
-          <i class="bi bi-inbox"></i>
-          {{ actividad.entregas }} entregas
         </span>
       </div>
 

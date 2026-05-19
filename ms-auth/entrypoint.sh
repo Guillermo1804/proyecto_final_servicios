@@ -16,20 +16,17 @@ MySQLdb.connect(
 done
 echo "MySQL listo!"
 
-# Aplicar migraciones
 echo "Aplicando migraciones..."
 python manage.py migrate --noinput
 
-# Crear usuario administrador inicial
 echo "Inicializando administrador..."
 python manage.py create_admin
 
-# Arrancar servidor gRPC en background (si existe el management command)
-if python manage.py help grpc_server 2>/dev/null; then
-  echo "Iniciando servidor gRPC en puerto ${GRPC_PORT}..."
-  python manage.py grpc_server &
-fi
+GRPC_PORT="${GRPC_PORT:-50051}"
+echo "Iniciando servidor gRPC en puerto ${GRPC_PORT}..."
+nohup python manage.py grpc_server >/tmp/grpc-ms-auth.log 2>&1 &
+echo "gRPC PID $!"
+bash /docker/scripts/wait_grpc_port.sh "${GRPC_PORT}" 45
 
-# Arrancar Gunicorn
 echo "Iniciando servidor REST en puerto ${REST_PORT}..."
 exec gunicorn config.wsgi:application --bind 0.0.0.0:${REST_PORT} --workers 3 --timeout 120

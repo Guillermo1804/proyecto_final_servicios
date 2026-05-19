@@ -1,5 +1,7 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, switchMap, throwError } from 'rxjs';
 import { FacadeService } from './facade.service';
 
 const AUTH_EXCLUDED_PATTERNS = [
@@ -10,23 +12,52 @@ const AUTH_EXCLUDED_PATTERNS = [
   '/auth/reset-password',
 ];
 
+function isAuthExcluded(url: string): boolean {
+  return AUTH_EXCLUDED_PATTERNS.some((pattern) => url.includes(pattern));
+}
+
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
-  if (AUTH_EXCLUDED_PATTERNS.some((pattern) => request.url.includes(pattern))) {
-    return next(request);
-  }
-
   const facadeService = inject(FacadeService);
-  const token = facadeService.getAccessToken();
+  const router = inject(Router);
 
-  if (!token) {
-    return next(request);
+  let req = request;
+  if (!isAuthExcluded(request.url)) {
+    const token = facadeService.getAccessToken();
+    if (token) {
+      req = request.clone({
+        setHeaders: { Authorization: `Bearer ${token}` },
+      });
+    }
   }
 
-  return next(
-    request.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
+  return next(req).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (
+        error.status !== 401 ||
+        isAuthExcluded(request.url) ||
+        request.url.includes('/auth/refresh-token')
+      ) {
+        return throwError(() => error);
       }
-    })
+
+      return facadeService.refreshAccessToken().pipe(
+        switchMap((newToken) => {
+          if (!newToken) {
+            facadeService.clearSession();
+            void router.navigate(['/login']);
+            return throwError(() => error);
+          }
+          const retry = request.clone({
+            setHeaders: { Authorization: `Bearer ${newToken}` },
+          });
+          return next(retry);
+        }),
+        catchError((refreshErr) => {
+          facadeService.clearSession();
+          void router.navigate(['/login']);
+          return throwError(() => refreshErr);
+        }),
+      );
+    }),
   );
 };
