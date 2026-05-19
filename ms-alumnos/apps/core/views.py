@@ -6,6 +6,10 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+import uuid
+import tempfile
+import os
+from django.conf import settings
 from apps.core.models import Alumno, Docente, InscripcionMateria
 from apps.core.serializers import AlumnoSerializer, DocenteSerializer, InscripcionMateriaSerializer
 from utils.auth_client import create_user_alumno
@@ -14,6 +18,11 @@ from utils.pagination import AGMPagination
 from utils.notificaciones_client import send_baja_notif, send_bienvenida
 from utils.periodos_client import get_materia_docente_id
 from utils.responses import error_response, success_response
+from utils.auth import jwt_required
+from utils.pdf_docentes_parser import parse_pdf_docentes
+from utils.auth_ms1_client import create_user_in_auth
+from utils.periodos_ms2_client import get_materia_detail
+
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +58,7 @@ class DocenteViewSet(viewsets.ModelViewSet):
             
         return queryset
 
+    @jwt_required()
     def list(self, request, *args, **kwargs):
         params = request.query_params
         allowed_params = {"page", "limit", "nombre", "apellido", "departamento", "usuario_id"}
@@ -60,6 +70,7 @@ class DocenteViewSet(viewsets.ModelViewSet):
             )
         return super().list(request, *args, **kwargs)
 
+    @jwt_required(roles=["admin"])
     def create(self, request, *args, **kwargs):
         """Crear un docente. Se permite pasar usuario_id manualmente para este issue."""
         serializer = self.get_serializer(data=request.data)
@@ -77,11 +88,13 @@ class DocenteViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
         )
 
+    @jwt_required()
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return success_response(serializer.data)
 
+    @jwt_required(roles=["admin"])
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -90,10 +103,80 @@ class DocenteViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         return success_response(serializer.data, message="Docente actualizado")
 
+    @jwt_required(roles=["admin"])
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return success_response(None, message="Docente eliminado", status=status.HTTP_200_OK)
+
+    @jwt_required(roles=["admin"])
+    @action(detail=False, methods=['post'], url_path='importar')
+    def importar(self, request):
+        pdf_file = request.FILES.get('file')
+        if not pdf_file:
+            return error_response("El archivo 'file' es requerido.", status=400)
+            
+        if not pdf_file.name.endswith('.pdf'):
+            return error_response("El archivo debe ser un PDF válido.", status=400)
+            
+        # Write to a temporary file inside workspace directory to parse safely
+        temp_dir = os.path.join(settings.BASE_DIR, 'temp')
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=temp_dir) as temp_file:
+            for chunk in pdf_file.chunks():
+                temp_file.write(chunk)
+            temp_file_path = temp_file.name
+
+        creados = 0
+        omitidos = 0
+        errores = []
+
+        try:
+            rows, parse_errors = parse_pdf_docentes(temp_file_path)
+            for pe in parse_errors:
+                errores.append({"error": pe})
+                
+            for row in rows:
+                nombre = row["nombre"]
+                apellido = row["apellido"]
+                email = row["email"]
+                departamento = row["departamento"]
+                
+                # Check duplicate by email locally
+                if Docente.objects.filter(email=email).exists():
+                    omitidos += 1
+                    continue
+                    
+                # Create user in MS-1 Auth
+                temp_pwd = str(uuid.uuid4())[:8]
+                user_id, err_msg = create_user_in_auth(email, f"{nombre} {apellido}".strip(), "docente", temp_pwd)
+                
+                if not user_id:
+                    errores.append({"email": email, "error": err_msg or "Error en gRPC de MS-1 Auth"})
+                    continue
+                    
+                try:
+                    Docente.objects.create(
+                        usuario_id=user_id,
+                        nombre=nombre,
+                        apellido=apellido,
+                        email=email,
+                        departamento=departamento
+                    )
+                    creados += 1
+                except Exception as e:
+                    errores.append({"email": email, "error": f"Error de BD local: {str(e)}"})
+        finally:
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+                
+        summary = {
+            "creados": creados,
+            "omitidos": omitidos,
+            "errores": len(errores)
+        }
+        return success_response(summary, message="Importación de docentes completada")
 
 
 class AlumnoViewSet(viewsets.ModelViewSet):
@@ -102,6 +185,7 @@ class AlumnoViewSet(viewsets.ModelViewSet):
     serializer_class = AlumnoSerializer
     pagination_class = AGMPagination
 
+    @jwt_required(roles=["admin"])
     @action(detail=False, methods=['post'], url_path='importar/preview')
     def importar_preview(self, request):
         """Parsear archivo y retornar preview de datos válidos/errores."""
@@ -117,6 +201,7 @@ class AlumnoViewSet(viewsets.ModelViewSet):
             "total_errores": len(errores)
         })
 
+    @jwt_required(roles=["admin"])
     @action(detail=False, methods=['post'], url_path='importar/confirmar')
     def importar_confirmar(self, request):
         """Ejecutar upsert de alumnos confirmados."""
@@ -184,6 +269,7 @@ class AlumnoViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return error_response(f"Error durante la persistencia de datos: {str(e)}", status=500)
 
+    @jwt_required()
     @action(detail=False, methods=['get'], url_path='por-materia')
     def por_materia(self, request):
         """Listar alumnos activos en una materia específica."""
@@ -211,6 +297,7 @@ class AlumnoViewSet(viewsets.ModelViewSet):
         serializer = InscripcionMateriaSerializer(queryset, many=True)
         return success_response(serializer.data)
 
+    @jwt_required(roles=["admin"])
     @action(detail=True, methods=['post'], url_path='baja-materia')
     def baja_materia(self, request, pk=None):
         """Da de baja una materia de forma irreversible para un alumno."""
@@ -250,3 +337,38 @@ class AlumnoViewSet(viewsets.ModelViewSet):
             
         except Exception as e:
             return error_response(f"Error inesperado al procesar la baja: {str(e)}", status=500)
+
+    @jwt_required()
+    @action(detail=False, methods=['get'], url_path='me/materias')
+    def me_materias(self, request):
+        """Obtiene las materias activas del alumno autenticado enriquecidas con MS-2."""
+        user_id = request.user_id
+        try:
+            alumno = Alumno.objects.get(usuario_id=user_id)
+        except Alumno.DoesNotExist:
+            return error_response("El alumno asociado al usuario no existe.", status=404)
+
+        queryset = InscripcionMateria.objects.filter(
+            alumno=alumno,
+            activa=True
+        ).order_by('id')
+
+
+
+        # Pagination
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = InscripcionMateriaSerializer(page, many=True)
+            data = serializer.data
+            for idx, item in enumerate(data):
+                m_id = item["materia_id"]
+                item["materia_detail"] = get_materia_detail(m_id)
+            return self.get_paginated_response(data)
+
+        serializer = InscripcionMateriaSerializer(queryset, many=True)
+        data = serializer.data
+        for item in data:
+            m_id = item["materia_id"]
+            item["materia_detail"] = get_materia_detail(m_id)
+        return success_response(data)
+

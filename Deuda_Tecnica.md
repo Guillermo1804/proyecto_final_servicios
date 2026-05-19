@@ -24,6 +24,10 @@
 | S-13 | docs | ISSUE-1104: Colección Postman — 22 endpoints (MS-2 y MS-3) + Environment | none | N/A | 0 | 0 |
 | S-14 | ms-notificaciones | Epic 8 ISSUE-801–806: EmailService, REST, gRPC :50056, integración MS-1/3/4 | none | 0→20 passed; 0 failed | 1 | 0 |
 | S-15 | ms-reportes | Epic 9 ISSUE-901–907: REST reportes/stats, gRPC :50057, clientes MS-1..5, mocks MS-4/5 | none | 0→34 passed; 0 failed | 1 | 0 |
+| S-16 | ms-periodos | ISSUE-406: JWT en ms-periodos — @jwt_required decorator, ValidateToken via gRPC, mock auth [13 tests] | none | 11→13 passed; 0 failed | 1 | 0 |
+| S-17 | ms-alumnos | ISSUE-509: JWT en ms-alumnos — @jwt_required decorator, ValidateToken via gRPC, auth fix [18 tests] | none | 16→18 passed; 0 failed | 1 | 0 |
+| S-18 | ms-alumnos | ISSUE-502: Import PDF docentes — pdfplumber, CreateUser via gRPC MS-1, graceful error handling [21 tests] | none | 18→21 passed; 0 failed | 1 | 0 |
+| S-19 | ms-alumnos | ISSUE-508: GET /api/alumnos/me/materias/ enriched with MS-2 Periodos gRPC, periodos_client, graceful fallback [24 tests] | none | 21→24 passed; 0 failed | 1 | 0 |
 
 ---
 
@@ -78,7 +82,7 @@
 | ~~ISSUE-403~~ | ~~Import PDF materias (pdfplumber, tolerante a fallos, upsert por NRC)~~ | ✅ cerrado | Alta |
 | ~~ISSUE-404~~ | ~~CRUD materias con paginación y búsqueda~~ | ✅ cerrado | Alta |
 | ~~ISSUE-405~~ | ~~Servidor gRPC :50052 — 3 RPCs de `periodos.proto`~~ | ✅ cerrado | Alta |
-| ISSUE-406 | JWT via gRPC MS-1 en todos los endpoints | 🔴 activo | Alta |
+| ~~ISSUE-406~~ | ~~JWT via gRPC MS-1 en todos los endpoints~~ | ✅ cerrado | Alta |
 | ~~ISSUE-407~~ | ~~`GET /api/periodos/activo/` — endpoint público o autenticado~~ | ✅ cerrado | Media |
 | ~~ISSUE-408~~ | ~~Paginación `?page&limit` en listados~~ | ✅ cerrado | Alta |
 
@@ -90,14 +94,15 @@
 | Issue | Descripción | Estado | Prioridad |
 |---|---|---|---|
 | ~~ISSUE-501~~ | ~~Modelos `Docente`, `Alumno`, `InscripcionMateria` + migraciones~~ | ✅ cerrado | Alta |
-| ISSUE-502 | Import PDF docentes → `CreateUser` MS-1 + seed `Docente` | 🔴 activo | Alta |
+| ~~ISSUE-502~~ | ~~Import PDF docentes → `CreateUser` MS-1 + seed `Docente`~~ | ✅ cerrado | Alta |
+
 | ~~ISSUE-503~~ | ~~CRUD docentes con paginación~~ | ✅ cerrado | Alta |
 | ~~ISSUE-504~~ | ~~Import alumnos Excel/CSV con preview + confirmación + `SendBienvenida`~~ | ✅ cerrado | Alta |
 | ~~ISSUE-505~~ | ~~Listado alumnos por materia (solo activos)~~ | ✅ cerrado | Alta |
 | ~~ISSUE-506~~ | ~~Baja de materia — irreversible, `SendBajaNotif` gRPC MS-6~~ | ✅ cerrado | Alta |
 | ~~ISSUE-507~~ | ~~Servidor gRPC :50053 — 4 RPCs de `alumnos.proto`~~ | ✅ cerrado | Alta |
-| ISSUE-508 | `GET /api/alumnos/me/materias/` enriquecido con MS-2 | 🟡 pendiente | Media |
-| ISSUE-509 | JWT via gRPC MS-1 en todos los endpoints | 🔴 activo | Alta |
+| ~~ISSUE-508~~ | ~~`GET /api/alumnos/me/materias/` enriquecido con MS-2~~ | ✅ cerrado | Media |
+| ~~ISSUE-509~~ | ~~JWT via gRPC MS-1 en todos los endpoints~~ | ✅ cerrado | Alta |
 
 ---
 

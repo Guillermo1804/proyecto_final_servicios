@@ -7,15 +7,15 @@ from decouple import config
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE_DIR, "proto_generated"))
 
-from proto_generated import auth_pb2_grpc
+from proto_generated import periodos_pb2_grpc
 
 
-def get_auth_stub():
+def get_periodos_stub():
     """
-    Crea y retorna un stub de AuthService para comunicación gRPC con MS-1.
+    Crea y retorna un stub de PeriodosService para comunicación gRPC con MS-2.
     Host/port configurados vía variables de entorno.
     """
-    host = config("MS_AUTH_GRPC_HOST", default="ms-auth")
-    port = config("MS_AUTH_GRPC_PORT", default="50051")
+    host = config("MS_PERIODOS_GRPC_HOST", default="ms-periodos")
+    port = config("MS_PERIODOS_GRPC_PORT", default="50052")
     channel = grpc.insecure_channel(f"{host}:{port}")
-    return auth_pb2_grpc.AuthServiceStub(channel)
+    return periodos_pb2_grpc.PeriodosServiceStub(channel)

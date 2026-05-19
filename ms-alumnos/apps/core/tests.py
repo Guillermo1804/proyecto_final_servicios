@@ -5,8 +5,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.test import TestCase
 from unittest.mock import MagicMock, patch
+from rest_framework.test import APIClient
 from apps.core.models import Alumno, Docente, InscripcionMateria
-from proto_generated import alumnos_pb2, alumnos_pb2_grpc
+from proto_generated import alumnos_pb2, alumnos_pb2_grpc, auth_pb2
 from grpc_server.servicer import AlumnosServicer
 
 class AlumnoModelTests(TestCase):
@@ -91,6 +92,17 @@ class DocenteCRUDTests(TestCase):
     """Tests para CRUD de Docente y sus filtros/paginación."""
 
     def setUp(self):
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
+        self.patcher = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher.start()
+        
+        self.mock_stub = MagicMock()
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=1, email="test@buap.mx", rol="admin", nombre="Test"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+
         # Crear 15 docentes para probar paginación
         for i in range(15):
             Docente.objects.create(
@@ -100,6 +112,9 @@ class DocenteCRUDTests(TestCase):
                 email=f"docente{i}@fcc.buap.mx",
                 departamento="IA" if i % 2 == 0 else "Computación"
             )
+
+    def tearDown(self):
+        self.patcher.stop()
 
     def test_list_docentes_paginado(self):
         """Listar docentes debe retornar envelope AGM con count y 10 resultados por página."""
@@ -133,9 +148,38 @@ class DocenteCRUDTests(TestCase):
         self.assertEqual(body["data"]["nombre"], "Ana")
         self.assertEqual(body["data"]["usuario_id"], 9999)
 
+    def test_crear_docente_sin_auth_retorna_401(self):
+        self.client.credentials()
+        response = self.client.post("/api/docentes/", data={}, content_type="application/json")
+        self.assertEqual(response.status_code, 401)
+        self.assertFalse(response.json()["success"])
+
+    def test_crear_docente_rol_alumno_retorna_403(self):
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=2, email="alumno@buap.mx", rol="alumno", nombre="Test"
+        )
+        response = self.client.post("/api/docentes/", data={}, content_type="application/json")
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(response.json()["success"])
+
 
 class AlumnoImportTests(TestCase):
     """Tests para los flujos de importación de alumnos (Preview + Confirmar)."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
+        self.patcher = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher.start()
+        
+        self.mock_stub = MagicMock()
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=1, email="test@buap.mx", rol="admin", nombre="Test"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+
+    def tearDown(self):
+        self.patcher.stop()
 
     def test_import_preview_csv_valido(self):
         """Verifica que un CSV se parsee correctamente en el preview."""
@@ -199,6 +243,17 @@ class AlumnoPorMateriaTests(TestCase):
     """Tests para el endpoint /api/alumnos/por-materia/."""
 
     def setUp(self):
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
+        self.patcher = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher.start()
+        
+        self.mock_stub = MagicMock()
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=1, email="test@buap.mx", rol="admin", nombre="Test"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+
         # Crear 3 alumnos
         self.a1 = Alumno.objects.create(usuario_id=1, matricula="20201", nombre="Juan", apellido="Zepeda", email="juan@b.com")
         self.a2 = Alumno.objects.create(usuario_id=2, matricula="20202", nombre="Beto", apellido="Yañez", email="beto@b.com")
@@ -210,6 +265,9 @@ class AlumnoPorMateriaTests(TestCase):
         
         # Inscribir a3 en materia 1 (inactivo)
         InscripcionMateria.objects.create(alumno=self.a3, materia_id=1, nrc="100", nombre_materia="Mate", docente_nombre="Doc1", activa=False)
+
+    def tearDown(self):
+        self.patcher.stop()
 
     def test_list_por_materia_exitoso(self):
         """GET ?materia_id=1 debe retornar solo 2 alumnos activos, ordenados por apellido."""
@@ -234,10 +292,24 @@ class AlumnoBajaMateriaTests(TestCase):
     """Tests para la baja irreversible de materias."""
 
     def setUp(self):
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
+        self.patcher = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher.start()
+        
+        self.mock_stub = MagicMock()
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=1, email="test@buap.mx", rol="admin", nombre="Test"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+
         self.alumno = Alumno.objects.create(usuario_id=10, matricula="2020555", nombre="Luis", apellido="Baja", email="luis@b.com")
         self.insc = InscripcionMateria.objects.create(
             alumno=self.alumno, materia_id=5, nrc="500", nombre_materia="Bajas", docente_nombre="D5", activa=True
         )
+
+    def tearDown(self):
+        self.patcher.stop()
 
     @patch("apps.core.views.get_materia_docente_id", return_value=99)
     @patch("apps.core.views.send_baja_notif")
@@ -319,3 +391,225 @@ class NotificacionesClientEnvTests(TestCase):
         from utils.notificaciones_client import _notificaciones_target
 
         self.assertEqual(_notificaciones_target(), 'ms-notificaciones:50056')
+
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+class DocenteImportTests(TestCase):
+    """Tests para el endpoint de importación de docentes POST /api/docentes/importar/."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.patcher_auth = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher_auth.start()
+        
+        self.mock_stub = MagicMock()
+        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=1, email="admin@buap.mx", rol="admin", nombre="Admin"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_stub
+
+    def tearDown(self):
+        self.patcher_auth.stop()
+
+    @patch("apps.core.views.parse_pdf_docentes")
+    @patch("apps.core.views.create_user_in_auth")
+    def test_import_pdf_docentes_exitoso(self, mock_create_user, mock_parse_pdf):
+        """Importar un PDF válido de docentes crea los usuarios e inserta los docentes."""
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_admin")
+        
+        # Mocking PDF parser result
+        mock_parse_pdf.return_value = ([
+            {
+                "nombre": "Evelia",
+                "apellido": "Perez Bonilla",
+                "email": "evelia.perez@correo.buap.mx",
+                "departamento": "Computación"
+            },
+            {
+                "nombre": "Adan",
+                "apellido": "Limon Faustino",
+                "email": "adan.limon@correo.buap.mx",
+                "departamento": "IA"
+            }
+        ], [])
+        
+        # Mocking gRPC MS-1 Auth CreateUser response: (user_id, error_message)
+        mock_create_user.side_effect = [
+            (9001, None),
+            (9002, None)
+        ]
+        
+        pdf_file = SimpleUploadedFile("trabajadores.pdf", b"%PDF-1.4...", content_type="application/pdf")
+        response = self.client.post("/api/docentes/importar/", {"file": pdf_file}, format="multipart")
+        
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body["success"])
+        self.assertEqual(body["data"]["creados"], 2)
+        self.assertEqual(body["data"]["omitidos"], 0)
+        self.assertEqual(body["data"]["errores"], 0)
+        
+        # Verificamos que se crearon en la BD
+        self.assertTrue(Docente.objects.filter(email="evelia.perez@correo.buap.mx").exists())
+        self.assertTrue(Docente.objects.filter(email="adan.limon@correo.buap.mx").exists())
+
+    @patch("apps.core.views.parse_pdf_docentes")
+    @patch("apps.core.views.create_user_in_auth")
+    def test_import_pdf_docentes_grpc_error_graceful(self, mock_create_user, mock_parse_pdf):
+        """Si falla gRPC MS-1 Auth para un docente, se maneja de forma graceful y continúa."""
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_admin")
+        
+        mock_parse_pdf.return_value = ([
+            {
+                "nombre": "Evelia",
+                "apellido": "Perez Bonilla",
+                "email": "evelia.perez@correo.buap.mx",
+                "departamento": "Computación"
+            },
+            {
+                "nombre": "Adan",
+                "apellido": "Limon Faustino",
+                "email": "adan.limon@correo.buap.mx",
+                "departamento": "IA"
+            }
+        ], [])
+        
+        # El primero falla en MS-1 Auth, el segundo tiene éxito
+        mock_create_user.side_effect = [
+            (None, "MS-1 Auth No Disponible"),
+            (9002, None)
+        ]
+        
+        pdf_file = SimpleUploadedFile("trabajadores.pdf", b"%PDF-1.4...", content_type="application/pdf")
+        response = self.client.post("/api/docentes/importar/", {"file": pdf_file}, format="multipart")
+        
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body["success"])
+        self.assertEqual(body["data"]["creados"], 1)
+        self.assertEqual(body["data"]["omitidos"], 0)
+        self.assertEqual(body["data"]["errores"], 1)
+        
+        # Se creó solo el segundo
+        self.assertFalse(Docente.objects.filter(email="evelia.perez@correo.buap.mx").exists())
+        self.assertTrue(Docente.objects.filter(email="adan.limon@correo.buap.mx").exists())
+
+    def test_import_pdf_docentes_sin_auth_retorna_401(self):
+        """Una petición sin JWT válido al endpoint de importar retorna 401."""
+        self.client.credentials()  # Sin token
+        pdf_file = SimpleUploadedFile("trabajadores.pdf", b"%PDF-1.4...", content_type="application/pdf")
+        response = self.client.post("/api/docentes/importar/", {"file": pdf_file}, format="multipart")
+        self.assertEqual(response.status_code, 401)
+
+
+from proto_generated import periodos_pb2
+
+class AlumnoMeMateriasTests(TestCase):
+    """Tests para el endpoint GET /api/alumnos/me/materias/."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.patcher_auth = patch("utils.auth.get_auth_stub")
+        self.mock_get_auth_stub = self.patcher_auth.start()
+        
+        self.mock_auth_stub = MagicMock()
+        # Mocking ValidateToken for alumno (rol="alumno", user_id=50)
+        self.mock_auth_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True, user_id=50, email="alumno50@correo.buap.mx", rol="alumno", nombre="Juan Perez"
+        )
+        self.mock_get_auth_stub.return_value = self.mock_auth_stub
+
+    def tearDown(self):
+        self.patcher_auth.stop()
+
+    @patch("utils.periodos_ms2_client.get_periodos_stub")
+    def test_get_my_materias_enriquecido(self, mock_get_periodos_stub):
+        """Alumno autenticado obtiene sus materias activas enriquecidas con MS-2."""
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_alumno")
+        
+        # 1. Crear el Alumno en la BD
+        alumno = Alumno.objects.create(
+            usuario_id=50,
+            matricula="202050000",
+            nombre="Juan",
+            apellido="Perez",
+            email="alumno50@correo.buap.mx",
+            carrera="ICC",
+            semestre=5
+        )
+        
+        # 2. Crear InscripcionMateria activa
+        InscripcionMateria.objects.create(
+            alumno=alumno,
+            materia_id=123,
+            nrc="11111",
+            nombre_materia="Matematicas",
+            docente_nombre="Docente Uno",
+            horario="L-M 08:00",
+            activa=True
+        )
+
+        # 3. Mockear gRPC PeriodosService stub
+        mock_periodos_stub = MagicMock()
+        mock_periodos_stub.GetMateriaById.return_value = periodos_pb2.MateriaInfo(
+            id=123,
+            nrc="11111",
+            nombre="Matematicas Basicas",
+            seccion="001",
+            clave="MAT101",
+            docente_nombre="Docente Uno",
+            docente_id=888,
+            horario="L-M 08:00",
+            periodo_id=2026,
+            periodo_nombre="Primavera 2026"
+        )
+        mock_get_periodos_stub.return_value = mock_periodos_stub
+
+        # 4. Hacer la peticion GET
+        response = self.client.get("/api/alumnos/me/materias/")
+        self.assertEqual(response.status_code, 200)
+        
+        body = response.json()
+        self.assertTrue(body["success"])
+        self.assertEqual(len(body["data"]["results"]), 1)
+        self.assertEqual(body["data"]["results"][0]["materia_id"], 123)
+        self.assertEqual(body["data"]["results"][0]["materia_detail"]["clave"], "MAT101")
+        self.assertEqual(body["data"]["results"][0]["materia_detail"]["periodo_nombre"], "Primavera 2026")
+
+    def test_get_my_materias_sin_inscripciones(self):
+        """Alumno con cero inscripciones obtiene una lista vacia (200)."""
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_alumno")
+        
+        # Crear el Alumno en la BD, sin inscripciones
+        Alumno.objects.create(
+            usuario_id=50,
+            matricula="202050000",
+            nombre="Juan",
+            apellido="Perez",
+            email="alumno50@correo.buap.mx",
+            carrera="ICC",
+            semestre=5
+        )
+        
+        response = self.client.get("/api/alumnos/me/materias/")
+        self.assertEqual(response.status_code, 200)
+        
+        body = response.json()
+        self.assertTrue(body["success"])
+        self.assertEqual(len(body["data"]["results"]), 0)
+
+    def test_get_my_materias_sin_alumno_asociado(self):
+        """Usuario autenticado cuyo usuario_id no tiene Alumno asociado retorna 404."""
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_alumno")
+        
+        # No creamos Alumno en la BD para usuario_id=50
+        response = self.client.get("/api/alumnos/me/materias/")
+        self.assertEqual(response.status_code, 404)
+        
+        body = response.json()
+        self.assertFalse(body["success"])
+        self.assertIn("asociado al usuario no existe", body["message"])
+
+
+
