@@ -33,6 +33,16 @@
 			"enabled": true
 		},
 		{
+			"key": "refresh_token",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "base_url_auth",
+			"value": "http://localhost:8001",
+			"enabled": true
+		},
+		{
 			"key": "materia_id",
 			"value": "1",
 			"enabled": true
@@ -44,6 +54,11 @@
 		},
 		{
 			"key": "alumno_id",
+			"value": "1",
+			"enabled": true
+		},
+		{
+			"key": "sesion_id",
 			"value": "1",
 			"enabled": true
 		},

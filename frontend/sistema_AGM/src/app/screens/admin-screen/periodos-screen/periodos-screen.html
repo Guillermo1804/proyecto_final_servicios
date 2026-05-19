@@ -11,93 +11,103 @@
       </p>
     </section>
 
-    <button class="create-btn">
+    <p *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</p>
+    <p *ngIf="successMessage" class="alert-success">{{ successMessage }}</p>
+    <p *ngIf="loading">Cargando periodos…</p>
+
+    <button class="create-btn" type="button" (click)="toggleCreateForm()" [disabled]="saving">
       <i class="bi bi-plus-lg"></i>
-      Crear Periodo
+      {{ showCreateForm ? 'Cancelar' : 'Crear Periodo' }}
     </button>
 
-    <section class="summary-grid">
+    <section class="create-form" *ngIf="showCreateForm">
+      <label>
+        Nombre
+        <input type="text" [(ngModel)]="newPeriodo.nombre" name="nombre" />
+      </label>
+      <label>
+        Inicio
+        <input type="date" [(ngModel)]="newPeriodo.fecha_inicio" name="fecha_inicio" />
+      </label>
+      <label>
+        Fin
+        <input type="date" [(ngModel)]="newPeriodo.fecha_fin" name="fecha_fin" />
+      </label>
+      <button type="button" (click)="submitCreate()" [disabled]="saving">Guardar periodo</button>
+    </section>
 
+    <section class="summary-grid">
       <article class="summary-card">
         <p>Periodo Actual</p>
-        <h3>2024-1</h3>
-        <span>Finaliza en 45 días</span>
+        <h3>{{ periodoActualNombre }}</h3>
       </article>
-
       <article class="summary-card">
-        <p>Próximo Periodo</p>
-        <h3>2024-2</h3>
-        <span>Inicia el 15 de Agosto</span>
+        <p>Total registrados</p>
+        <h3>{{ totalPeriodos }}</h3>
       </article>
-
-      <article class="summary-card">
-        <p>Total Histórico</p>
-        <h3>24 Ciclos</h3>
-        <span>Desde el año 2012</span>
-      </article>
-
     </section>
 
     <section class="table-card">
-
       <div class="search-box">
         <i class="bi bi-search"></i>
-        <input type="text" placeholder="Buscar periodos...">
-      </div>
-
-      <div class="actions-row">
-        <button>
-          <i class="bi bi-filter"></i>
-          Filtrar
-        </button>
-
-        <button>
-          <i class="bi bi-download"></i>
-          Exportar
-        </button>
+        <input
+          type="text"
+          placeholder="Buscar periodos..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+        />
       </div>
 
       <div class="periodos-table">
-
         <div class="table-head">
           <span>Nombre del Periodo</span>
           <span>Estado</span>
           <span>Fecha Inicio</span>
+          <span>Acciones</span>
         </div>
 
-        <div class="table-row" *ngFor="let periodo of periodos">
-
+        <div class="table-row" *ngFor="let periodo of periodosFiltrados">
           <div class="period-name">
             <div class="calendar-icon" [ngClass]="periodo.icono">
               <i class="bi bi-calendar3"></i>
             </div>
-
             <strong>{{ periodo.nombre }}</strong>
           </div>
-
           <span class="status" [ngClass]="periodo.tipo">
             {{ periodo.estado }}
           </span>
-
           <span class="date">
             {{ periodo.fechaInicio }}
           </span>
-
+          <span class="row-actions">
+            <button
+              type="button"
+              *ngIf="!periodo.activo"
+              (click)="activar(periodo)"
+              [disabled]="saving"
+            >
+              Activar
+            </button>
+            <button type="button" (click)="openImport(periodo.id)" [disabled]="saving">
+              Importar PDF
+            </button>
+          </span>
         </div>
-
       </div>
 
-      <p class="table-footer">
-        Mostrando 4 de 24 periodos
+      <p class="table-footer" *ngIf="!loading">
+        Mostrando {{ periodosFiltrados.length }} de {{ totalPeriodos }} periodos
       </p>
-
     </section>
-
   </main>
 
-  <button class="floating-btn">
-    <i class="bi bi-plus-lg"></i>
-  </button>
+  <input
+    id="import-pdf-input"
+    type="file"
+    accept="application/pdf"
+    hidden
+    (change)="onImportFileSelected($event)"
+  />
 
   <app-bottom-navbar-admin></app-bottom-navbar-admin>
 

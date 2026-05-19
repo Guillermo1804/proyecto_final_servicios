@@ -208,9 +208,13 @@ class AlumnoViewSet(viewsets.ModelViewSet):
         alumnos_data = request.data.get('alumnos', [])
         if not alumnos_data:
             return error_response("No se proporcionaron datos de alumnos (JSON con lista 'alumnos' esperado).", status=400)
-            
+
+        materia_global = int(request.data.get('materia_id') or 0)
+        materia_detail = get_materia_detail(materia_global) if materia_global else None
+
         creados = 0
         actualizados = 0
+        inscripciones = 0
         
         try:
             with transaction.atomic():
@@ -221,7 +225,7 @@ class AlumnoViewSet(viewsets.ModelViewSet):
                         
                     usuario_id = int(data.get('usuario_id') or 0)
                     clave_acceso = (data.get('clave_acceso') or '').strip()
-                    materia_id = int(data.get('materia_id') or 0)
+                    materia_id = int(data.get('materia_id') or materia_global or 0)
                     nombre_completo = f"{data.get('nombre', '')} {data.get('apellido', '')}".strip()
 
                     alumno, created = Alumno.objects.update_or_create(
@@ -260,10 +264,32 @@ class AlumnoViewSet(viewsets.ModelViewSet):
                         )
                     else:
                         actualizados += 1
+
+                    if materia_id:
+                        detail = (
+                            get_materia_detail(materia_id)
+                            if materia_id != materia_global
+                            else materia_detail
+                        ) or {}
+                        _, ins_created = InscripcionMateria.objects.update_or_create(
+                            alumno=alumno,
+                            materia_id=materia_id,
+                            defaults={
+                                "nrc": detail.get("nrc", ""),
+                                "nombre_materia": detail.get("nombre", f"Materia {materia_id}"),
+                                "docente_nombre": detail.get("docente_nombre", ""),
+                                "horario": detail.get("horario", ""),
+                                "activa": True,
+                                "fecha_baja": None,
+                            },
+                        )
+                        if ins_created:
+                            inscripciones += 1
                         
             return success_response({
                 "creados": creados,
-                "actualizados": actualizados
+                "actualizados": actualizados,
+                "inscripciones": inscripciones,
             }, message="Importación completada con éxito.")
             
         except Exception as e:

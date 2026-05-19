@@ -171,24 +171,6 @@ class PonderacionesTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-
-        class CierreImpresionTests(TestCase):
-            def setUp(self):
-                self.auth_headers = {'HTTP_AUTHORIZATION': 'Bearer token-valido'}
-
-            @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-            @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
-            def test_marcar_imprimir_lista(self, mock_validate, mock_materia):
-                response = self.client.post('/materias/10/imprimir-lista', **self.auth_headers)
-                self.assertEqual(response.status_code, 200)
-                body = response.json()
-                self.assertTrue(body['success'])
-                estado = EstadoMateria.objects.get(materia_id=10)
-                self.assertTrue(estado.lista_impresa)
-                mock_validate.assert_called_once_with('token-valido')
-                mock_materia.assert_called_once_with(10)
-        self.assertFalse(response.json()['success'])
-
     @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
     @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_consultar_ponderaciones_ok(self, mock_validate, mock_materia):
@@ -533,6 +515,23 @@ class ConcentradoRestTests(TestCase):
         self.assertEqual(alumno_6['nombre'], 'Luis Perez')
         self.assertEqual(alumno_6['promedio_real'], '0.00')
         self.assertEqual(alumno_6['promedio_redondeado'], 0)
+
+
+class CierreImpresionTests(TestCase):
+    def setUp(self):
+        self.auth_headers = {'HTTP_AUTHORIZATION': 'Bearer token-valido'}
+
+    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    def test_marcar_imprimir_lista(self, mock_validate, mock_materia):
+        response = self.client.post('/materias/10/imprimir-lista', **self.auth_headers)
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body['success'])
+        estado = EstadoMateria.objects.get(materia_id=10)
+        self.assertTrue(estado.lista_impresa)
+        mock_validate.assert_called_once_with('token-valido')
+        mock_materia.assert_called_once_with(10)
 
 
 class CerrarMateriaTests(TestCase):

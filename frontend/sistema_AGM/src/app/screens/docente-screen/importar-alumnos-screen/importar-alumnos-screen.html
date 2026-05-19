@@ -38,9 +38,16 @@
         Asegúrese de que las columnas coincidan con la plantilla oficial.
       </p>
 
-      <button>
+      <button type="button" (click)="openFilePicker()" [disabled]="loading || saving">
         Seleccionar Archivo
       </button>
+      <input
+        id="import-alumnos-file"
+        type="file"
+        accept=".csv,.xlsx,.xls"
+        hidden
+        (change)="onFileSelected($event)"
+      />
 
     </section>
 
@@ -70,7 +77,10 @@
 
     </section>
 
-    <section class="success-card">
+    <p *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</p>
+    <p *ngIf="successMessage" class="alert-success">{{ successMessage }}</p>
+
+    <section class="success-card" *ngIf="previewReady">
 
       <h4>
         <i class="bi bi-patch-check"></i>
@@ -78,21 +88,21 @@
       </h4>
 
       <p>
-        Se encontraron <strong>128 registros</strong> listos para importar.
-        Revise la previsualización debajo.
+        Se encontraron <strong>{{ totalValidas }} registros</strong> listos para importar
+        <span *ngIf="totalErrores"> ({{ totalErrores }} con error)</span>.
       </p>
 
     </section>
 
-    <section class="preview-card">
+    <section class="preview-card" *ngIf="previewReady">
 
       <div class="preview-header">
 
         <h3>Previsualización de Estudiantes</h3>
 
         <div class="preview-badges">
-          <span class="validos">128<br>Válidos</span>
-          <span class="errores">0<br>Errores</span>
+          <span class="validos">{{ totalValidas }}<br>Válidos</span>
+          <span class="errores">{{ totalErrores }}<br>Errores</span>
         </div>
 
       </div>
@@ -129,7 +139,7 @@
       <div class="preview-footer">
 
         <p>
-          Mostrando 4 de 128 alumnos encontrados
+          Mostrando {{ alumnos.length }} alumnos en vista previa
         </p>
 
         <div class="pagination">
@@ -152,7 +162,12 @@
         Cancelar
       </button>
 
-      <button class="import-btn">
+      <button
+        class="import-btn"
+        type="button"
+        (click)="confirmImport()"
+        [disabled]="!previewReady || saving"
+      >
         Importar Alumnos
       </button>
 

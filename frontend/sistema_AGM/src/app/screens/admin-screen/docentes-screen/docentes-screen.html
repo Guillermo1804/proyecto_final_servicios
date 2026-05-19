@@ -12,10 +12,22 @@
       </p>
     </section>
 
-    <button class="create-btn">
-      <i class="bi bi-person-plus"></i>
-      Registrar Docente
+    <p *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</p>
+    <p *ngIf="successMessage" class="alert-success">{{ successMessage }}</p>
+    <p *ngIf="loading">Cargando docentes…</p>
+
+    <button class="create-btn" type="button" (click)="openImportPdf()" [disabled]="saving">
+      <i class="bi bi-file-earmark-pdf"></i>
+      Importar PDF (directorio)
     </button>
+
+    <input
+      id="import-docentes-pdf"
+      type="file"
+      accept="application/pdf"
+      hidden
+      (change)="onImportPdf($event)"
+    />
 
     <section class="filters-section">
 
@@ -25,6 +37,8 @@
         <input
           type="text"
           placeholder="Buscar por nombre, ID o especialidad"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
         >
       </div>
 
@@ -56,7 +70,7 @@
 
       <div
         class="table-row"
-        *ngFor="let docente of docentes"
+        *ngFor="let docente of docentesFiltrados"
       >
 
         <div class="teacher-info">
@@ -88,7 +102,7 @@
 
       <div class="table-footer">
 
-        <span>Mostrando 4 de 128 docentes</span>
+        <span>Mostrando {{ docentesFiltrados.length }} de {{ docentes.length }} docentes</span>
 
         <div class="pagination">
           <button disabled>

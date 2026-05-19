@@ -28,6 +28,12 @@
 | S-17 | ms-alumnos | ISSUE-509: JWT en ms-alumnos — @jwt_required decorator, ValidateToken via gRPC, auth fix [18 tests] | none | 16→18 passed; 0 failed | 1 | 0 |
 | S-18 | ms-alumnos | ISSUE-502: Import PDF docentes — pdfplumber, CreateUser via gRPC MS-1, graceful error handling [21 tests] | none | 18→21 passed; 0 failed | 1 | 0 |
 | S-19 | ms-alumnos | ISSUE-508: GET /api/alumnos/me/materias/ enriched with MS-2 Periodos gRPC, periodos_client, graceful fallback [24 tests] | none | 21→24 passed; 0 failed | 1 | 0 |
+| S-20 | ms-auth | Epic 3 ISSUE-301–308: tests T1–T10, README, Postman MS-1, fix reset transaction, grpc_servicer, proto path | none | 0→14 passed; 0 failed | 1 | 1 |
+| S-21 | ms-periodos | Epic 4 ISSUE-401–408: README, matriz T1–T13, Postman MS-2 gateway, proto path settings, frontend crear/activar/import PDF | none | 13 passed; 0 failed | 1 | 1 |
+| S-22 | ms-alumnos | Epic 5 ISSUE-501–509: README, Postman MS-3 gateway, inscripción en import confirmar, frontend docentes/import/detalle | none | 24 passed; 0 failed | 1 | 1 |
+| S-23 | ms-calificaciones | Epic 6 ISSUE-601–609: README, Postman MS-4, fix tests CierreImpresion, frontend calificaciones-screen | none | 2→24 passed; 0 failed | 1 | 1 |
+| S-24 | ms-asistencias | Epic 7 ISSUE-701–708: JWT MS-1, README, Postman MS-5, tests REST, frontend asistencias-screen | none | 2→11 passed; 0 failed | 1 | 1 |
+| S-25 | ms-reportes | Epic 9 repaso: USE_MOCK_DATA=False, .env completo, verify_grpc_upstream, frontend reportes-screen sin mock UI | none | 34 passed; 0 failed | 1 | 0 |
 
 ---
 
@@ -50,14 +56,14 @@
 
 | Issue | Descripción | Estado | Prioridad |
 |---|---|---|---|
-| ISSUE-301 | Modelos `Usuario` + migraciones MySQL | 🔴 activo | **CRÍTICA — desbloquea todo** |
-| ISSUE-302 | `POST /api/auth/login/` — JWT access+refresh | 🔴 activo | Crítica |
-| ISSUE-303 | `POST /api/auth/refresh/` | 🔴 activo | Crítica |
-| ISSUE-304 | `POST /api/auth/logout/` | 🔴 activo | Alta |
-| ISSUE-305 | Servidor gRPC :50051 — `ValidateToken`, `GetUserById`, `CheckRole` | 🔴 activo | **CRÍTICA** |
-| ISSUE-306 | gRPC `CreateUser` — para imports de MS-3 | 🔴 activo | Alta |
-| ISSUE-307 | `POST /api/auth/reset-password/` | 🟡 pendiente | Media |
-| ISSUE-308 | Seed usuario admin inicial | 🔴 activo | Alta |
+| ~~ISSUE-301~~ | ~~Fundación Django + `AUTH_USER_MODEL` + MySQL~~ | ✅ cerrado | Crítica |
+| ~~ISSUE-302~~ | ~~Login JWT + refresh + me~~ | ✅ cerrado | Crítica |
+| ~~ISSUE-303~~ | ~~Forgot/reset password + MS-6~~ | ✅ cerrado | Alta |
+| ~~ISSUE-304~~ | ~~RBAC DRF + documentación gRPC~~ | ✅ cerrado | Crítica |
+| ~~ISSUE-305~~ | ~~gRPC :50051 — ValidateToken, GetUserById, CheckRole, CreateUser~~ | ✅ cerrado | Crítica |
+| ~~ISSUE-306~~ | ~~CRUD admin `/usuarios`~~ | ✅ cerrado | Alta |
+| ~~ISSUE-307~~ | ~~`POST /usuarios` + API key interna~~ | ✅ cerrado | Alta |
+| ~~ISSUE-308~~ | ~~Logout + blacklist refresh~~ | ✅ cerrado | Media |
 
 ---
 
@@ -229,7 +235,7 @@
 
 | MS | Baseline | Fecha |
 |---|---|---|
-| ms-auth | 0 passed; 0 failed (no tests) | 2026-05-16 |
+| ms-auth | 14 passed; 0 failed | 2026-05-18 |
 | ms-periodos | 11 passed; 0 failed | 2026-05-16 |
 | ms-alumnos | 15 passed; 0 failed | 2026-05-16 |
 | ms-calificaciones | 0 passed; 0 failed (no tests) | 2026-05-16 |

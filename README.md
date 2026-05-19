@@ -208,7 +208,7 @@ No está en `docker-compose`. Desde `frontend/sistema_AGM`: `npm install` y `npm
 
 - **GitHub Actions:** `.github/workflows/docker-build.yml` — `docker build` en los 7 MS en cada push/PR a `main` o `develop`.
 - **Postman:** [`docs/postman/AGM_API_Collection.json`](docs/postman/AGM_API_Collection.json) (MS-2, MS-3, **MS-6**); [`docs/postman_collection.json`](docs/postman_collection.json) — auth y gateway.
-- **MS-6:** matriz de pruebas P1–P10 en [`docs/devs/Makinohara/MATRIZ_PRUEBAS_MS6.md`](docs/devs/Makinohara/MATRIZ_PRUEBAS_MS6.md).
+- **Pulido y pruebas por MS:** [`docs/RESUMEN_CAMBIOS.md`](docs/RESUMEN_CAMBIOS.md) (único documento vivo).
 
 ---
 

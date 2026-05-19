@@ -23,7 +23,7 @@ Copiar `.env.example` → `.env`. Valores sensibles **no** deben commitearse.
 | `MS_*_GRPC_HOST` / `MS_*_GRPC_PORT` | Upstreams MS-1…MS-5 |
 | `GRPC_CLIENT_TIMEOUT` | Timeout general clientes gRPC (s) |
 | `GRPC_CLIENT_TIMEOUT_CALIFICACIONES` | Timeout `GetConcentrado` (s, default 30) |
-| `USE_MOCK_DATA` | `True`: mocks/fallback MS-4 y MS-5 si gRPC no responde |
+| `USE_MOCK_DATA` | **`False`** en Docker/producción; `True` solo tests unitarios aislados |
 | `ESTADISTICAS_DOCENTE_MAX_MATERIAS` | Límite materias en historial docente |
 | `STATS_ALUMNO_MATERIA_IDS` | IDs de materia para stats alumno en dev |
 
@@ -80,4 +80,4 @@ Carpeta **MS-7** en `docs/postman/AGM_API_Collection.json`. Variables: `base_url
 
 ## Pruebas
 
-Matriz E2E: `docs/devs/Makinohara/MATRIZ_PRUEBAS_MS7.md`.
+Pulido y casos R1–R10: [`docs/RESUMEN_CAMBIOS.md`](../docs/RESUMEN_CAMBIOS.md).

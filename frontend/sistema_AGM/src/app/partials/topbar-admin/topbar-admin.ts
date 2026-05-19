@@ -15,8 +15,13 @@ export class TopbarAdmin {
   ) {}
 
   logout(): void {
-    this.facadeService.clearSession();
-    this.router.navigate(['/login'], { replaceUrl: true });
+    this.facadeService.logout().subscribe({
+      next: () => this.router.navigate(['/login'], { replaceUrl: true }),
+      error: () => {
+        this.facadeService.clearSession();
+        this.router.navigate(['/login'], { replaceUrl: true });
+      },
+    });
   }
 
 }

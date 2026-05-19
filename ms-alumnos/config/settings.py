@@ -9,7 +9,10 @@ from decouple import config
 from config.agm_env import env_bool, cors_allowed_origins_list, mysql_database_settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.append(os.path.join(BASE_DIR, 'proto_generated'))
+
+_proto_dir = BASE_DIR / "proto_generated"
+if _proto_dir.is_dir():
+    sys.path.insert(0, str(_proto_dir))
 
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me')
 DEBUG = config('DEBUG', default=True, cast=bool)

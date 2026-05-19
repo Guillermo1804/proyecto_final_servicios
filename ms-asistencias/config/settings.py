@@ -1,10 +1,15 @@
 """Django settings for MS-5 Asistencias QR."""
 
+import sys
 from pathlib import Path
 from decouple import config
 from config.agm_env import env_bool, cors_allowed_origins_list, mysql_database_settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+_proto_dir = BASE_DIR / "proto_generated"
+if _proto_dir.is_dir():
+    sys.path.insert(0, str(_proto_dir))
 
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me')
 DEBUG = config('DEBUG', default=True, cast=bool)
@@ -66,6 +71,15 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'apps.core.authentication.MsJwtAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
 
 # ===== REDIS CONFIGURATION =====
 CACHES = {

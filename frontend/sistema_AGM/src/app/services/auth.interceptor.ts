@@ -2,7 +2,13 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { FacadeService } from './facade.service';
 
-const AUTH_EXCLUDED_PATTERNS = ['/auth/login', '/auth/logout', '/auth/refresh', '/token'];
+const AUTH_EXCLUDED_PATTERNS = [
+  '/auth/login',
+  '/auth/logout',
+  '/auth/refresh-token',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+];
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   if (AUTH_EXCLUDED_PATTERNS.some((pattern) => request.url.includes(pattern))) {

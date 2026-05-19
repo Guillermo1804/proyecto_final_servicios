@@ -122,7 +122,7 @@ Environment: `base_url_gateway`, `internal_api_key`.
 
 - [`docs/microservicios/MS6_NOTIFICACIONES.md`](../docs/microservicios/MS6_NOTIFICACIONES.md)
 - [`docs/devs/Makinohara/PLAN_ACCION_MS6_NOTIFICACIONES.md`](../docs/devs/Makinohara/PLAN_ACCION_MS6_NOTIFICACIONES.md)
-- [`docs/devs/Makinohara/MATRIZ_PRUEBAS_MS6.md`](../docs/devs/Makinohara/MATRIZ_PRUEBAS_MS6.md)
+- [`docs/RESUMEN_CAMBIOS.md`](../docs/RESUMEN_CAMBIOS.md) (pulido MS-6, casos P1–P10)
 
 ## Producción
 
