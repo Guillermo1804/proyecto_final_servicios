@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from uuid import uuid4
 from datetime import timedelta
 import secrets
@@ -6,48 +7,14 @@ from decouple import config
 from django.db import transaction
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+=======
+>>>>>>> parent of 04b6ece (cambios de ms auth)
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-
-from .grpc_clients import send_reset_password_notification
-from .models import PasswordResetToken
-from .permissions import IsAdminRole, IsDocenteRole, IsAlumnoRole
-from .services import create_user_account, is_internal_api_key_valid
-from .serializers import (
-    LoginSerializer,
-    UserSerializer,
-    AdminUserListSerializer,
-    AdminUserUpdateSerializer,
-    AdminUserResetPasswordSerializer,
-    AdminUserCreateSerializer,
-    LogoutSerializer,
-    CustomTokenRefreshSerializer,
-    ForgotPasswordSerializer,
-    ResetPasswordSerializer,
-)
-
-User = get_user_model()
-
-
-def _admin_user_payload(user):
-    return AdminUserListSerializer(user).data
-
-
-def _send_password_reset_email(user):
-    token_value = uuid4()
-    reset_token = PasswordResetToken.objects.create(
-        user=user,
-        token=token_value,
-        expira_en=timezone.now() + timedelta(hours=1),
-    )
-
-    frontend_url = config('FRONTEND_URL', default='http://localhost:4200')
-    reset_url = f'{frontend_url}/reset-password?token={reset_token.token}'
-    send_reset_password_notification(user.email, str(reset_token.token), reset_url)
-    return reset_token
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import LoginSerializer, UserSerializer
 
 
 @api_view(['POST'])
@@ -56,15 +23,13 @@ def login(request):
     """
     POST /auth/login
     
-    Autentica un usuario con email y contraseña, retorna JWT (access + refresh).
-    
     Body:
     {
         "email": "admin@agm.buap.mx",
         "password": "admin123"
     }
     
-    Response 200:
+    Response:
     {
         "success": true,
         "data": {
@@ -80,33 +45,19 @@ def login(request):
         },
         "message": "Login exitoso"
     }
-    
-    Response 401:
-    {
-        "success": false,
-        "data": null,
-        "message": "Credenciales inválidas"
-    }
     """
     serializer = LoginSerializer(data=request.data)
     
     if serializer.is_valid():
         user = serializer.validated_data.get('user')
         
-        # Generar tokens JWT
+        # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
-        access = refresh.access_token
-        
-        # Agregar claims custom
-        access['user_id'] = user.id
-        access['email'] = user.email
-        access['rol'] = user.rol
-        access['nombre'] = user.nombre
         
         return Response({
             'success': True,
             'data': {
-                'access_token': str(access),
+                'access_token': str(refresh.access_token),
                 'refresh_token': str(refresh),
                 'user': UserSerializer(user).data
             },
@@ -116,8 +67,9 @@ def login(request):
     return Response({
         'success': False,
         'data': None,
-        'message': serializer.errors.get('non_field_errors', ['Credenciales inválidas'])[0]
+        'message': serializer.errors.get('non_field_errors', ['Error en la autenticación'])[0]
     }, status=status.HTTP_401_UNAUTHORIZED)
+<<<<<<< HEAD
 
 
 @api_view(['POST'])
@@ -484,3 +436,5 @@ def usuario_reset_password(request, user_id):
         'data': None,
         'message': 'Se envió un enlace para restablecer la contraseña'
     }, status=status.HTTP_200_OK)
+=======
+>>>>>>> parent of 04b6ece (cambios de ms auth)

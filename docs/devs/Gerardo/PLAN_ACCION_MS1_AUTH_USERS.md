@@ -144,7 +144,7 @@ Si MS-1 falla, **ningún** flujo del sistema es confiable; es el microservicio c
 | 306.1 | `GET /usuarios` | Paginación `page`, `limit` (§5.4.5 proyecto) |
 | 306.2 | `GET /usuarios/:id` | |
 | 306.3 | `PUT /usuarios/:id` | Campos permitidos: nombre, activo (no cambiar rol sin regla explícita) |
-| 306.4 | `POST /usuarios/:id/reset-password` | Flujo por correo con token temporal de 1 h reutilizando MS-6 |
+| 306.4 | `POST /usuarios/:id/reset-password` | Nueva temporal o flujo por correo — acordar y documentar |
 | 306.5 | `DELETE /usuarios/:id` | Soft delete `activo=False` |
 
 ---
@@ -153,8 +153,8 @@ Si MS-1 falla, **ningún** flujo del sistema es confiable; es el microservicio c
 
 | # | Tarea | Criterio |
 |---|--------|----------|
-| 307.1 | Header `X-Internal-Api-Key` o autenticación admin | Mismo secret en MS-3 env; rechazar 401 si falta |
-| 307.2 | Body: email, nombre, rol, password | Password inicial UUID si no se envía; soporta alta desde admin |
+| 307.1 | Header `X-Internal-Api-Key` o similar | Mismo secret en MS-3 env; rechazar 401 si falta |
+| 307.2 | Body: email, nombre, rol, password | Password inicial UUID para alumnos |
 | 307.3 | Respuesta `user_id` | MS-3 persiste FK `usuario_id` |
 | 307.4 | Duplicado email | 409 o 400 con mensaje claro |
 
@@ -168,7 +168,7 @@ Si MS-1 falla, **ningún** flujo del sistema es confiable; es el microservicio c
 |---|--------|----------|
 | 308.1 | `simplejwt` blacklist app | Migraciones |
 | 308.2 | `ROTATE_REFRESH_TOKENS` + blacklist | Comportamiento acordado con frontend |
-| 308.3 | `POST /auth/logout` | Body con refresh; tras éxito, refresh no válido por blacklist |
+| 308.3 | `POST /auth/logout` | Body con refresh; tras éxito, refresh no válido |
 
 **Patrón habitual:** access sigue válido hasta expiración; el enunciado “invalidación del token” se cumple para refresh y para nuevas sesiones.
 
