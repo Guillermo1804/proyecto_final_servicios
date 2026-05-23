@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 
 from apps.core.models import SesionAsistencia, RegistroAsistencia
 from apps.core.utils import get_stats, initialize_stats
-from apps.core.grpc_clients import get_alumno_by_id
+from apps.core.models import AlumnoProjection
 
 
 class EstadisticasService:

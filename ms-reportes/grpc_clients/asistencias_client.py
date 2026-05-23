@@ -6,6 +6,9 @@ from grpc_clients.exceptions import map_rpc_error
 from grpc_clients.mocks import mock_asistencia_alumno, mock_estadisticas_asistencia
 from proto_generated import asistencias_pb2, asistencias_pb2_grpc
 
+"""DEPRECATED (Fase 9): cliente gRPC de negocio. Bloqueado con USE_EVENT_BUS=true."""
+from agm_events.grpc_legacy import block_business_grpc
+
 _SERVICE = 'ms-asistencias'
 
 _FALLBACK_CODES = frozenset(
@@ -19,14 +22,17 @@ _FALLBACK_CODES = frozenset(
 
 
 def use_mock_data() -> bool:
+    block_business_grpc('asistencias_client.py.use_mock_data')
     return env_bool('USE_MOCK_DATA', default=False)
 
 
 def _should_fallback_to_mock(exc: grpc.RpcError) -> bool:
+    block_business_grpc('asistencias_client.py._should_fallback_to_mock')
     return exc.code() in _FALLBACK_CODES
 
 
 def get_asistencias_stub() -> asistencias_pb2_grpc.AsistenciasServiceStub:
+    block_business_grpc('asistencias_client.py.get_asistencias_stub')
     channel = get_channel(
         'asistencias',
         'MS_ASISTENCIAS_GRPC_HOST',
@@ -38,6 +44,7 @@ def get_asistencias_stub() -> asistencias_pb2_grpc.AsistenciasServiceStub:
 
 
 def get_asistencia_alumno(alumno_id: int, materia_id: int) -> asistencias_pb2.AsistenciaAlumnoResponse:
+    block_business_grpc('asistencias_client.py.get_asistencia_alumno')
     if use_mock_data():
         return mock_asistencia_alumno(alumno_id, materia_id)
     try:
@@ -58,6 +65,7 @@ def get_asistencia_alumno(alumno_id: int, materia_id: int) -> asistencias_pb2.As
 
 
 def get_estadisticas_asistencia(materia_id: int) -> asistencias_pb2.EstadisticasAsistenciaResponse:
+    block_business_grpc('asistencias_client.py.get_estadisticas_asistencia')
     """GetEstadisticasAsistencia con fallback a mock si USE_MOCK_DATA o MS-5 no responde."""
     if use_mock_data():
         return mock_estadisticas_asistencia(materia_id)

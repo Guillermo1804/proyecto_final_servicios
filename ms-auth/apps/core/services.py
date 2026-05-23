@@ -27,13 +27,13 @@ def create_user_account(*, email, nombre, rol, password, activo=True):
         return None, 'El email ya está registrado'
 
     with transaction.atomic():
-        user = User.objects.create_user(
+        user = User(
             email=email,
             nombre=nombre,
             rol=rol,
-            password=password,
+            activo=activo,
         )
-        user.activo = activo
-        user.save(update_fields=['activo'])
+        user.set_password(password)
+        user.save()
 
     return user, None

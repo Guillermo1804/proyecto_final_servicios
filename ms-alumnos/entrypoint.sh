@@ -16,14 +16,16 @@ MySQLdb.connect(
 done
 echo "MySQL listo!"
 
-# Aplicar migraciones
 echo "Aplicando migraciones..."
 python manage.py migrate --noinput
 
-# Arrancar servidor gRPC en background
-echo "Iniciando servidor gRPC en puerto 50053..."
+if [ "${AGM_RUN_MODE}" = "outbox-worker" ]; then
+  echo "Iniciando relay outbox MS-3 → RabbitMQ..."
+  exec python manage.py run_event_outbox
+fi
+
+echo "Iniciando servidor gRPC en puerto ${GRPC_PORT}..."
 python -m grpc_server.server &
 
-# Arrancar Gunicorn
 echo "Iniciando servidor REST en puerto ${REST_PORT}..."
 exec gunicorn config.wsgi:application --bind 0.0.0.0:${REST_PORT} --workers 3 --timeout 120

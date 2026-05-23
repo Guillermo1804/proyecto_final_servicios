@@ -3,12 +3,29 @@ import os
 import grpc
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from unittest.mock import MagicMock, patch
 from rest_framework.test import APIClient
-from apps.core.models import Alumno, Docente, InscripcionMateria
-from proto_generated import alumnos_pb2, alumnos_pb2_grpc, auth_pb2
+
+from apps.core.models import Alumno, Docente, EventOutbox, InscripcionMateria, PendingUserCreation
 from grpc_server.servicer import AlumnosServicer
+from proto_generated import alumnos_pb2, alumnos_pb2_grpc
+from utils.jwt_local import AuthenticatedUser
+
+
+def _admin_user():
+    return AuthenticatedUser(
+        user_id=1,
+        email="test@buap.mx",
+        rol="admin",
+        nombre="Test",
+    )
+
+
+def _install_jwt_mock(test_case):
+    test_case.patcher = patch("utils.jwt_local.validate_access_token")
+    test_case.mock_validate = test_case.patcher.start()
+    test_case.mock_validate.return_value = _admin_user()
 
 class AlumnoModelTests(TestCase):
     """Pruebas básicas para el modelo Alumno."""
@@ -94,14 +111,7 @@ class DocenteCRUDTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
-        self.patcher = patch("utils.auth.get_auth_stub")
-        self.mock_get_auth_stub = self.patcher.start()
-        
-        self.mock_stub = MagicMock()
-        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
-            valid=True, user_id=1, email="test@buap.mx", rol="admin", nombre="Test"
-        )
-        self.mock_get_auth_stub.return_value = self.mock_stub
+        _install_jwt_mock(self)
 
         # Crear 15 docentes para probar paginación
         for i in range(15):
@@ -155,8 +165,11 @@ class DocenteCRUDTests(TestCase):
         self.assertFalse(response.json()["success"])
 
     def test_crear_docente_rol_alumno_retorna_403(self):
-        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
-            valid=True, user_id=2, email="alumno@buap.mx", rol="alumno", nombre="Test"
+        self.mock_validate.return_value = AuthenticatedUser(
+            user_id=2,
+            email="alumno@buap.mx",
+            rol="alumno",
+            nombre="Test",
         )
         response = self.client.post("/api/docentes/", data={}, content_type="application/json")
         self.assertEqual(response.status_code, 403)
@@ -169,14 +182,7 @@ class AlumnoImportTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
-        self.patcher = patch("utils.auth.get_auth_stub")
-        self.mock_get_auth_stub = self.patcher.start()
-        
-        self.mock_stub = MagicMock()
-        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
-            valid=True, user_id=1, email="test@buap.mx", rol="admin", nombre="Test"
-        )
-        self.mock_get_auth_stub.return_value = self.mock_stub
+        _install_jwt_mock(self)
 
     def tearDown(self):
         self.patcher.stop()
@@ -193,11 +199,9 @@ class AlumnoImportTests(TestCase):
         self.assertEqual(data["validas"][0]["matricula"], "202012345")
         self.assertEqual(data["validas"][0]["apellido"], "Perez Lopez")
 
-    @patch("apps.core.views.send_bienvenida")
-    def test_import_confirmar_upsert(self, mock_send):
-        """Verifica que el upsert cree registros y llame a la notificación."""
-        mock_send.return_value = True
-        
+    @override_settings(USE_EVENT_BUS=True)
+    def test_import_confirmar_upsert_event_bus(self):
+        """Upsert crea alumno, outbox y solicitud async de usuario (sin MS-6)."""
         alumnos_data = {
             "alumnos": [
                 {
@@ -206,37 +210,64 @@ class AlumnoImportTests(TestCase):
                     "apellido": "Import",
                     "email": "test@buap.mx",
                     "carrera": "ICC",
-                    "semestre": 1
+                    "semestre": 1,
+                    "materia_id": 1,
+                    "periodo_id": 10,
+                    "clave_acceso": "clave-temp-01",
                 }
             ]
         }
-        
-        response = self.client.post("/api/alumnos/importar/confirmar/", alumnos_data, content_type="application/json")
+
+        response = self.client.post(
+            "/api/alumnos/importar/confirmar/",
+            alumnos_data,
+            content_type="application/json",
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["data"]["creados"], 1)
         self.assertTrue(Alumno.objects.filter(matricula="202099999").exists())
-        self.assertEqual(mock_send.call_count, 1)
+        self.assertEqual(
+            EventOutbox.objects.filter(event_name="alumno.imported.v1").count(),
+            1,
+        )
+        self.assertEqual(
+            EventOutbox.objects.filter(event_name="user.create_requested.v1").count(),
+            1,
+        )
+        self.assertEqual(PendingUserCreation.objects.count(), 1)
 
-    @patch("apps.core.views.send_bienvenida")
-    def test_import_confirmar_fallo_notificacion_no_aborta(self, mock_send):
-        """Si falla gRPC, el import debe continuar (graceful failure)."""
-        mock_send.return_value = False # Simula fallo de red/timeout
-        
+    @override_settings(USE_EVENT_BUS=True)
+    def test_import_confirmar_lote_atomico_outbox(self):
+        """Import masivo: todos los eventos outbox en la misma transaccion."""
         alumnos_data = {
             "alumnos": [
                 {
-                    "matricula": "202088888",
-                    "nombre": "Graceful",
-                    "apellido": "Failure",
-                    "email": "fail@buap.mx"
-                }
+                    "matricula": "202088881",
+                    "nombre": "A",
+                    "apellido": "Uno",
+                    "email": "a1@buap.mx",
+                    "clave_acceso": "k1",
+                },
+                {
+                    "matricula": "202088882",
+                    "nombre": "B",
+                    "apellido": "Dos",
+                    "email": "a2@buap.mx",
+                    "clave_acceso": "k2",
+                },
             ]
         }
-        
-        response = self.client.post("/api/alumnos/importar/confirmar/", alumnos_data, content_type="application/json")
+        response = self.client.post(
+            "/api/alumnos/importar/confirmar/",
+            alumnos_data,
+            content_type="application/json",
+        )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["data"]["creados"], 1)
-        self.assertTrue(Alumno.objects.filter(matricula="202088888").exists())
+        self.assertEqual(response.json()["data"]["creados"], 2)
+        self.assertEqual(
+            EventOutbox.objects.filter(event_name="alumno.imported.v1").count(),
+            2,
+        )
 
 
 class AlumnoPorMateriaTests(TestCase):
@@ -245,14 +276,7 @@ class AlumnoPorMateriaTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
-        self.patcher = patch("utils.auth.get_auth_stub")
-        self.mock_get_auth_stub = self.patcher.start()
-        
-        self.mock_stub = MagicMock()
-        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
-            valid=True, user_id=1, email="test@buap.mx", rol="admin", nombre="Test"
-        )
-        self.mock_get_auth_stub.return_value = self.mock_stub
+        _install_jwt_mock(self)
 
         # Crear 3 alumnos
         self.a1 = Alumno.objects.create(usuario_id=1, matricula="20201", nombre="Juan", apellido="Zepeda", email="juan@b.com")
@@ -294,14 +318,7 @@ class AlumnoBajaMateriaTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
-        self.patcher = patch("utils.auth.get_auth_stub")
-        self.mock_get_auth_stub = self.patcher.start()
-        
-        self.mock_stub = MagicMock()
-        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
-            valid=True, user_id=1, email="test@buap.mx", rol="admin", nombre="Test"
-        )
-        self.mock_get_auth_stub.return_value = self.mock_stub
+        _install_jwt_mock(self)
 
         self.alumno = Alumno.objects.create(usuario_id=10, matricula="2020555", nombre="Luis", apellido="Baja", email="luis@b.com")
         self.insc = InscripcionMateria.objects.create(
@@ -311,11 +328,21 @@ class AlumnoBajaMateriaTests(TestCase):
     def tearDown(self):
         self.patcher.stop()
 
-    @patch("apps.core.views.get_materia_docente_id", return_value=99)
-    @patch("apps.core.views.send_baja_notif")
-    def test_baja_materia_exitosa(self, mock_send, _mock_docente):
-        """POST /api/alumnos/{id}/baja-materia/ marca activa=False y setea fecha_baja."""
-        mock_send.return_value = True
+    @override_settings(USE_EVENT_BUS=True)
+    @patch(
+        "apps.core.views.resolve_materia_context",
+        return_value={
+            "materia_id": 5,
+            "periodo_id": 3,
+            "docente_email": "doc@buap.mx",
+            "docente_id": 99,
+            "docente_nombre": "Doc",
+            "materia_nombre": "Bajas",
+            "nrc": "500",
+        },
+    )
+    def test_baja_materia_exitosa_event_bus(self, _mock_ctx):
+        """Baja publica alumno.withdrawn.v1 sin depender de MS-6."""
         payload = {"materia_id": 5}
 
         response = self.client.post(
@@ -329,11 +356,12 @@ class AlumnoBajaMateriaTests(TestCase):
         self.insc.refresh_from_db()
         self.assertFalse(self.insc.activa)
         self.assertIsNotNone(self.insc.fecha_baja)
-        mock_send.assert_called_once()
-        self.assertEqual(mock_send.call_args.kwargs["docente_id"], 99)
+        self.assertEqual(
+            EventOutbox.objects.filter(event_name="alumno.withdrawn.v1").count(),
+            1,
+        )
 
-    @patch("apps.core.views.send_baja_notif")
-    def test_baja_materia_ya_inactiva_falla(self, mock_send):
+    def test_baja_materia_ya_inactiva_falla(self):
         """Intentar dar de baja una materia ya inactiva retorna 400."""
         self.insc.activa = False
         self.insc.save()
@@ -400,20 +428,15 @@ class DocenteImportTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.patcher_auth = patch("utils.auth.get_auth_stub")
-        self.mock_get_auth_stub = self.patcher_auth.start()
-        
-        self.mock_stub = MagicMock()
-        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
-            valid=True, user_id=1, email="admin@buap.mx", rol="admin", nombre="Admin"
-        )
-        self.mock_get_auth_stub.return_value = self.mock_stub
+        _install_jwt_mock(self)
+        self.patcher_auth = self.patcher
 
     def tearDown(self):
         self.patcher_auth.stop()
 
+    @override_settings(USE_EVENT_BUS=False)
     @patch("apps.core.views.parse_pdf_docentes")
-    @patch("apps.core.views.create_user_in_auth")
+    @patch("apps.core.services.docente_import.create_user_in_auth")
     def test_import_pdf_docentes_exitoso(self, mock_create_user, mock_parse_pdf):
         """Importar un PDF válido de docentes crea los usuarios e inserta los docentes."""
         self.client.credentials(HTTP_AUTHORIZATION="Bearer token_admin")
@@ -454,8 +477,9 @@ class DocenteImportTests(TestCase):
         self.assertTrue(Docente.objects.filter(email="evelia.perez@correo.buap.mx").exists())
         self.assertTrue(Docente.objects.filter(email="adan.limon@correo.buap.mx").exists())
 
+    @override_settings(USE_EVENT_BUS=False)
     @patch("apps.core.views.parse_pdf_docentes")
-    @patch("apps.core.views.create_user_in_auth")
+    @patch("apps.core.services.docente_import.create_user_in_auth")
     def test_import_pdf_docentes_grpc_error_graceful(self, mock_create_user, mock_parse_pdf):
         """Si falla gRPC MS-1 Auth para un docente, se maneja de forma graceful y continúa."""
         self.client.credentials(HTTP_AUTHORIZATION="Bearer token_admin")
@@ -510,15 +534,14 @@ class AlumnoMeMateriasTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.patcher_auth = patch("utils.auth.get_auth_stub")
-        self.mock_get_auth_stub = self.patcher_auth.start()
-        
-        self.mock_auth_stub = MagicMock()
-        # Mocking ValidateToken for alumno (rol="alumno", user_id=50)
-        self.mock_auth_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
-            valid=True, user_id=50, email="alumno50@correo.buap.mx", rol="alumno", nombre="Juan Perez"
+        _install_jwt_mock(self)
+        self.patcher_auth = self.patcher
+        self.mock_validate.return_value = AuthenticatedUser(
+            user_id=50,
+            email="alumno50@correo.buap.mx",
+            rol="alumno",
+            nombre="Juan Perez",
         )
-        self.mock_get_auth_stub.return_value = self.mock_auth_stub
 
     def tearDown(self):
         self.patcher_auth.stop()

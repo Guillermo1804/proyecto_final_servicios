@@ -3,6 +3,7 @@ from datetime import timedelta
 import secrets
 
 from decouple import config
+from django.db import transaction
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, permission_classes
@@ -11,9 +12,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
+from django.conf import settings
+
+from .event_bus.password_events import enqueue_password_reset_requested
 from .grpc_clients import send_reset_password_notification
 from .models import PasswordResetToken
 from .permissions import IsAdminRole, IsDocenteRole, IsAlumnoRole
+from .event_bus.token_events import enqueue_token_revoked
 from .services import create_user_account, is_internal_api_key_valid
 from .serializers import (
     LoginSerializer,
@@ -35,6 +40,20 @@ def _admin_user_payload(user):
     return AdminUserListSerializer(user).data
 
 
+def _dispatch_password_reset_notification(
+    *, email: str, reset_url: str, token: str, nombre: str = ''
+) -> None:
+    if getattr(settings, 'USE_EVENT_BUS', True):
+        enqueue_password_reset_requested(
+            email=email,
+            reset_url=reset_url,
+            token=token,
+            nombre=nombre,
+        )
+    else:
+        send_reset_password_notification(email, token, reset_url)
+
+
 def _send_password_reset_email(user):
     token_value = uuid4()
     reset_token = PasswordResetToken.objects.create(
@@ -45,7 +64,14 @@ def _send_password_reset_email(user):
 
     frontend_url = config('FRONTEND_URL', default='http://localhost:4200')
     reset_url = f'{frontend_url}/reset-password?token={reset_token.token}'
-    send_reset_password_notification(user.email, str(reset_token.token), reset_url)
+    transaction.on_commit(
+        lambda: _dispatch_password_reset_notification(
+            email=user.email,
+            reset_url=reset_url,
+            token=str(reset_token.token),
+            nombre=user.nombre or '',
+        )
+    )
     return reset_token
 
 
@@ -231,7 +257,16 @@ def forgot_password(request):
 
             frontend_url = config('FRONTEND_URL', default='http://localhost:4200')
             reset_url = f'{frontend_url}/reset-password?token={reset_token.token}'
-            send_reset_password_notification(target_user.email, str(reset_token.token), reset_url)
+            transaction.on_commit(
+                lambda u=target_user, r=reset_url, t=str(reset_token.token): (
+                    _dispatch_password_reset_notification(
+                        email=u.email,
+                        reset_url=r,
+                        token=t,
+                        nombre=u.nombre or '',
+                    )
+                )
+            )
 
     return Response({
         'success': True,
@@ -284,7 +319,11 @@ def logout(request):
 
     try:
         refresh = RefreshToken(serializer.validated_data['refresh'])
+        jti = refresh.get('jti')
+        user_id = refresh.get('user_id') or getattr(request.user, 'id', None)
         refresh.blacklist()
+        if jti and user_id:
+            enqueue_token_revoked(user_id=int(user_id), jti=str(jti))
     except TokenError:
         return Response({
             'success': False,
@@ -399,7 +438,14 @@ def usuarios(request):
             expira_en=timezone.now() + timedelta(hours=1),
         )
         reset_url = f'{frontend_url}/reset-password?token={reset_token.token}'
-        send_reset_password_notification(user.email, str(reset_token.token), reset_url)
+        transaction.on_commit(
+            lambda: _dispatch_password_reset_notification(
+                email=user.email,
+                reset_url=reset_url,
+                token=str(reset_token.token),
+                nombre=user.nombre or '',
+            )
+        )
 
     return Response({
         'success': True,

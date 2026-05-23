@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass(frozen=True)
@@ -51,6 +52,7 @@ class CalificacionesReportDTO:
     materia: MateriaEncabezadoDTO
     categorias: tuple[CategoriaConcentradoDTO, ...]
     alumnos: tuple[AlumnoCalificacionRowDTO, ...]
+    data_as_of: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -70,6 +72,7 @@ class AsistenciasReportDTO:
     total_sesiones: int
     porcentaje_asistencia_grupal: float
     alumnos: tuple[AlumnoAsistenciaRowDTO, ...]
+    data_as_of: datetime | None = None
 
 
 @dataclass(frozen=True)

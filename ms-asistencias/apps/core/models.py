@@ -158,3 +158,88 @@ class RegistroAsistencia(models.Model):
         if self.minuto_registro < 0 or self.minuto_registro > 10:
             raise ValueError("minuto_registro debe estar entre 0 y 10")
         super().save(*args, **kwargs)
+
+
+class EventOutbox(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        PUBLISHED = 'published', 'Published'
+        FAILED = 'failed', 'Failed'
+
+    event_id = models.UUIDField(primary_key=True, editable=False)
+    event_name = models.CharField(max_length=128)
+    event_version = models.PositiveIntegerField(default=1)
+    aggregate_type = models.CharField(max_length=64)
+    aggregate_id = models.CharField(max_length=64)
+    payload = models.JSONField()
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    retry_count = models.PositiveIntegerField(default=0)
+    last_error = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'event_outbox'
+        indexes = [
+            models.Index(fields=['status', 'created_at'], name='idx_ms5_outbox_status'),
+        ]
+
+
+class EventInbox(models.Model):
+    event_id = models.UUIDField(primary_key=True, editable=False)
+    event_name = models.CharField(max_length=128, db_index=True)
+    handler = models.CharField(max_length=64)
+    processed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'event_inbox'
+
+
+class PeriodoProjection(models.Model):
+    periodo_id = models.IntegerField(primary_key=True)
+    nombre = models.CharField(max_length=100, default='')
+    activo = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'periodo_projection'
+
+
+class MateriaProjection(models.Model):
+    materia_id = models.IntegerField(primary_key=True)
+    periodo_id = models.IntegerField(db_index=True)
+    nrc = models.CharField(max_length=32, default='')
+    nombre = models.CharField(max_length=255, default='')
+    docente_id = models.IntegerField(null=True, blank=True)
+    periodo_activo = models.BooleanField(default=True)
+    cerrada_upstream = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'materia_projection'
+
+
+class AlumnoProjection(models.Model):
+    """Inscripción alumno-materia para validación local en escaneo QR."""
+
+    alumno_id = models.IntegerField(db_index=True)
+    materia_id = models.IntegerField(db_index=True)
+    matricula = models.CharField(max_length=32, default='')
+    nombre = models.CharField(max_length=255, default='')
+    email = models.EmailField(blank=True, default='')
+    activa = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'alumno_projection'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['alumno_id', 'materia_id'],
+                name='uniq_alumno_projection_materia',
+            ),
+        ]

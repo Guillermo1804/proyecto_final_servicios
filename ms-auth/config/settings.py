@@ -32,6 +32,9 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 
 # Application definition
 
+SERVICE_NAME = config('SERVICE_NAME', default='ms-auth')
+USE_EVENT_BUS = config('USE_EVENT_BUS', default=True, cast=bool)
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -48,6 +51,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'apps.core.event_bus.middleware.CorrelationIdMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -152,12 +156,28 @@ else:
 INTERNAL_API_KEY = config('INTERNAL_API_KEY', default='')
 
 # JWT settings
+JWT_ALGORITHM = config('JWT_ALGORITHM', default='RS256')
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(config('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', 30))),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=int(config('JWT_REFRESH_TOKEN_LIFETIME_DAYS', 7))),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
-    'ALGORITHM': 'HS256',
+    'ALGORITHM': JWT_ALGORITHM,
     'SIGNING_KEY': SECRET_KEY,
 }
+
+if JWT_ALGORITHM == 'RS256':
+    from apps.core.jwt_keys import get_rsa_private_key_pem, get_rsa_public_key_pem
+
+    SIMPLE_JWT['SIGNING_KEY'] = get_rsa_private_key_pem()
+    SIMPLE_JWT['VERIFYING_KEY'] = get_rsa_public_key_pem()
+
+# Bus de eventos (Fase 2+)
+EVENT_QUEUE_NAME = config('EVENT_QUEUE_NAME', default='ms-auth.events')
+RABBITMQ_HOST = config('RABBITMQ_HOST', default='rabbitmq')
+RABBITMQ_PORT = config('RABBITMQ_PORT', default='5672')
+RABBITMQ_USER = config('RABBITMQ_USER', default='agm_bus')
+RABBITMQ_PASSWORD = config('RABBITMQ_PASSWORD', default='agm_bus_dev_change_me')
+RABBITMQ_VHOST = config('RABBITMQ_VHOST', default='agm')
+EVENT_EXCHANGE = config('EVENT_EXCHANGE', default='agm.domain')

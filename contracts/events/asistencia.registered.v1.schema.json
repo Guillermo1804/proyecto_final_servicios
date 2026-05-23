@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "asistencia.registered.v1 payload",
+  "type": "object",
+  "required": ["sesion_id", "materia_id", "alumno_id", "estado", "minuto_registro"],
+  "properties": {
+    "sesion_id": { "type": "integer" },
+    "materia_id": { "type": "integer" },
+    "alumno_id": { "type": "integer" },
+    "estado": { "type": "string", "enum": ["presente", "retardo"] },
+    "minuto_registro": { "type": "integer" },
+    "registro_id": { "type": "integer" }
+  }
+}

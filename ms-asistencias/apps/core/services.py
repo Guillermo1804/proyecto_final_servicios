@@ -10,6 +10,8 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 
 from apps.core.models import SesionAsistencia
+from apps.core.projection_access import assert_materia_habilitada_para_asistencia, ProjectionRejection
+from apps.core.event_bus.publishers import publish_qr_session_created
 from apps.core.utils import (
     store_sesion_in_redis,
     get_sesion_from_redis,
@@ -43,6 +45,11 @@ class SesionAsistenciaService:
         Raises:
             ValidationError if duplicate session exists
         """
+        try:
+            assert_materia_habilitada_para_asistencia(materia_id)
+        except ProjectionRejection as exc:
+            raise ValidationError(str(exc)) from exc
+
         # Check if already active in Redis (fast path)
         existing_redis = get_active_sesion_id_by_materia(materia_id)
         if existing_redis:
@@ -91,7 +98,14 @@ class SesionAsistenciaService:
         
         # Initialize stats
         initialize_stats(sesion.id)
-        
+
+        publish_qr_session_created(
+            sesion_id=sesion.id,
+            materia_id=materia_id,
+            docente_id=docente_id,
+            fecha_fin_teorica=fecha_fin.isoformat(),
+        )
+
         return sesion, f"Sesión {sesion.id} iniciada para materia {materia_id}"
     
     @staticmethod

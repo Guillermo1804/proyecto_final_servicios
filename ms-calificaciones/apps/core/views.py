@@ -10,7 +10,6 @@ from rest_framework import serializers, status
 from rest_framework.decorators import api_view
 
 from apps.core.models import EstadoMateria, Ponderacion, Actividad, Calificacion
-from apps.core.services import calcular_promedio_ponderado, obtener_concentrado_materia, redondear_institucional
 from apps.core.serializers import (
     PonderacionBatchSerializer,
     PonderacionOutputSerializer,
@@ -19,8 +18,21 @@ from apps.core.serializers import (
     CalificacionInputSerializer,
     CalificacionOutputSerializer,
 )
-from grpc_clients import get_alumnos_by_materia, get_materia_by_id, validate_token, is_alumno_en_materia
-from utils.notificaciones_client import send_cierre_materia
+from django.conf import settings
+
+from apps.core.event_bus.publishers import (
+    publish_actividad_created,
+    publish_calificacion_updated,
+    publish_concentrado_calculado,
+    publish_materia_calificaciones_cerradas,
+)
+from apps.core.services import calcular_promedio_ponderado, obtener_concentrado_materia, redondear_institucional
+from apps.core.projection_access import (
+    get_materia_local,
+    is_alumno_en_materia_local,
+    list_alumnos_materia_local,
+)
+from utils.jwt_local import validate_access_token
 from utils.responses import error_response, success_response
 
 logger = logging.getLogger(__name__)
@@ -41,26 +53,23 @@ def _authorize_materia_management(request, materia_id):
         return error_response('No se proporcionó token de autorización.', status=status.HTTP_401_UNAUTHORIZED)
 
     try:
-        auth_response = validate_token(token)
-    except PermissionError:
+        auth_response = validate_access_token(token)
+    except ValueError:
         return error_response('Token inválido o expirado.', status=status.HTTP_401_UNAUTHORIZED)
     except Exception as exc:
         logger.exception('Error validando token para materia %s', materia_id)
         return error_response(f'No se pudo validar el token: {exc}', status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-    role = (getattr(auth_response, 'rol', '') or '').lower()
+    role = (auth_response.rol or '').lower()
     if role == 'admin':
         return None
 
     try:
-        materia = get_materia_by_id(materia_id)
+        materia = get_materia_local(materia_id)
     except LookupError:
-        return error_response('La materia no existe.', status=status.HTTP_404_NOT_FOUND)
-    except Exception as exc:
-        logger.exception('Error consultando materia %s en MS-2', materia_id)
-        return error_response(f'No se pudo validar la materia: {exc}', status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        return error_response('La materia no existe en proyección local.', status=status.HTTP_404_NOT_FOUND)
 
-    if getattr(auth_response, 'user_id', None) != getattr(materia, 'docente_id', None):
+    if auth_response.user_id != materia.docente_id:
         return error_response('No tienes permisos para gestionar esta materia.', status=status.HTTP_403_FORBIDDEN)
 
     return None
@@ -183,25 +192,15 @@ def _build_concentrado_rest_payload(materia_id):
     if concentrado_local is None:
         return None
 
-    try:
-        alumnos_response = get_alumnos_by_materia(materia_id)
-    except LookupError:
-        alumnos_response = None
-    except Exception as exc:
-        raise RuntimeError(f'No se pudo obtener el listado de alumnos: {exc}') from exc
-
-    alumnos_index = {}
-    alumnos_en_materia = []
-    if alumnos_response is not None:
-        alumnos_en_materia = list(getattr(alumnos_response, 'alumnos', []))
-        alumnos_index = {getattr(alumno, 'id', None): alumno for alumno in alumnos_en_materia if getattr(alumno, 'id', None) is not None}
+    alumnos_en_materia = list_alumnos_materia_local(materia_id)
+    alumnos_index = {alumno.id: alumno for alumno in alumnos_en_materia}
 
     actividades_por_alumno = {}
     calificaciones_qs = Calificacion.objects.filter(actividad__ponderacion__materia_id=materia_id).select_related('actividad__ponderacion', 'actividad')
     for calificacion in calificaciones_qs.order_by('actividad__ponderacion__id', 'actividad__id'):
         actividades_por_alumno.setdefault(calificacion.alumno_id, []).append(calificacion)
 
-    alumno_ids = [getattr(alumno, 'id', None) for alumno in alumnos_en_materia if getattr(alumno, 'id', None) is not None]
+    alumno_ids = [alumno.id for alumno in alumnos_en_materia]
     if not alumno_ids:
         alumno_ids = sorted(set(actividades_por_alumno.keys()))
 
@@ -224,8 +223,8 @@ def _build_concentrado_rest_payload(materia_id):
         promedio_real = promedio_real.quantize(Decimal('0.01'))
         alumnos.append({
             'alumno_id': alumno_id,
-            'matricula': getattr(alumno_ref, 'matricula', '') or str(alumno_id),
-            'nombre': getattr(alumno_ref, 'nombre', '') or '',
+            'matricula': alumno_ref.matricula if alumno_ref else str(alumno_id),
+            'nombre': alumno_ref.nombre if alumno_ref else '',
             'calificaciones': [
                 {
                     'actividad_id': item.actividad_id,
@@ -349,6 +348,16 @@ def actividades(request):
                 nombre=serializer.validated_data['nombre'],
                 descripcion=serializer.validated_data.get('descripcion', ''),
                 fecha=serializer.validated_data.get('fecha'),
+            )
+            fecha_val = actividad.fecha.isoformat() if actividad.fecha else None
+            publish_actividad_created(
+                actividad_id=actividad.id,
+                materia_id=materia_id,
+                ponderacion_id=ponderacion.id,
+                nombre=actividad.nombre,
+                descripcion=actividad.descripcion,
+                fecha=fecha_val,
+                categoria=ponderacion.nombre_categoria,
             )
             output_serializer = ActividadOutputSerializer(actividad)
             return success_response(
@@ -498,23 +507,10 @@ def crear_calificacion(request):
         # Primera vez, no hay restricción
         pass
 
-    # Validar que el alumno está inscrito en la materia
-    try:
-        if not is_alumno_en_materia(alumno_id, materia_id):
-            return error_response(
-                'El alumno no está inscrito activo en la materia.',
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-    except LookupError:
+    if not is_alumno_en_materia_local(alumno_id, materia_id):
         return error_response(
-            'El alumno no existe o no está inscrito en la materia.',
+            'El alumno no está inscrito activo en la materia (proyección local).',
             status=status.HTTP_400_BAD_REQUEST,
-        )
-    except Exception as exc:
-        logger.exception('Error validando alumno en materia')
-        return error_response(
-            f'Error validando alumno: {exc}',
-            status=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
 
     try:
@@ -522,6 +518,14 @@ def crear_calificacion(request):
             actividad=actividad,
             alumno_id=alumno_id,
             defaults={'calificacion': calificacion},
+        )
+        publish_calificacion_updated(
+            calificacion_id=calif_obj.id,
+            actividad_id=actividad_id,
+            alumno_id=alumno_id,
+            materia_id=materia_id,
+            calificacion=calificacion,
+            created=created,
         )
         output_serializer = CalificacionOutputSerializer(calif_obj)
         action = 'creada' if created else 'actualizada'
@@ -603,19 +607,9 @@ def importar_calificaciones(request, materia_id: int):
             resumen['errores'].append({'fila': fila, 'motivo': 'alumno_id inválido'})
             continue
 
-        # validar alumno inscrito via MS-3
-        try:
-            if not is_alumno_en_materia(alumno_id, materia_id):
-                resumen['fallos'] += 1
-                resumen['errores'].append({'fila': fila, 'motivo': 'alumno no inscrito'})
-                continue
-        except LookupError:
+        if not is_alumno_en_materia_local(alumno_id, materia_id):
             resumen['fallos'] += 1
-            resumen['errores'].append({'fila': fila, 'motivo': 'alumno no encontrado'})
-            continue
-        except Exception as exc:
-            resumen['fallos'] += 1
-            resumen['errores'].append({'fila': fila, 'motivo': f'error validando alumno: {exc}'})
+            resumen['errores'].append({'fila': fila, 'motivo': 'alumno no inscrito (proyección)'})
             continue
 
         try:
@@ -665,6 +659,24 @@ def concentrado(request, materia_id: int):
 
     if payload is None:
         return error_response('La materia no tiene datos locales.', status=status.HTTP_404_NOT_FOUND)
+
+    if getattr(settings, 'USE_EVENT_BUS', False) and payload.get('alumnos'):
+        promedios = [Decimal(a['promedio_real']) for a in payload['alumnos']]
+        promedio_grupal = (
+            sum(promedios, Decimal('0')) / Decimal(len(promedios)) if promedios else Decimal('0')
+        )
+        try:
+            materia_local = get_materia_local(materia_id)
+            nrc, nombre = materia_local.nrc, materia_local.nombre
+        except LookupError:
+            nrc, nombre = '', f'Materia {materia_id}'
+        publish_concentrado_calculado(
+            materia_id=materia_id,
+            total_alumnos=len(payload['alumnos']),
+            promedio_grupal=float(promedio_grupal),
+            nrc=nrc,
+            materia_nombre=nombre,
+        )
 
     return success_response(
         payload,
@@ -733,10 +745,19 @@ def editar_eliminar_calificacion(request, calificacion_id: int):
 def cerrar_materia(request, materia_id: int):
     """
     POST /materias/<id>/cerrar
-    Marca la materia como cerrada y dispara notificación masiva en MS-6.
+    Marca la materia como cerrada y publica materia.calificaciones_cerradas.v1 (MS-6 vía bus).
     """
     if materia_id <= 0:
         return error_response('materia_id inválido', status=status.HTTP_400_BAD_REQUEST)
+
+    auth_error = _authorize_materia_management(request, materia_id)
+    if auth_error is not None:
+        return auth_error
+
+    try:
+        materia_local = get_materia_local(materia_id)
+    except LookupError:
+        return error_response('La materia no existe en proyección local.', status=status.HTTP_404_NOT_FOUND)
 
     try:
         with transaction.atomic():
@@ -751,15 +772,38 @@ def cerrar_materia(request, materia_id: int):
             estado.fecha_cierre = timezone.now()
             estado.save(update_fields=['cerrada', 'fecha_cierre'])
 
-        notificacion_ok = send_cierre_materia(materia_id)
-        if notificacion_ok:
+            alumnos_payload = []
+            for alumno in list_alumnos_materia_local(materia_id):
+                promedio_real = calcular_promedio_ponderado(alumno.id, materia_id)
+                alumnos_payload.append({
+                    'alumno_id': alumno.id,
+                    'email': alumno.email,
+                    'matricula': alumno.matricula,
+                    'nombre': alumno.nombre,
+                    'promedio_real': float(promedio_real.quantize(Decimal('0.01'))),
+                    'promedio_redondeado': redondear_institucional(promedio_real),
+                })
+
+            event_payload = {
+                'materia_id': materia_id,
+                'periodo_id': materia_local.periodo_id,
+                'nrc': materia_local.nrc,
+                'nombre': materia_local.nombre,
+                'seccion': materia_local.seccion,
+                'periodo_nombre': materia_local.periodo_nombre,
+                'fecha_cierre': estado.fecha_cierre.isoformat(),
+                'alumnos': alumnos_payload,
+            }
+            publish_materia_calificaciones_cerradas(event_payload)
+
+        if getattr(settings, 'USE_EVENT_BUS', False):
             EstadoMateria.objects.filter(materia_id=materia_id).update(notificacion_enviada=True)
 
         return success_response(
             {
                 'materia_id': materia_id,
                 'cerrada': True,
-                'notificacion_enviada': notificacion_ok,
+                'evento_publicado': getattr(settings, 'USE_EVENT_BUS', False),
             },
             message='Materia cerrada correctamente',
             status=status.HTTP_200_OK,

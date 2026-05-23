@@ -4,8 +4,12 @@ from grpc_clients.channel import get_channel, grpc_timeout
 from grpc_clients.errors import map_rpc_error
 from proto_generated import auth_pb2, auth_pb2_grpc
 
+"""DEPRECATED (Fase 9): cliente gRPC de negocio. Bloqueado con USE_EVENT_BUS=true."""
+from agm_events.grpc_legacy import block_business_grpc
+
 
 def get_auth_stub() -> auth_pb2_grpc.AuthServiceStub:
+    block_business_grpc('auth_client.py.get_auth_stub')
     channel = get_channel(
         'auth',
         'MS_AUTH_GRPC_HOST',
@@ -17,6 +21,7 @@ def get_auth_stub() -> auth_pb2_grpc.AuthServiceStub:
 
 
 def validate_token(token: str) -> auth_pb2.ValidateTokenResponse:
+    block_business_grpc('auth_client.py.validate_token')
     """
     Valida JWT contra MS-1 (AuthService.ValidateToken).
     """

@@ -10,6 +10,15 @@ from config.agm_env import env_bool, cors_allowed_origins_list, mysql_database_s
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SERVICE_NAME = config('SERVICE_NAME', default='ms-notificaciones')
+USE_EVENT_BUS = config('USE_EVENT_BUS', default=True, cast=bool)
+
+JWT_JWKS_URL = config(
+    'JWT_JWKS_URL',
+    default='http://ms-auth:8001/.well-known/jwks.json',
+)
+JWT_JWKS_CACHE_TTL_SECONDS = config('JWT_JWKS_CACHE_TTL_SECONDS', default=300, cast=int)
+
 # Stubs gRPC (import alumnos_pb2, auth_pb2, …)
 sys.path.insert(0, os.path.join(BASE_DIR, 'proto_generated'))
 
@@ -80,8 +89,11 @@ else:
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = cors_allowed_origins_list()
 
-# SMTP (ISSUE-801) — django.core.mail
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# SMTP — django.core.mail (locmem/console en pruebas Docker)
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND',
+    default='django.core.mail.backends.smtp.EmailBackend',
+)
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', default=True)
@@ -94,4 +106,29 @@ DEFAULT_FROM_EMAIL = config(
 
 REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'utils.exception_handlers.agm_exception_handler',
+}
+
+EVENT_QUEUE_NAME = config('EVENT_QUEUE_NAME', default='ms-notificaciones.events')
+RABBITMQ_HOST = config('RABBITMQ_HOST', default='rabbitmq')
+RABBITMQ_PORT = config('RABBITMQ_PORT', default='5672')
+RABBITMQ_USER = config('RABBITMQ_USER', default='agm_bus')
+RABBITMQ_PASSWORD = config('RABBITMQ_PASSWORD', default='agm_bus_dev_change_me')
+RABBITMQ_VHOST = config('RABBITMQ_VHOST', default='agm')
+EVENT_EXCHANGE = config('EVENT_EXCHANGE', default='agm.domain')
+EVENT_PUBLISH_RETRIES = config('EVENT_PUBLISH_RETRIES', default=5, cast=int)
+EVENT_PUBLISH_BACKOFF_SECONDS = config('EVENT_PUBLISH_BACKOFF_SECONDS', default=2, cast=float)
+EVENT_CONSUME_MAX_RETRIES = config('EVENT_CONSUME_MAX_RETRIES', default=5, cast=int)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {'console': {'class': 'logging.StreamHandler'}},
+    'loggers': {
+        'apps.notificaciones.event_bus': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'agm_events': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+    },
 }

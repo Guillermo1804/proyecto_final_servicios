@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 
 
 def _default_data_provider() -> NotificacionesDataProvider:
+    if getattr(settings, 'USE_EVENT_BUS', False):
+        return PlaceholderDataProvider()
     if env_bool('USE_PLACEHOLDER_DATA', default=False):
         return PlaceholderDataProvider()
     return GrpcDataProvider()

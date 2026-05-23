@@ -4,6 +4,9 @@ from grpc import StatusCode
 
 from proto_generated import alumnos_pb2_grpc, alumnos_pb2, auth_pb2_grpc, auth_pb2, periodos_pb2_grpc, periodos_pb2
 
+"""DEPRECATED (Fase 9): cliente gRPC de negocio. Bloqueado con USE_EVENT_BUS=true."""
+from agm_events.grpc_legacy import block_business_grpc
+
 ALUMNOS_HOST = config('MS_ALUMNOS_GRPC_HOST', default='ms-alumnos')
 ALUMNOS_PORT = config('MS_ALUMNOS_GRPC_PORT', default='50053')
 AUTH_HOST = config('MS_AUTH_GRPC_HOST', default='ms-auth')
@@ -18,10 +21,12 @@ _channel_periodos = None
 
 
 def _get_channel(host, port):
+    block_business_grpc('__init__.py._get_channel')
     return grpc.insecure_channel(f"{host}:{port}")
 
 
 def alumnos_channel():
+    block_business_grpc('__init__.py.alumnos_channel')
     global _channel_alumnos
     if _channel_alumnos is None:
         _channel_alumnos = _get_channel(ALUMNOS_HOST, ALUMNOS_PORT)
@@ -29,6 +34,7 @@ def alumnos_channel():
 
 
 def auth_channel():
+    block_business_grpc('__init__.py.auth_channel')
     global _channel_auth
     if _channel_auth is None:
         _channel_auth = _get_channel(AUTH_HOST, AUTH_PORT)
@@ -36,6 +42,7 @@ def auth_channel():
 
 
 def periodos_channel():
+    block_business_grpc('__init__.py.periodos_channel')
     global _channel_periodos
     if _channel_periodos is None:
         _channel_periodos = _get_channel(PERIODOS_HOST, PERIODOS_PORT)
@@ -43,6 +50,7 @@ def periodos_channel():
 
 
 def get_alumno_by_id(alumno_id):
+    block_business_grpc('__init__.py.get_alumno_by_id')
     stub = alumnos_pb2_grpc.AlumnosServiceStub(alumnos_channel())
     req = alumnos_pb2.GetAlumnoByIdRequest(alumno_id=alumno_id)
     try:
@@ -55,6 +63,7 @@ def get_alumno_by_id(alumno_id):
 
 
 def validate_token(token):
+    block_business_grpc('__init__.py.validate_token')
     stub = auth_pb2_grpc.AuthServiceStub(auth_channel())
     req = auth_pb2.ValidateTokenRequest(token=token)
     try:
@@ -67,6 +76,7 @@ def validate_token(token):
 
 
 def get_materia_by_id(materia_id):
+    block_business_grpc('__init__.py.get_materia_by_id')
     stub = periodos_pb2_grpc.PeriodosServiceStub(periodos_channel())
     req = periodos_pb2.GetMateriaByIdRequest(materia_id=materia_id)
     try:
@@ -79,6 +89,7 @@ def get_materia_by_id(materia_id):
 
 
 def get_alumnos_by_materia(materia_id):
+    block_business_grpc('__init__.py.get_alumnos_by_materia')
     stub = alumnos_pb2_grpc.AlumnosServiceStub(alumnos_channel())
     req = alumnos_pb2.GetAlumnosByMateriaRequest(materia_id=materia_id)
     try:
@@ -91,6 +102,7 @@ def get_alumnos_by_materia(materia_id):
 
 
 def is_alumno_en_materia(alumno_id, materia_id):
+    block_business_grpc('__init__.py.is_alumno_en_materia')
     """
     Verifica si un alumno está inscrito activo en una materia (via MS-3).
     Retorna bool; raise LookupError si no está encontrado.
