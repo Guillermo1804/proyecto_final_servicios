@@ -362,3 +362,120 @@
     font-size: 3rem;
   }
 }
+
+.docente-dashboard {
+  background:
+    radial-gradient(circle at top left, rgba(47, 128, 255, 0.1), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(217, 180, 91, 0.08), transparent 22%),
+    var(--bg-page);
+}
+
+.hero,
+.class-card,
+.pending-card,
+.notifications-card {
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 1.3rem;
+  color: var(--text-inverse);
+  background:
+    radial-gradient(circle at 84% 22%, rgba(244, 207, 119, 0.2), transparent 18%),
+    radial-gradient(circle at 18% 18%, rgba(47, 128, 255, 0.24), transparent 18%),
+    linear-gradient(145deg, #04122f, #0a2a59 52%, #11326d);
+}
+
+.hero button {
+  border-radius: 999px;
+  box-shadow: var(--shadow-soft);
+}
+
+.hero:hover,
+.class-card:hover,
+.pending-card:hover,
+.notifications-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong);
+}
+
+.classes-list .class-card:nth-child(1) {
+  animation-delay: 60ms;
+}
+
+.classes-list .class-card:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.classes-list .class-card:nth-child(3) {
+  animation-delay: 180ms;
+}
+
+.class-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.class-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary-electric), var(--accent-gold));
+}
+
+.class-card .class-head span,
+.pending-icon,
+.alert-icon {
+  box-shadow: inset 0 0 0 1px rgba(47, 128, 255, 0.08);
+}
+
+.class-card .class-head i.activo {
+  color: var(--primary-blue);
+  text-shadow: 0 0 16px rgba(47, 128, 255, 0.22);
+}
+
+.pending-item:nth-child(1) {
+  animation-delay: 60ms;
+}
+
+.pending-item:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.pending-item:nth-child(3) {
+  animation-delay: 180ms;
+}
+
+.pending-card .center-link {
+  background: rgba(47, 128, 255, 0.08);
+  color: var(--primary-blue);
+  font-weight: 700;
+}
+
+.notifications-card .table-head {
+  background: rgba(47, 128, 255, 0.06);
+}
+
+.notifications-card .table-row:nth-child(2n) {
+  background: rgba(47, 128, 255, 0.02);
+}
+
+.notifications-card .table-row:nth-child(2) {
+  animation-delay: 40ms;
+}
+
+.notifications-card .table-row:nth-child(3) {
+  animation-delay: 80ms;
+}
