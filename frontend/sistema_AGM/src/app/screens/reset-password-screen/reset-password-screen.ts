@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { RecuperacionPasswordService } from '../../services/recuperacion-password-services/recuperacion-password.service';
+import { ValidatorService } from '../../services/tools/validator.service';
 
 @Component({
   selector: 'app-reset-password-screen',
@@ -17,7 +18,13 @@ export class ResetPasswordScreen {
   loading = false;
   message = '';
   token = '';
-  constructor(private recoveryService: RecuperacionPasswordService, private route: ActivatedRoute) {
+  showPassword = false;
+  showConfirmPassword = false;
+  constructor(
+    private recoveryService: RecuperacionPasswordService,
+    private route: ActivatedRoute,
+    private validator: ValidatorService
+  ) {
     this.token = this.route.snapshot.queryParamMap.get('token') || '';
   }
 
@@ -29,7 +36,7 @@ export class ResetPasswordScreen {
       return;
     }
 
-    if (this.password !== this.confirmPassword) {
+    if (!this.validator.equals(this.password, this.confirmPassword)) {
       this.message = 'Las contraseñas no coinciden';
       return;
     }
@@ -51,5 +58,13 @@ export class ResetPasswordScreen {
         this.message = err?.error?.message || 'Error al restablecer la contraseña';
       }
     );
+  }
+
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleConfirmPassword(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 }
