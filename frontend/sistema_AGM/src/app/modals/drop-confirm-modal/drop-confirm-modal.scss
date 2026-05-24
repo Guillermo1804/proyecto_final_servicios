@@ -1,0 +1,26 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  z-index: 1200;
+}
+
+.modal-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.2rem;
+  width: 92%;
+  max-width: 520px;
+  box-shadow: 0 10px 40px rgba(2,6,23,0.25);
+}
+
+.modal-card h3 { margin: 0 0 .4rem }
+.confirm-instruction { margin: .4rem 0; color: #374151 }
+.modal-actions { display:flex; justify-content:flex-end; gap: .5rem; margin-top: .8rem }
+.modal-actions .cancel { background: transparent; border: 1px solid #d1d5db; padding: .45rem .8rem; border-radius: 8px }
+.modal-actions .confirm { background: #ef4444; color: white; border: none; padding: .45rem .9rem; border-radius: 8px }
+.modal-error { color: #dc2626; margin-top: .6rem }
+.modal-success { color: #15803d; margin-top: .6rem }

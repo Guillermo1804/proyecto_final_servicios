@@ -1,0 +1,23 @@
+<div class="modal-overlay" *ngIf="visible">
+  <div class="modal-card">
+    <h3>Confirmar baja de materia</h3>
+    <p>La operación es irreversible. Perderás todo acceso a esta materia y se notificará al docente por correo.</p>
+
+    <p class="confirm-instruction">Escribe <strong>DARSE DE BAJA</strong> para confirmar.</p>
+
+    <input
+      type="text"
+      placeholder="DARSE DE BAJA"
+      (input)="onInput($event.target.value)"
+      [value]="confirmationText"
+    >
+
+    <div class="modal-actions">
+      <button class="cancel" (click)="onCancel()">Cancelar</button>
+      <button class="confirm" (click)="onConfirm()">Darme de baja</button>
+    </div>
+
+    <div class="modal-error" *ngIf="error">{{ error }}</div>
+    <div class="modal-success" *ngIf="success">{{ success }}</div>
+  </div>
+</div>

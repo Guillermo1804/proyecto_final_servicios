@@ -21,15 +21,11 @@
 
       </div>
 
-      <h1>Alejandro García Martínez</h1>
-
-      <p>Ingeniería en Sistemas</p>
+      <h1>{{ nombre || 'Alumno' }}</h1>
 
       <div class="hero-tags">
 
-        <span>Matrícula: 20210452</span>
-
-        <span>6to Semestre</span>
+        <span>Matrícula: {{ matricula || '—' }}</span>
 
       </div>
 
@@ -43,12 +39,12 @@
 
       <article class="info-item">
 
-        <i class="bi bi-code-square"></i>
 
-        <div>
+
+        <!-- <div>
           <span>Carrera</span>
           <strong>Ingeniería en Sistemas Computacionales</strong>
-        </div>
+        </div> -->
 
       </article>
 
@@ -58,7 +54,7 @@
 
         <div>
           <span>Ciclo Escolar</span>
-          <strong>Enero - Junio 2024</strong>
+          <strong>Enero - Junio Primavera 2026</strong>
         </div>
 
       </article>
@@ -80,50 +76,54 @@
 
     <section class="settings-card">
 
-      <h2>Configuración</h2>
+      <h2>GENERAR QR PARA PASE DE LISTA</h2>
 
-      <article class="setting-item">
-
-        <div class="setting-left">
-          <i class="bi bi-lock"></i>
-          <span>Cambio de contraseña</span>
-        </div>
-
-        <i class="bi bi-chevron-right"></i>
-
-      </article>
-
-      <article class="setting-item">
-
-        <div class="setting-left">
-          <i class="bi bi-gear"></i>
-          <span>Ajustes de cuenta</span>
-        </div>
-
-        <i class="bi bi-chevron-right"></i>
-
-      </article>
-
-      <article class="setting-item">
-
-        <div class="setting-left">
-          <i class="bi bi-bell"></i>
-          <span>Notificaciones</span>
-        </div>
-
-        <i class="bi bi-chevron-right"></i>
-
-      </article>
-
-      <hr>
-
-      <button class="logout-btn">
-
-        <i class="bi bi-box-arrow-right"></i>
-
-        Cerrar Sesión
-
+      <button
+        type="button"
+        class="activate-qr-btn"
+        *ngIf="!qrActivo"
+        (click)="activarQr()"
+      >
+        Activar QR
       </button>
+
+      <div class="qr-card" *ngIf="qrActivo">
+
+        <div class="qr-meta">
+          <span class="qr-label">Matrícula</span>
+          <strong>{{ matricula }}</strong>
+
+          <span class="qr-label">Sesión</span>
+          <strong>{{ qrSnapshot?.sessionId || 'Generando...' }}</strong>
+
+          <span class="qr-label">Renovación</span>
+          <strong>Cada {{ qrRefreshSeconds }} segundos</strong>
+        </div>
+
+        <div class="qr-visual">
+
+          <div class="qr-frame" *ngIf="!qrLoading && qrSnapshot; else qrLoadingTpl">
+            <img [src]="qrSnapshot.qrDataUrl" alt="Código QR personal de asistencia">
+          </div>
+
+          <ng-template #qrLoadingTpl>
+            <div class="qr-loading">
+              <i class="bi bi-qr-code"></i>
+              <span>Generando QR...</span>
+            </div>
+          </ng-template>
+
+          <p class="qr-timer">Se renueva en {{ qrCountdown }}s</p>
+          <small class="qr-note">
+            El QR incluye matrícula, sesión y marca de tiempo cifrada para evitar capturas reutilizables.
+          </small>
+
+          <p class="qr-error" *ngIf="qrError">{{ qrError }}</p>
+
+        </div>
+
+      </div>
+
 
     </section>
 

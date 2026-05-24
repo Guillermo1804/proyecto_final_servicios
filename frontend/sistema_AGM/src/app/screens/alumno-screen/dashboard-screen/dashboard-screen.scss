@@ -62,6 +62,18 @@
   }
 }
 
+.hero-meta {
+  margin: .6rem 0;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  span {
+    color: #b8c6dc;
+    font-size: .85rem;
+  }
+}
+
 .hero-bg {
   width: 180px;
   height: 180px;
@@ -527,4 +539,9 @@
     grid-template-columns: repeat(3, 1fr);
   }
 
+}
+
+.subjects-table .table-head,
+.subjects-table .table-row {
+  grid-template-columns: 0.9fr 2fr 1fr 0.6fr;
 }
