@@ -11,12 +11,16 @@
 // ];
 import { Routes } from '@angular/router';
 import { LoginScreen } from './screens/login-screen/login-screen';
+import { ForgotPasswordScreen } from './screens/forgot-password-screen/forgot-password-screen';
+import { ResetPasswordScreen } from './screens/reset-password-screen/reset-password-screen';
 // import { authGuard, roleGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
 	{ path: '', pathMatch: 'full', redirectTo: 'login' },
 
 	{ path: 'login', component: LoginScreen },
+	{ path: 'forgot-password', component: ForgotPasswordScreen },
+	{ path: 'reset-password', component: ResetPasswordScreen },
 
 	{
 		path: 'admin',
