@@ -40,9 +40,21 @@
   <i class="bi bi-graph-up-arrow"></i>
   Rendimiento
 </button>
-
 </div>
 
+  <div class="actions-row">
+
+    <button class="close-btn" (click)="cerrarMateria()">
+      <i class="bi bi-lock"></i>
+      Cerrar Materia
+    </button>
+
+    <button class="print-btn" (click)="imprimirListaNotas()">
+      <i class="bi bi-printer"></i>
+      Imprimir lista de notas
+    </button>
+
+  </div>
     </section>
 
     <section class="stats-grid">
@@ -65,19 +77,6 @@
 
         <p>Asistencia Total</p>
         <h3>94.8%</h3>
-      </article>
-
-      <article class="progress-card">
-        <div class="progress-head">
-          <span>Progreso del Programa</span>
-          <strong>65%</strong>
-        </div>
-
-        <div class="progress-bar">
-          <div></div>
-        </div>
-
-        <p>Siguiente hito: Derivadas Implícitas (Viernes)</p>
       </article>
 
     </section>
@@ -110,6 +109,8 @@
       <input
         type="text"
         placeholder="Buscar alumno..."
+        [(ngModel)]="busquedaAlumno"
+        (ngModelChange)="buscarAlumnos($event)"
       >
     </div>
 
@@ -125,7 +126,7 @@
 
     <div
       class="table-row"
-      *ngFor="let alumno of alumnos"
+      *ngFor="let alumno of alumnosPaginados"
     >
 
       <div class="student-name">
@@ -149,6 +150,40 @@
       </span>
 
     </div>
+
+  </div>
+
+  <div class="students-pagination" *ngIf="totalPaginasAlumnos > 1">
+
+    <button
+      type="button"
+      class="pagination-btn"
+      (click)="paginaAnteriorAlumnos()"
+      [disabled]="paginaActualAlumnos === 1"
+    >
+      Anterior
+    </button>
+
+    <div class="pagination-pages">
+      <button
+        type="button"
+        class="page-number"
+        *ngFor="let page of paginasAlumnos"
+        [class.active]="paginaActualAlumnos === page"
+        (click)="irAPaginaAlumnos(page)"
+      >
+        {{ page }}
+      </button>
+    </div>
+
+    <button
+      type="button"
+      class="pagination-btn"
+      (click)="paginaSiguienteAlumnos()"
+      [disabled]="paginaActualAlumnos === totalPaginasAlumnos"
+    >
+      Siguiente
+    </button>
 
   </div>
 
@@ -198,7 +233,10 @@
           type="number"
           [(ngModel)]="rubro.porcentaje"
           min="0"
-          max="100"
+          [attr.max]="getMaximoRubro(i)"
+          step="1"
+          inputmode="numeric"
+          (input)="limitarPorcentajeRubro(i)"
         >
 
         <span>%</span>
@@ -226,10 +264,23 @@
       Agregar Rubro
     </button>
 
-    <button class="save-btn" (click)="guardarPlanEvaluacion()">
+    <button class="save-btn" (click)="guardarPlanEvaluacion()" [disabled]="!planEvaluacionValido">
       <i class="bi bi-check-circle"></i>
       Guardar Plan
     </button>
+
+    <button class="import-excel-btn" (click)="abrirImportacionExcel()">
+      <i class="bi bi-file-earmark-excel"></i>
+      Importar desde Excel
+    </button>
+
+    <input
+      #excelInput
+      type="file"
+      accept=".xlsx,.xls,.csv"
+      hidden
+      (change)="onExcelSeleccionado($event)"
+    >
 
   </div>
 
@@ -260,6 +311,87 @@
     </button>
   </div>
 
+  <section class="grades-summary-card">
+    <div class="grades-summary-top">
+      <div>
+        <h3>Concentrado de calificaciones</h3>
+        <p>Promedio ponderado real y promedio redondeado por alumno.</p>
+      </div>
+
+      <div class="summary-metrics">
+        <div class="summary-metric">
+          <span>Promedio ponderado real</span>
+          <strong>{{ promedioPonderadoReal | number:'1.1-2' }}</strong>
+        </div>
+
+        <div class="summary-metric accent">
+          <span>Promedio redondeado</span>
+          <strong>{{ promedioPonderadoRedondeado }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="grades-summary-table">
+      <div class="grades-summary-head">
+        <span>Alumno</span>
+        <span>Matrícula</span>
+        <span>Promedio real</span>
+        <span>Promedio redondeado</span>
+      </div>
+
+      <div class="grades-summary-row" *ngFor="let alumno of concentradoCalificacionesPaginado">
+        <div class="student-name">
+          <div class="initials">{{ alumno.iniciales }}</div>
+          <span>{{ alumno.nombre }}</span>
+        </div>
+
+        <span>{{ alumno.matricula }}</span>
+        <span>{{ alumno.promedioReal | number:'1.1-2' }}</span>
+        <span>{{ alumno.promedioRedondeado }}</span>
+      </div>
+    </div>
+
+    <div class="students-pagination" *ngIf="totalPaginasConcentrado > 1">
+      <button
+        type="button"
+        class="pagination-btn"
+        (click)="paginaAnteriorConcentrado()"
+        [disabled]="paginaActualConcentrado === 1"
+      >
+        Anterior
+      </button>
+
+      <div class="pagination-pages">
+        <button
+          type="button"
+          class="page-number"
+          *ngFor="let page of paginasConcentrado"
+          [class.active]="paginaActualConcentrado === page"
+          (click)="irAPaginaConcentrado(page)"
+        >
+          {{ page }}
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="pagination-btn"
+        (click)="paginaSiguienteConcentrado()"
+        [disabled]="paginaActualConcentrado === totalPaginasConcentrado"
+      >
+        Siguiente
+      </button>
+    </div>
+  </section>
+
+  <input
+    #actividadExcelInput
+    type="file"
+    accept=".xlsx,.xls,.csv"
+    hidden
+    (change)="onCalificacionesExcelSeleccionado($event)"
+  >
+
   <section class="activity-form" *ngIf="mostrarFormularioActividad">
 
     <input
@@ -289,12 +421,6 @@
       [(ngModel)]="nuevaActividad.fechaEntrega"
     >
 
-    <input
-      type="number"
-      placeholder="Valor dentro del rubro (%)"
-      [(ngModel)]="nuevaActividad.valorInterno"
-    >
-
     <div class="form-actions">
       <button class="cancel-btn" (click)="cancelarActividad()">
         Cancelar
@@ -311,7 +437,7 @@
 
     <article
       class="activity-box"
-      *ngFor="let actividad of actividades"
+      *ngFor="let actividad of actividadesPaginadas"
     >
 
       <div class="activity-header">
@@ -339,15 +465,114 @@
           {{ actividad.valorInterno }}% del rubro
         </span>
 
-        <span>
+        <!-- <span>
           <i class="bi bi-inbox"></i>
           {{ actividad.entregas }} entregas
+        </span> -->
+      </div>
+
+      <div class="auto-weight-info">
+        <i class="bi bi-calculator"></i>
+        <span>
+          Peso calculado automáticamente: {{ actividad.valorInterno | number:'1.0-2' }}% del rubro
         </span>
+      </div>
+
+      <div class="activity-actions-row">
+        <button class="import-grade-btn" type="button" (click)="abrirImportacionCalificaciones(actividades.indexOf(actividad))">
+          <i class="bi bi-file-earmark-excel"></i>
+          Importar calificaciones Excel
+        </button>
+      </div>
+
+      <div class="activity-grades">
+        <div class="activity-grades-head">
+          <span>Alumno</span>
+          <span>Calificación</span>
+        </div>
+
+        <div class="activity-grade-row" *ngFor="let alumno of getAlumnosActividadPaginados(actividades.indexOf(actividad))">
+          <span>{{ alumno.nombre }}</span>
+
+          <input
+            type="number"
+            min="0"
+            [attr.max]="100"
+            step="0.1"
+            [ngModel]="obtenerCalificacionActividad(actividad, alumno.matricula)"
+            (ngModelChange)="setCalificacionActividad(actividad, alumno.matricula, $event)"
+            (input)="onCalificacionInput($event, actividad, alumno.matricula)"
+          >
+        </div>
+
+        <div class="students-pagination activity-students-pagination" *ngIf="getTotalPaginasAlumnosActividad() > 1">
+          <button
+            type="button"
+            class="pagination-btn"
+            (click)="paginaAnteriorAlumnosActividad(actividades.indexOf(actividad))"
+            [disabled]="getPaginaActualAlumnosActividad(actividades.indexOf(actividad)) === 1"
+          >
+            Anterior
+          </button>
+
+          <div class="pagination-pages">
+            <button
+              type="button"
+              class="page-number"
+              *ngFor="let page of getPaginasAlumnosActividad()"
+              [class.active]="getPaginaActualAlumnosActividad(actividades.indexOf(actividad)) === page"
+              (click)="irAPaginaAlumnosActividad(actividades.indexOf(actividad), page)"
+            >
+              {{ page }}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="pagination-btn"
+            (click)="paginaSiguienteAlumnosActividad(actividades.indexOf(actividad))"
+            [disabled]="getPaginaActualAlumnosActividad(actividades.indexOf(actividad)) === getTotalPaginasAlumnosActividad()"
+          >
+            Siguiente
+          </button>
+        </div>
       </div>
 
     </article>
 
   </section>
+
+  <div class="students-pagination" *ngIf="totalPaginasActividades > 1">
+    <button
+      type="button"
+      class="pagination-btn"
+      (click)="paginaAnteriorActividades()"
+      [disabled]="paginaActualActividades === 1"
+    >
+      Anterior
+    </button>
+
+    <div class="pagination-pages">
+      <button
+        type="button"
+        class="page-number"
+        *ngFor="let page of paginasActividades"
+        [class.active]="paginaActualActividades === page"
+        (click)="irAPaginaActividades(page)"
+      >
+        {{ page }}
+      </button>
+    </div>
+
+    <button
+      type="button"
+      class="pagination-btn"
+      (click)="paginaSiguienteActividades()"
+      [disabled]="paginaActualActividades === totalPaginasActividades"
+    >
+      Siguiente
+    </button>
+  </div>
 
 </section>
 

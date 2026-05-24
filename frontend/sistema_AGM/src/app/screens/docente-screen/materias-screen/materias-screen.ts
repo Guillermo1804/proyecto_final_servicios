@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bottom-navbar-docente';
 import { RouterLink } from '@angular/router';
 import { TopbarAdmin } from "../../../partials/topbar-admin/topbar-admin";
+import { MateriaDocenteItem, MateriasDocenteService } from '../../../services/docente-services/materias-docente.service';
 
 @Component({
   selector: 'app-materias-docente-screen',
@@ -11,33 +12,19 @@ import { TopbarAdmin } from "../../../partials/topbar-admin/topbar-admin";
   templateUrl: './materias-screen.html',
   styleUrl: './materias-screen.scss'
 })
-export class MateriasScreen {
+export class MateriasScreen implements OnInit {
 
-  materias = [
-    {
-      codigo: 'INF-402',
-      nombre: 'Estructuras de Datos II',
-      facultad: 'Facultad de Ingeniería',
-      alumnos: 32,
-      progreso: 65,
-      horario: 'Lunes - Miércoles (08:00 - 10:00)'
-    },
-    {
-      codigo: 'INF-310',
-      nombre: 'Sistemas Operativos',
-      facultad: 'Facultad de Ingeniería',
-      alumnos: 28,
-      progreso: 42,
-      horario: 'Martes - Jueves (10:00 - 12:00)'
-    },
-    {
-      codigo: 'INF-501',
-      nombre: 'Inteligencia Artificial',
-      facultad: 'Facultad de Ingeniería',
-      alumnos: 24,
-      progreso: 88,
-      horario: 'Viernes (14:00 - 18:00)'
-    }
-  ];
+  materias: MateriaDocenteItem[] = [];
+  private readonly materiasService = inject(MateriasDocenteService);
+
+  ngOnInit(): void {
+    this.materiasService.getMaterias().subscribe((materias) => {
+      this.materias = materias;
+    });
+  }
+
+  trackByMateria(_: number, materia: { nrc: string }): string {
+    return materia.nrc;
+  }
 
 }

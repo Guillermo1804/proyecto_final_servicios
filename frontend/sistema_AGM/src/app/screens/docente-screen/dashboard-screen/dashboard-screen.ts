@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bottom-navbar-docente';
 import { BottomNavbarAdmin } from "../../../partials/bottom-navbar-admin/bottom-navbar-admin";
 import { TopbarAdmin } from "../../../partials/topbar-admin/topbar-admin";
+import { DashboardDocenteService, DashboardClaseItem, DashboardNotificacionItem, DashboardPendienteItem, DashboardResumenMateriaItem } from '../../../services/docente-services/dashboard-docente.service';
 
 @Component({
   selector: 'app-dashboard-docente-screen',
@@ -13,51 +14,32 @@ import { TopbarAdmin } from "../../../partials/topbar-admin/topbar-admin";
 })
 export class DashboardScreen {
 
-  clasesHoy = [
-    {
-      hora: '08:00-10:00',
-      materia: 'Cálculo Integral',
-      grupo: 'Grupo A - Ingeniería Civil',
-      aula: 'Aula Magna 302',
-      icono: 'bi-broadcast',
-      activo: true
-    },
-    {
-      hora: '11:30-13:30',
-      materia: 'Física Mecánica',
-      grupo: 'Grupo B - Ingeniería Mecánica',
-      aula: 'Laboratorio L4',
-      icono: 'bi-people',
-      activo: false
-    }
-  ];
+  clasesHoy: DashboardClaseItem[] = [];
+  pendientes: DashboardPendienteItem[] = [];
+  notificaciones: DashboardNotificacionItem[] = [];
+  resumenMaterias: DashboardResumenMateriaItem[] = [];
 
-  pendientes = [
-    {
-      icono: 'bi-clipboard2-alert',
-      color: 'rojo',
-      titulo: 'Práctica: Leyes de Newton',
-      detalle: '12 entregas nuevas'
-    },
-    {
-      icono: 'bi-clipboard-check',
-      color: 'azul',
-      titulo: 'Proyecto Final Parcial',
-      detalle: '4 entregas nuevas'
-    }
-  ];
+  totalMateriasAsignadas = 0;
+  totalAlumnosInscritos = 0;
+  porcentajeAsistenciaDelDia = 0;
+  ultimaActualizacion = '';
 
-  notificaciones = [
-    {
-      fecha: 'Hoy, 10:15',
-      asunto: 'Cierre de actas - Periodo Otoño 2023',
-      emisor: 'Dirección Académica'
-    },
-    {
-      fecha: 'Ayer, 16:40',
-      asunto: 'Nueva solicitud de examen extraordinario',
-      emisor: 'Control Escolar'
-    }
-  ];
+  constructor(private readonly dashboardService: DashboardDocenteService) {
+    this.cargarDashboard();
+  }
+
+  private cargarDashboard(): void {
+    this.clasesHoy = this.dashboardService.getClasesHoy();
+    this.pendientes = this.dashboardService.getPendientes();
+    this.notificaciones = this.dashboardService.getNotificaciones();
+    this.resumenMaterias = this.dashboardService.getResumenMaterias();
+    this.totalMateriasAsignadas = this.dashboardService.getTotalMateriasAsignadas();
+    this.totalAlumnosInscritos = this.dashboardService.getTotalAlumnosInscritos();
+    this.porcentajeAsistenciaDelDia = this.dashboardService.getPorcentajeAsistenciaDelDia();
+    this.ultimaActualizacion = new Date().toLocaleTimeString('es-MX', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
 
 }

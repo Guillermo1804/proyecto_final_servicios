@@ -1,10 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { MateriasDocenteService } from '../../../services/docente-services/materias-docente.service';
+import { DetalleMateriaDocenteService, DetalleMateriaActividadBaseItem, DetalleMateriaActividadItem, DetalleMateriaAlumnoItem, DetalleMateriaRubroItem } from '../../../services/docente-services/detalle-materia-docente.service';
 import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bottom-navbar-docente';
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: 'app-detalle-materia-screen',
   standalone: true,
@@ -15,40 +18,32 @@ import { FormsModule } from '@angular/forms';
 export class DetalleMateriaScreen implements OnInit {
 
   ngOnInit(): void {
-    // Aquí podrías cargar los datos de la materia usando el código obtenido de la ruta
-    // Ejemplo: this.materiaService.getMateria(this.codigoMateria).subscribe(...)
+    this.recalcularValoresInternosTodosRubros();
   }
   codigoMateria = '';
+  alumnos: DetalleMateriaAlumnoItem[] = [];
 
-  alumnos = [
-    {
-      iniciales: 'AG',
-      nombre: 'Alonso García, Roberto',
-      matricula: '202300124',
-      asistencia: '98%'
-    },
-    {
-      iniciales: 'BC',
-      nombre: 'Barrera Cruz, Sofía',
-      matricula: '202300456',
-      asistencia: '85%'
-    },
-    {
-      iniciales: 'DV',
-      nombre: 'Díaz Valdés, Marco',
-      matricula: '202300891',
-      asistencia: '62%'
-    },
-    {
-      iniciales: 'LM',
-      nombre: 'López Mora, Elena',
-      matricula: '202300321',
-      asistencia: '100%'
-    }
-  ];
+  busquedaAlumno = '';
+  paginaActualAlumnos = 1;
+  alumnosPorPagina = 2;
+  paginaActualConcentrado = 1;
+  alumnosPorPaginaConcentrado = 4;
+  paginaActualActividades = 1;
+  actividadesPorPagina = 2;
+  alumnosPorPaginaActividad = 4;
+  paginasAlumnosPorActividad: Record<number, number> = {};
 
-  constructor(private route: ActivatedRoute) {
+  constructor(
+    private route: ActivatedRoute,
+    private materiasService: MateriasDocenteService,
+    private detalleMateriaService: DetalleMateriaDocenteService
+  ) {
     this.codigoMateria = this.route.snapshot.paramMap.get('id') ?? '';
+    this.alumnos = this.detalleMateriaService.getAlumnos();
+    this.rubrosEvaluacion = this.detalleMateriaService.getRubrosEvaluacion();
+    this.actividades = this.detalleMateriaService.getActividades();
+    this.resumenMateria = this.detalleMateriaService.getResumen();
+    this.nuevaActividad = this.detalleMateriaService.crearActividadBase();
   }
 
   tabActiva: 'alumnos' | 'evaluacion' | 'actividades' = 'alumnos';
@@ -56,69 +51,64 @@ export class DetalleMateriaScreen implements OnInit {
 cambiarTab(tab: 'alumnos' | 'evaluacion' | 'actividades'): void {
   this.tabActiva = tab;
 }
-rubrosEvaluacion = [
-  {
-    nombre: 'Tareas',
-    descripcion: 'Actividades y entregas semanales',
-    porcentaje: 30
-  },
-  {
-    nombre: 'Proyecto',
-    descripcion: 'Proyecto integrador de la materia',
-    porcentaje: 30
-  },
-  {
-    nombre: 'Examen',
-    descripcion: 'Evaluaciones parciales o finales',
-    porcentaje: 40
-  }
-];
 
-actividades = [
-  {
-    titulo: 'Tarea investigación',
-    descripcion: 'Investigación sobre conceptos principales de la unidad.',
-    rubro: 'Tareas',
-    fechaEntrega: '2024-06-05',
-    valorInterno: 40,
+buscarAlumnos(termino: string): void {
+  this.busquedaAlumno = termino;
+  this.paginaActualAlumnos = 1;
+}
+
+get alumnosFiltrados() {
+  return this.detalleMateriaService.filtrarAlumnos(this.alumnos, this.busquedaAlumno);
+}
+
+get totalPaginasAlumnos(): number {
+  return this.detalleMateriaService.getTotalPaginas(this.alumnosFiltrados.length, this.alumnosPorPagina);
+}
+
+get paginasAlumnos(): number[] {
+  return this.detalleMateriaService.generarPaginas(this.totalPaginasAlumnos);
+}
+
+get alumnosPaginados() {
+  return this.detalleMateriaService.paginar(this.alumnosFiltrados, this.paginaActualAlumnos, this.alumnosPorPagina);
+}
+
+irAPaginaAlumnos(pagina: number): void {
+  this.paginaActualAlumnos = Math.min(Math.max(pagina, 1), this.totalPaginasAlumnos);
+}
+
+paginaAnteriorAlumnos(): void {
+  this.irAPaginaAlumnos(this.paginaActualAlumnos - 1);
+}
+
+paginaSiguienteAlumnos(): void {
+  this.irAPaginaAlumnos(this.paginaActualAlumnos + 1);
+}
+  rubrosEvaluacion: DetalleMateriaRubroItem[] = [];
+
+  resumenMateria = {
+    grupo: '',
+    materia: '',
+    horario: ''
+  };
+
+  actividades: DetalleMateriaActividadItem[] = [];
+
+  nuevaActividad: DetalleMateriaActividadBaseItem = {
+    titulo: '',
+    descripcion: '',
+    rubro: '',
+    fechaEntrega: '',
     estado: 'Abierta',
     tipo: 'abierta',
-    entregas: 12
-  },
-  {
-    titulo: 'Wireframes',
-    descripcion: 'Diseño de pantallas principales del sistema.',
-    rubro: 'Proyecto',
-    fechaEntrega: '2024-06-12',
-    valorInterno: 30,
-    estado: 'En revisión',
-    tipo: 'revision',
-    entregas: 8
-  },
-  {
-    titulo: 'Examen parcial',
-    descripcion: 'Evaluación correspondiente al primer bloque temático.',
-    rubro: 'Examen',
-    fechaEntrega: '2024-06-18',
-    valorInterno: 100,
-    estado: 'Cerrada',
-    tipo: 'cerrada',
-    entregas: 32
-  }
-];
+    entregas: 0
+  };
 
-nuevaActividad = {
-  titulo: '',
-  descripcion: '',
-  rubro: '',
-  fechaEntrega: '',
-  valorInterno: 0,
-  estado: 'Abierta',
-  tipo: 'abierta',
-  entregas: 0
-};
+  mostrarFormularioActividad = false;
 
-mostrarFormularioActividad = false;
+  @ViewChild('excelInput') private excelInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('actividadExcelInput') private actividadExcelInput?: ElementRef<HTMLInputElement>;
+  actividadImportacionIndex = -1;
 
 abrirFormularioActividad(): void {
   this.mostrarFormularioActividad = true;
@@ -127,16 +117,7 @@ abrirFormularioActividad(): void {
 cancelarActividad(): void {
   this.mostrarFormularioActividad = false;
 
-  this.nuevaActividad = {
-    titulo: '',
-    descripcion: '',
-    rubro: '',
-    fechaEntrega: '',
-    valorInterno: 0,
-    estado: 'Abierta',
-    tipo: 'abierta',
-    entregas: 0
-  };
+  this.nuevaActividad = this.detalleMateriaService.crearActividadBase();
 }
 
 crearActividad(): void {
@@ -145,16 +126,171 @@ crearActividad(): void {
     return;
   }
 
-  this.actividades.push({ ...this.nuevaActividad });
+  const rubroActividad = this.nuevaActividad.rubro;
+
+  this.actividades.push(this.detalleMateriaService.crearActividadConCalificaciones(this.alumnos, this.nuevaActividad));
+
+  this.recalcularValoresInternosRubro(rubroActividad);
+  this.paginaActualActividades = this.totalPaginasActividades;
 
   this.cancelarActividad();
 }
 
+recalcularValoresInternosTodosRubros(): void {
+  this.detalleMateriaService.recalcularValoresInternosTodosRubros(this.actividades);
+}
+
+recalcularValoresInternosRubro(rubro: string): void {
+  this.detalleMateriaService.recalcularValoresInternosRubro(this.actividades, rubro);
+}
+
+get valorTotalRubros(): number {
+  return this.detalleMateriaService.getValorTotalRubros(this.rubrosEvaluacion);
+}
+
+get valorTotalActividadesPorRubro(): Record<string, number> {
+  return this.detalleMateriaService.getValorTotalActividadesPorRubro(this.actividades);
+}
+
+getPesoActividad(actividad: { rubro: string; valorInterno: number }): number {
+  return this.detalleMateriaService.getPesoActividad(actividad, this.rubrosEvaluacion, this.valorTotalActividadesPorRubro);
+}
+
+obtenerCalificacionActividad(actividad: { calificaciones?: Record<string, number> }, matricula: string): number {
+  return this.detalleMateriaService.obtenerCalificacionActividad(actividad, matricula);
+}
+
+setCalificacionActividad(actividad: { calificaciones: Record<string, number> }, matricula: string, valor: number | string): void {
+  this.detalleMateriaService.setCalificacionActividad(actividad, matricula, valor);
+}
+
+onCalificacionInput(event: Event, actividad: { calificaciones: Record<string, number> }, matricula: string): void {
+  const input = event.target as HTMLInputElement;
+  const calificacion = this.detalleMateriaService.setCalificacionActividad(actividad, matricula, input.value);
+  input.value = String(calificacion);
+}
+
+getPaginaActualAlumnosActividad(actividadIndex: number): number {
+  return this.paginasAlumnosPorActividad[actividadIndex] ?? 1;
+}
+
+getTotalPaginasAlumnosActividad(): number {
+  return this.detalleMateriaService.getTotalPaginas(this.alumnos.length, this.alumnosPorPaginaActividad);
+}
+
+getPaginasAlumnosActividad(): number[] {
+  return this.detalleMateriaService.generarPaginas(this.getTotalPaginasAlumnosActividad());
+}
+
+getAlumnosActividadPaginados(actividadIndex: number) {
+  const paginaActual = this.getPaginaActualAlumnosActividad(actividadIndex);
+  return this.detalleMateriaService.paginar(this.alumnos, paginaActual, this.alumnosPorPaginaActividad);
+}
+
+irAPaginaAlumnosActividad(actividadIndex: number, pagina: number): void {
+  const total = this.getTotalPaginasAlumnosActividad();
+  this.paginasAlumnosPorActividad[actividadIndex] = Math.min(Math.max(pagina, 1), total);
+}
+
+paginaAnteriorAlumnosActividad(actividadIndex: number): void {
+  this.irAPaginaAlumnosActividad(actividadIndex, this.getPaginaActualAlumnosActividad(actividadIndex) - 1);
+}
+
+paginaSiguienteAlumnosActividad(actividadIndex: number): void {
+  this.irAPaginaAlumnosActividad(actividadIndex, this.getPaginaActualAlumnosActividad(actividadIndex) + 1);
+}
+
+get totalPaginasConcentrado(): number {
+  return this.detalleMateriaService.getTotalPaginas(this.concentradoCalificaciones.length, this.alumnosPorPaginaConcentrado);
+}
+
+get paginasConcentrado(): number[] {
+  return this.detalleMateriaService.generarPaginas(this.totalPaginasConcentrado);
+}
+
+get concentradoCalificacionesPaginado() {
+  return this.detalleMateriaService.paginar(this.concentradoCalificaciones, this.paginaActualConcentrado, this.alumnosPorPaginaConcentrado);
+}
+
+irAPaginaConcentrado(pagina: number): void {
+  this.paginaActualConcentrado = Math.min(Math.max(pagina, 1), this.totalPaginasConcentrado);
+}
+
+paginaAnteriorConcentrado(): void {
+  this.irAPaginaConcentrado(this.paginaActualConcentrado - 1);
+}
+
+paginaSiguienteConcentrado(): void {
+  this.irAPaginaConcentrado(this.paginaActualConcentrado + 1);
+}
+
+get totalPaginasActividades(): number {
+  return this.detalleMateriaService.getTotalPaginas(this.actividades.length, this.actividadesPorPagina);
+}
+
+get paginasActividades(): number[] {
+  return this.detalleMateriaService.generarPaginas(this.totalPaginasActividades);
+}
+
+get actividadesPaginadas(): DetalleMateriaActividadItem[] {
+  return this.detalleMateriaService.paginar(this.actividades, this.paginaActualActividades, this.actividadesPorPagina);
+}
+
+irAPaginaActividades(pagina: number): void {
+  this.paginaActualActividades = Math.min(Math.max(pagina, 1), this.totalPaginasActividades);
+}
+
+paginaAnteriorActividades(): void {
+  this.irAPaginaActividades(this.paginaActualActividades - 1);
+}
+
+paginaSiguienteActividades(): void {
+  this.irAPaginaActividades(this.paginaActualActividades + 1);
+}
+
+abrirImportacionCalificaciones(index: number): void {
+  this.actividadImportacionIndex = index;
+  this.actividadExcelInput?.nativeElement.click();
+}
+
+onCalificacionesExcelSeleccionado(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  const actividad = this.actividadImportacionIndex >= 0 ? this.actividades[this.actividadImportacionIndex] : null;
+  const nombreActividad = actividad?.titulo ?? 'actividad';
+
+  alert(`Archivo ${file.name} seleccionado para ${nombreActividad}. Aquí se puede importar el Excel de calificaciones.`);
+  input.value = '';
+  this.actividadImportacionIndex = -1;
+}
+
+get promedioPonderadoReal(): number {
+  return this.detalleMateriaService.getPromedioPonderadoReal(this.alumnos, this.actividades, this.rubrosEvaluacion);
+}
+
+get promedioPonderadoRedondeado(): number {
+  return this.detalleMateriaService.getPromedioPonderadoRedondeado(this.alumnos, this.actividades, this.rubrosEvaluacion);
+}
+
+get concentradoCalificaciones() {
+  return this.detalleMateriaService.getConcentradoCalificaciones(this.alumnos, this.actividades, this.rubrosEvaluacion);
+}
+
+calcularPromedioAlumno(matricula: string): number {
+  return this.detalleMateriaService.calcularPromedioAlumno(matricula, this.actividades, this.rubrosEvaluacion);
+}
+
 get totalEvaluacion(): number {
-  return this.rubrosEvaluacion.reduce(
-    (acc, item) => acc + Number(item.porcentaje),
-    0
-  );
+  return this.detalleMateriaService.getValorTotalRubros(this.rubrosEvaluacion);
+}
+
+get planEvaluacionValido(): boolean {
+  return this.detalleMateriaService.getPlanEvaluacionValido(this.rubrosEvaluacion);
 }
 
 agregarRubro(): void {
@@ -167,12 +303,20 @@ agregarRubro(): void {
 
 }
 
+getMaximoRubro(index: number): number {
+  return this.detalleMateriaService.getMaximoRubro(this.rubrosEvaluacion, index);
+}
+
+limitarPorcentajeRubro(index: number): void {
+  this.detalleMateriaService.limitarPorcentajeRubro(this.rubrosEvaluacion, index);
+}
+
 eliminarRubro(index: number): void {
   this.rubrosEvaluacion.splice(index, 1);
 }
 guardarPlanEvaluacion(): void {
-  if (this.totalEvaluacion !== 100) {
-    alert('El total debe ser exactamente 100%');
+  if (!this.planEvaluacionValido) {
+    alert(`El total de la evaluación debe sumar 100%. Actualmente suma ${this.totalEvaluacion}%.`);
     return;
   }
 
@@ -185,5 +329,88 @@ guardarPlanEvaluacion(): void {
 
   // después:
   // this.materiaService.guardarPlanEvaluacion(payload).subscribe(...)
+}
+
+abrirImportacionExcel(): void {
+  this.excelInput?.nativeElement.click();
+}
+
+onExcelSeleccionado(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  alert(`Archivo ${file.name} seleccionado. Aquí se puede procesar el Excel para cargar el plan de evaluación.`);
+  input.value = '';
+}
+cerrarMateria(): void {
+  const confirmar = confirm('¿Cerrar la materia y marcarla como "Terminado"? Esta acción se puede revertir manualmente.');
+  if (!confirmar) {
+    return;
+  }
+
+  this.materiasService.updateMateriaEstado(this.codigoMateria, 'Terminado').subscribe((res) => {
+    alert('Materia marcada como Terminado.');
+  }, () => {
+    alert('No se pudo actualizar el estado en el servidor. Estado local actualizado.');
+  });
+}
+
+imprimirListaNotas(): void {
+  const title = `Concentrado de calificaciones - ${this.codigoMateria}`;
+  const cols = ['Alumno', 'Matrícula', 'Promedio real', 'Promedio redondeado'];
+
+  const rows = this.concentradoCalificaciones.map((a) => `
+    <tr>
+      <td>${a.nombre}</td>
+      <td>${a.matricula}</td>
+      <td>${Number(a.promedioReal).toFixed(2)}</td>
+      <td>${a.promedioRedondeado}</td>
+    </tr>
+  `).join('');
+
+  const html = `
+    <html>
+      <head>
+        <title>${title}</title>
+        <style>
+          body{font-family: Arial, Helvetica, sans-serif; padding:20px}
+          table{width:100%;border-collapse:collapse}
+          th,td{border:1px solid #ddd;padding:8px;text-align:left}
+          th{background:#f3f4f6}
+        </style>
+      </head>
+      <body>
+        <h2>${title}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>${cols[0]}</th>
+              <th>${cols[1]}</th>
+              <th>${cols[2]}</th>
+              <th>${cols[3]}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      </body>
+    </html>
+  `;
+
+  const w = window.open('', '_blank');
+  if (!w) {
+    alert('No fue posible abrir la ventana de impresión.');
+    return;
+  }
+
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 300);
 }
 }

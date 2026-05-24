@@ -58,7 +58,7 @@
 
         <h3>Lista de actividad reciente</h3>
 
-        <a href="#">
+        <a [routerLink]="acciones.actividad.route">
           Ver todo
         </a>
 
@@ -116,11 +116,11 @@
           Inicia un nuevo ciclo académico configurando fechas y parámetros base.
         </p>
 
-        <button>
+        <button type="button" [routerLink]="acciones.periodos.route">
 
           <i class="bi bi-plus-circle"></i>
 
-          Configurar ahora
+          {{ acciones.periodos.label }}
 
         </button>
 
@@ -141,35 +141,16 @@
       <h3>Registrar Docente</h3>
 
       <p>
-        Da de alta a nuevos docentes y asígnalos a sus facultades correspondientes.
+        Da de alta a nuevos docentes 
       </p>
 
-      <button>
-        Nueva alta docente
+      <button type="button" [routerLink]="acciones.docentes.route">
+        {{ acciones.docentes.label }}
       </button>
 
     </section>
 
-    <!-- SEDE -->
 
-    <section class="campus-card">
-
-      <img
-        src="/assets/sede.jpg"
-        alt="Sede principal"
-      >
-
-      <div class="campus-info">
-
-        <h3>Sede Principal</h3>
-
-        <p>
-          Mantenimiento programado: 12 Oct
-        </p>
-
-      </div>
-
-    </section>
 
   </main>
 

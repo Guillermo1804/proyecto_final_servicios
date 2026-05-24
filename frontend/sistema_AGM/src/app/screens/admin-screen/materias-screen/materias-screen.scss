@@ -169,7 +169,7 @@ select {
 .table-head,
 .table-row {
   display: grid;
-  grid-template-columns: .8fr 1.4fr .9fr;
+  grid-template-columns: .7fr .9fr 1.8fr .7fr 1.4fr .7fr 1.25fr .95fr;
   align-items: center;
   gap: .8rem;
 }
@@ -190,6 +190,10 @@ select {
   border-top: 1px solid #d1d5db;
 }
 
+.cell {
+  min-width: 0;
+}
+
 .codigo {
   color: #0057c2;
   font-size: 1rem;
@@ -197,7 +201,16 @@ select {
   word-break: break-word;
 }
 
+.clave {
+  color: #1f2937;
+  font-size: .95rem;
+  font-weight: 600;
+  word-break: break-word;
+}
+
 .materia-info {
+  min-width: 0;
+
   strong {
     display: block;
 
@@ -217,31 +230,39 @@ select {
   }
 }
 
-.facultad {
-  width: fit-content;
+.seccion,
+.docente,
+.salon {
+  color: #374151;
+  font-size: .92rem;
+  line-height: 1.3;
+}
 
-  padding: .35rem .7rem;
+.dias-cell,
+.hora-cell {
+  min-width: 0;
+  justify-self: start;
+}
 
-  border-radius: 999px;
+.stack-list {
+  display: grid;
+  gap: .28rem;
+  justify-items: start;
+}
 
-  font-size: .75rem;
+.stack-day {
   font-weight: 800;
-  letter-spacing: .06em;
+  color: #1f2937;
+}
 
-  &.ingenieria {
-    background: #dbeafe;
-    color: #1f2937;
-  }
+.stack-hour {
+  color: #374151;
+  white-space: nowrap;
+}
 
-  &.ciencias {
-    background: #dbeafe;
-    color: #1f2937;
-  }
-
-  &.artes {
-    background: #ffe1d2;
-    color: #7c2d12;
-  }
+.salon {
+  justify-self: start;
+  padding-left: .15rem;
 }
 
 .table-footer {
@@ -250,8 +271,49 @@ select {
 
   border-top: 1px solid #d1d5db;
 
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
   font-size: .85rem;
   color: #374151;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+
+  button {
+    border: none;
+    background: transparent;
+    color: #111827;
+
+    font-size: 1.05rem;
+    cursor: pointer;
+
+    &:disabled {
+      color: #b7bbc4;
+      cursor: default;
+    }
+  }
+
+  strong {
+    color: #0057c2;
+    font-size: .95rem;
+  }
+}
+
+.loading-state,
+.empty-state {
+  padding: 1rem 1.5rem 1.2rem;
+  color: #475569;
+  font-size: .98rem;
+}
+
+.empty-state {
+  padding-top: 1.1rem;
 }
 
 /* RESUMEN */
@@ -319,6 +381,105 @@ select {
   }
 }
 
+@media (max-width: 767px) {
+
+  .table-head {
+    display: none;
+  }
+
+  .table-row {
+    grid-template-columns: 1fr;
+    gap: .65rem;
+    padding: 1rem;
+  }
+
+  .cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: .35rem;
+    padding: .75rem 0;
+    border-bottom: 1px solid #edf0f4;
+
+    &::before {
+      content: attr(data-label);
+      color: #6b7280;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+  }
+
+  .cell:last-child {
+    border-bottom: none;
+  }
+
+  .codigo {
+    font-size: .96rem;
+  }
+
+  .codigo,
+  .clave,
+  .materia-info strong,
+  .seccion,
+  .docente,
+  .salon,
+  .stack-day,
+  .stack-hour {
+    text-align: left;
+  }
+
+  .materia-info strong {
+    margin-bottom: 0;
+  }
+
+  .dias-cell,
+  .hora-cell {
+    width: 100%;
+  }
+
+  .stack-list {
+    width: 100%;
+    gap: .3rem;
+    justify-items: start;
+  }
+
+  .stack-item {
+    width: 100%;
+    display: block;
+    width: 100%;
+  }
+
+  .stack-hour {
+    white-space: normal;
+  }
+
+  .salon {
+    padding-left: 0;
+    justify-self: start;
+  }
+
+  .table-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .pagination {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+
+  .loading-state,
+  .empty-state {
+    padding: 1rem;
+  }
+
+}
+
 /* TABLET */
 
 @media (min-width: 768px) {
@@ -338,6 +499,10 @@ select {
 
   .summary-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .cell::before {
+    content: none;
   }
 
 }
@@ -360,7 +525,7 @@ select {
 
   .table-head,
   .table-row {
-    grid-template-columns: .7fr 1.7fr .8fr;
+    grid-template-columns: .7fr .9fr 1.8fr .7fr 1.4fr .7fr 1.25fr .95fr;
   }
 
 }
