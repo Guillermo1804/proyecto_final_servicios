@@ -5,7 +5,8 @@ import { ErrorsService } from './tools/errors.service';
 import { ValidatorService } from './tools/validator.service';
 
 import { environment } from '../../environments/environment';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
@@ -204,6 +205,42 @@ export class FacadeService {
     }
 
     return String(role).trim().toLowerCase();
+  }
+  
+  public refreshToken(): Observable<any> {
+    const refresh = this.getRefreshToken();
+
+    if (!refresh) {
+      return throwError(() => new Error('No refresh token'));
+    }
+
+    return this.http.post<any>(this.buildApiUrl('/auth/refresh'), { refresh }).pipe(
+      tap((resp: any) => {
+        const access = this.extractAccessToken(resp);
+        const refreshTok = this.extractRefreshToken(resp);
+
+        if (access) {
+          const primaryStorage = sessionStorage;
+          primaryStorage.setItem(ACCESS_TOKEN_KEY, access);
+          localStorage.removeItem(ACCESS_TOKEN_KEY);
+        }
+
+        if (refreshTok) {
+          sessionStorage.setItem(REFRESH_TOKEN_KEY, refreshTok);
+          localStorage.removeItem(REFRESH_TOKEN_KEY);
+        }
+      })
+    );
+  }
+
+  public logout(): void {
+    // Optionally call backend logout endpoint here if needed
+    this.clearSession();
+    try {
+      this.router.navigate(['/login']);
+    } catch {
+      // ignore navigation errors in non-routing contexts
+    }
   }
   //Cerrar sesión
   // public logout(): Observable<any> {
