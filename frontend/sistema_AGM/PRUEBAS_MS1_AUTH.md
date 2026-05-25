@@ -18,7 +18,7 @@ npm start
 
 Abre: http://localhost:4200
 
-API gateway: http://127.0.0.1:8080
+API gateway: http://127.0.0.1:8080 (el front en dev usa `proxy.conf.json` hacia ese puerto)
 
 ## Credenciales de prueba
 

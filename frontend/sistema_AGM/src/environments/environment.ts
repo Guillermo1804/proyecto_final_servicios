@@ -4,9 +4,11 @@
 
 export const environment = {
   production: false,
-  /** Gateway Nginx (recomendado): MS-1 en /auth/* */
-  apiBaseUrl: 'http://127.0.0.1:8080',
-  /** Alias legacy usado por algunos servicios */
-  url_api: 'http://127.0.0.1:8080',
-  /** Solo MS-1 directo (sin Nginx): http://127.0.0.1:8001 */
+  /**
+   * Vacio con `ng serve`: las peticiones van a localhost:4200 y proxy.conf.json
+   * las reenvia a Nginx (http://127.0.0.1:8080).
+   * Si corres el front sin proxy, usa: 'http://127.0.0.1:8080'
+   */
+  apiBaseUrl: '',
+  url_api: '',
 };

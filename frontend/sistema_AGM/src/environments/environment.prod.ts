@@ -1,19 +1,8 @@
-import { buildMicroservicesConfig } from '../app/config/microservices.config';
-import { AgmEnvironment } from './environment.types';
+// Reemplaza environment.ts en builds de produccion (ver angular.json fileReplacements si se activa).
 
-/** Produccion: front servido junto al gateway (mismo host) o apiBaseUrl del deploy */
-export const environment: AgmEnvironment = {
+export const environment = {
   production: true,
-  integrationMode: 'gateway',
+  /** Mismo host que el gateway (Nginx sirve API y front juntos) */
   apiBaseUrl: '',
   url_api: '',
-  microservices: buildMicroservicesConfig('direct', {
-    ms1_auth: { enabled: true },
-    ms2_periodos: { enabled: false },
-    ms3_alumnos: { enabled: false },
-    ms4_calificaciones: { enabled: false },
-    ms5_asistencias: { enabled: false },
-    ms6_notificaciones: { enabled: false },
-    ms7_reportes: { enabled: false },
-  }),
 };
