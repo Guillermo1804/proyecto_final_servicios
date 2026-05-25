@@ -8,13 +8,13 @@
       <h2>Gestión de Asignaturas</h2>
 
       <p>
-        Administre el catálogo académico institucional, cursos y prerrequisitos.
+        Administre el catálogo académico institucional y cursos
       </p>
     </section>
 
     <button class="create-btn">
       <i class="bi bi-plus-lg"></i>
-      Nueva Materia
+      Importar Materias
     </button>
 
     <section class="filters-card">
@@ -23,109 +23,136 @@
         <i class="bi bi-search"></i>
 
         <input
+          #searchInput
           type="text"
-          placeholder="Buscar por código o nombre..."
+          placeholder="Buscar por NRC, clave, materia, docente o salón..."
+          (input)="onSearch(searchInput.value)"
         >
       </div>
 
-      <select>
+      <!-- <select>
         <option>Todas las Carreras</option>
         <option>ITI</option>
         <option>ICC</option>
-        <option>ITC</option>
-      </select>
+        <option>CCO</option>
+      </select> -->
 
-      <button class="filter-btn">
+      <!-- <button class="filter-btn">
         <i class="bi bi-filter"></i>
         Filtrar
-      </button>
+      </button> -->
 
     </section>
 
     <section class="table-card">
 
       <div class="table-head">
-        <span>CÓDIGO</span>
-        <span>NOMBRE DE ASIGNATURA</span>
-        <span>FACULTAD</span>
+        <span>NRC</span>
+        <span>CLAVE</span>
+        <span>NOMBRE DE MATERIA</span>
+        <span>SECCIÓN</span>
+        <span>DOCENTE ASIGNADO</span>
+        <span>DÍAS</span>
+        <span>HORA</span>
+        <span>SALÓN</span>
       </div>
 
       <div
         class="table-row"
-        *ngFor="let materia of materias"
+        *ngFor="let materia of materias; trackBy: trackByMateriaId"
       >
 
-        <span class="codigo">
-          {{ materia.codigo }}
+        <span class="cell codigo" [attr.data-label]="'NRC'">
+          {{ materia.nrc }}
         </span>
 
-        <div class="materia-info">
-          <strong>{{ materia.nombre }}</strong>
+        <span class="cell clave" [attr.data-label]="'Clave'">
+          {{ materia.clave }}
+        </span>
 
-          <p>
-            Prerrequisito:
-            <br>
-            {{ materia.prerequisito }}
-          </p>
+        <div class="cell materia-info" [attr.data-label]="'Nombre de materia'">
+          <strong>{{ materia.nombre }}</strong>
         </div>
 
-        <span
-          class="facultad"
-          [ngClass]="materia.tipo"
-        >
-          {{ materia.facultad }}
+        <span class="cell seccion" [attr.data-label]="'Sección'">
+          {{ materia.seccion }}
+        </span>
+
+        <span class="cell docente" [attr.data-label]="'Docente asignado'">
+          {{ materia.docente }}
+        </span>
+
+        <div class="cell dias-cell" [attr.data-label]="'Días'">
+          <div class="stack-list">
+            <span
+              class="stack-item stack-day"
+              *ngFor="let horario of materia.horarios"
+            >
+              {{ horario.dia }}
+            </span>
+          </div>
+        </div>
+
+        <div class="cell hora-cell" [attr.data-label]="'Hora'">
+          <div class="stack-list">
+            <span
+              class="stack-item stack-hour"
+              *ngFor="let horario of materia.horarios"
+            >
+              {{ horario.hora }}
+            </span>
+          </div>
+        </div>
+
+        <span class="cell salon" [attr.data-label]="'Salón'">
+          {{ materia.salon }}
         </span>
 
       </div>
 
+      <div
+        class="empty-state"
+        *ngIf="!isLoading && materias.length === 0"
+      >
+        No se encontraron materias con los filtros actuales.
+      </div>
+
+      <div
+        class="loading-state"
+        *ngIf="isLoading"
+      >
+        Cargando materias...
+      </div>
+
       <p class="table-footer">
-        Mostrando 1 a 4 de 128 materias
+        <span>
+          Mostrando {{ rangeStart }} - {{ rangeEnd }} de {{ totalItems }} materias
+        </span>
+
+        <span class="pagination">
+          <button
+            type="button"
+            [disabled]="currentPage === 1 || isLoading"
+            (click)="previousPage()"
+          >
+            <i class="bi bi-chevron-left"></i>
+          </button>
+
+          <strong>{{ currentPage }}</strong>
+
+          <button
+            type="button"
+            [disabled]="currentPage >= totalPages || isLoading"
+            (click)="nextPage()"
+          >
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </span>
       </p>
 
     </section>
 
-    <section class="summary-grid">
 
-      <article class="summary-card">
-
-        <div class="summary-icon azul">
-          <i class="bi bi-book"></i>
-        </div>
-
-        <div>
-          <p>TOTAL MATERIAS</p>
-          <h3>482</h3>
-        </div>
-
-      </article>
-
-      <article class="summary-card">
-
-        <div class="summary-icon naranja">
-          <i class="bi bi-bank"></i>
-        </div>
-
-        <div>
-          <p>FACULTADES</p>
-          <h3>8</h3>
-        </div>
-
-      </article>
-
-      <article class="summary-card">
-
-        <div class="summary-icon celeste">
-          <i class="bi bi-patch-check"></i>
-        </div>
-
-        <div>
-          <p>PLAN 2024</p>
-          <h3>94%</h3>
-        </div>
-
-      </article>
-
-    </section>
 
   </main>
 

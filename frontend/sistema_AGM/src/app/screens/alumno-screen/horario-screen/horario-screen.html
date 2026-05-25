@@ -12,6 +12,7 @@
         class="day-card"
         *ngFor="let dia of dias"
         [ngClass]="{ active: dia.activo }"
+        (click)="seleccionarDia(dia.dia)"
       >
 
         <span>{{ dia.dia }}</span>
@@ -27,7 +28,7 @@
 
       <article
         class="schedule-item"
-        *ngFor="let item of horarios"
+        *ngFor="let item of horariosDelDia"
         [ngClass]="item.color"
       >
 
@@ -65,6 +66,12 @@
 
     </section>
 
+    <section class="empty-state" *ngIf="horariosDelDia.length === 0">
+      <i class="bi bi-calendar-x"></i>
+      <h3>No hay materias para este día</h3>
+      <p>Selecciona otro día para ver las materias programadas.</p>
+    </section>
+
     <!-- RESUMEN -->
 
     <section class="summary-title">
@@ -76,7 +83,7 @@
       <i class="bi bi-book"></i>
 
       <div class="summary-info">
-        <h3>18</h3>
+        <h3>{{ resumen.horasLectivasTotales }}</h3>
         <p>Horas lectivas totales</p>
       </div>
 
@@ -88,7 +95,7 @@
 
         <i class="bi bi-calendar-check"></i>
 
-        <h3>4</h3>
+        <h3>{{ resumen.proyectos }}</h3>
 
         <p>Proyectos</p>
 
@@ -98,7 +105,7 @@
 
         <i class="bi bi-people"></i>
 
-        <h3>6</h3>
+        <h3>{{ resumen.profesores }}</h3>
 
         <p>Profesores</p>
 

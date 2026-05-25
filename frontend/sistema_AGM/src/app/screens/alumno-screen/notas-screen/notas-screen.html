@@ -20,13 +20,13 @@
 
       <span>PROMEDIO GENERAL PARCIAL</span>
 
-      <h2>8.7</h2>
+      <h2>{{ promedioGeneral }}</h2>
 
       <div class="progress-bar">
-        <div></div>
+        <div [style.width.%]="progresoPeriodo"></div>
       </div>
 
-      <p>Progreso del periodo: 65% completado</p>
+      <p>Progreso del periodo: {{ progresoPeriodo }}% completado</p>
 
     </section>
 
@@ -59,7 +59,7 @@
 
         </div>
 
-        <div class="average-row">
+        <div class="average-row" (click)="toggleExpand(materia)">
 
           <div>
             <span class="label">Promedio</span>
@@ -72,7 +72,7 @@
             </div>
           </div>
 
-          <i class="bi bi-chevron-down"></i>
+          <i class="bi" [ngClass]="materia.expandido ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
 
         </div>
 
@@ -87,13 +87,35 @@
             [ngClass]="{ active: parcial.activo }"
           >
 
-            <span>{{ parcial.titulo }}</span>
+            <div class="partial-title">
+              <span>{{ parcial.titulo }}</span>
+              <small class="partial-percent"> · {{ parcial.porcentaje }}%</small>
+            </div>
 
-            <h4>{{ parcial.valor }}</h4>
+            <div>
+              <h4>
+                {{ parcial.valor !== null && parcial.valor !== undefined ? (parcial.valor | number:'1.1-2') : '--' }}
+              </h4>
+            </div>
 
           </article>
 
         </section>
+
+        <div class="materia-actions" *ngIf="materia.expandido">
+          <button
+            type="button"
+            class="drop-btn"
+            *ngIf="!materia.dropped"
+            (click)="abrirModalBaja(materia)"
+          >
+            Darse de baja
+          </button>
+
+          <div class="dropped-note" *ngIf="materia.dropped">
+            Dado de baja el {{ materia.droppedAt | date:'short' }}
+          </div>
+        </div>
 
       </article>
 
@@ -105,9 +127,6 @@
 
       <h2>Resumen por Periodo</h2>
 
-      <a href="#">
-        Ver Historial Completo
-      </a>
 
     </section>
 
@@ -133,6 +152,15 @@
     </section>
 
   </main>
+
+  <app-drop-confirm-modal
+    [visible]="modalVisible"
+    [(confirmationText)]="dropConfirmationText"
+    [error]="dropError"
+    [success]="dropSuccess"
+    (cancel)="cerrarModal()"
+    (confirm)="confirmarBaja()"
+  ></app-drop-confirm-modal>
 
   <app-bottom-navbar-alumno></app-bottom-navbar-alumno>
 

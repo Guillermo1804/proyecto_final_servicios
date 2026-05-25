@@ -9,7 +9,9 @@
   <div class="filter-field">
     <label>Periodo Académico</label>
     <select>
-      <option>Ciclo Lectivo 2024-1 (Actual)</option>
+      <option *ngFor="let periodo of periodosEscolares">
+        {{ periodo.nombre }}{{ periodo.activo ? ' (Actual)' : '' }}
+      </option>
     </select>
   </div>
 
@@ -106,6 +108,122 @@
           Revisar criterios de evaluación en Estructuras de Datos, el promedio
           descendió 0.5 puntos este mes.
         </p>
+      </div>
+
+    </section>
+
+    <section class="academic-history-card">
+
+      <div class="history-header compact">
+        <h3>Historial académico</h3>
+
+        <span class="history-helper">Materias impartidas por periodo</span>
+      </div>
+
+      <div class="academic-period-list">
+
+        <article
+          class="academic-period-card"
+          *ngFor="let periodo of historialAcademico"
+          [ngClass]="{ inactive: !periodo.activo }"
+        >
+
+          <div class="academic-period-top">
+
+            <div>
+              <h4>{{ periodo.periodo }}</h4>
+              <p>{{ periodo.resumen }}</p>
+            </div>
+
+            <span class="period-badge" [ngClass]="{ active: periodo.activo, inactive: !periodo.activo }">
+              {{ periodo.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+
+          </div>
+
+          <div class="academic-subject-grid">
+
+            <article
+              class="academic-subject-card"
+              *ngFor="let materia of periodo.materias"
+            >
+
+              <div class="subject-header">
+                <strong>{{ materia.nombre }}</strong>
+                <span>{{ materia.grupo }}</span>
+              </div>
+
+              <div class="subject-stats">
+                <div>
+                  <span>Alumnos</span>
+                  <strong>{{ materia.alumnos }}</strong>
+                </div>
+
+                <div>
+                  <span>Promedio</span>
+                  <strong>{{ materia.promedio }}</strong>
+                </div>
+
+                <div>
+                  <span>Aprobación</span>
+                  <strong>{{ materia.aprobacion }}%</strong>
+                </div>
+              </div>
+
+            </article>
+
+          </div>
+
+        </article>
+
+      </div>
+
+    </section>
+
+    <section class="comparison-card">
+
+      <div class="history-header compact">
+        <h3>Comparativas de la misma materia</h3>
+
+        <span class="history-helper">Cuando una materia aparece en más de un periodo</span>
+      </div>
+
+      <div class="comparison-list">
+
+        <article
+          class="comparison-item"
+          *ngFor="let item of materiasComparadas"
+        >
+
+          <div class="comparison-main">
+
+            <div>
+              <h4>{{ item.nombre }}</h4>
+              <p>Impartida en {{ item.repeticiones }} periodos: {{ item.periodos.join(' · ') }}</p>
+            </div>
+
+            <span class="repeat-badge">Repetida</span>
+
+          </div>
+
+          <div class="comparison-metrics">
+
+            <article>
+              <span>Promedio actual</span>
+              <strong>{{ item.promedioActual }}</strong>
+              <small>Anterior: {{ item.promedioAnterior }} ({{ item.variacionPromedio }})</small>
+            </article>
+
+            <article>
+              <span>Aprobación actual</span>
+              <strong>{{ item.aprobacionActual }}%</strong>
+              <small>Anterior: {{ item.aprobacionAnterior }}% ({{ item.variacionAprobacion }} pts)</small>
+            </article>
+
+          </div>
+
+        </article>
+
       </div>
 
     </section>

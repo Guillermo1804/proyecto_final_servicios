@@ -1,7 +1,9 @@
 :host {
   display: block;
   min-height: 100vh;
-  background: #f7f7fb;
+  background:
+    radial-gradient(circle at top left, rgba(8, 117, 232, .12), transparent 28%),
+    linear-gradient(180deg, #f7f9fc 0%, #eef3fb 100%);
   color: #111827;
 }
 
@@ -12,12 +14,12 @@
 .docentes-page {
   min-height: 100vh;
   padding-bottom: 76px;
-  background: #f7f7fb;
+  background: transparent;
 }
 
 .content {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 1.4rem;
 }
@@ -38,7 +40,7 @@
     margin: 0;
     max-width: 680px;
     color: #374151;
-    font-size: 1.1rem;
+    font-size: 1rem;
     line-height: 1.45;
   }
 }
@@ -47,10 +49,11 @@
 
 .create-btn {
   width: 100%;
-  height: 64px;
+  min-height: 64px;
+  padding: 1rem 1.2rem;
 
   border: none;
-  border-radius: 8px;
+  border-radius: 14px;
 
   background: #0875e8;
   color: white;
@@ -60,7 +63,7 @@
   justify-content: center;
   gap: .8rem;
 
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 
   font-size: 1.1rem;
   font-weight: 800;
@@ -77,15 +80,16 @@
 .filters-section {
   display: grid;
   gap: 1rem;
-  margin-bottom: 1.8rem;
+  margin-bottom: 1.3rem;
 }
 
 .search-box {
-  height: 66px;
+  min-height: 60px;
 
-  background: white;
-  border: 1.5px solid #c9ced8;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, .9);
+  border: 1px solid #d6dbe6;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .05);
 
   display: flex;
   align-items: center;
@@ -114,53 +118,14 @@
   }
 }
 
-.filter-row {
-  display: grid;
-  grid-template-columns: 1fr 66px;
-  gap: .8rem;
-
-  select {
-    height: 64px;
-
-    background: white;
-
-    border: 1.5px solid #c9ced8;
-    border-radius: 12px;
-
-    padding: 0 1.2rem;
-
-    color: #111827;
-    font-size: 1rem;
-  }
-
-  .filter-btn {
-    height: 64px;
-
-    border: 1.5px solid #c9ced8;
-    border-radius: 12px;
-
-    background: white;
-    color: #111827;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    cursor: pointer;
-
-    i {
-      font-size: 1.4rem;
-    }
-  }
-}
-
 /* TABLA */
 
 .table-card {
-  background: white;
+  background: rgba(255, 255, 255, .92);
 
-  border: 1px solid #c9ced8;
-  border-radius: 12px;
+  border: 1px solid #d7dceb;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, .08);
 
   overflow: hidden;
   margin-bottom: 1.5rem;
@@ -169,31 +134,36 @@
 .table-head,
 .table-row {
   display: grid;
-  grid-template-columns: 1.35fr 1.1fr .7fr;
+  grid-template-columns: 1.6fr 1.3fr 1.2fr .72fr .88fr;
   align-items: center;
   gap: 1rem;
 }
 
 .table-head {
-  background: #ececef;
+  background: linear-gradient(180deg, #edf2f7 0%, #e8edf5 100%);
 
   padding: 1.2rem 2rem;
 
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: .03em;
+  color: #334155;
 }
 
 .table-row {
-  padding: 1.3rem 2rem;
+  padding: 1.2rem 2rem;
 
   border-top: 1px solid #e5e7eb;
+}
+
+.table-cell {
+  min-width: 0;
 }
 
 .teacher-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: .95rem;
 
   img {
     width: 52px;
@@ -221,35 +191,63 @@
   }
 }
 
-.faculty {
-  font-size: 1.1rem;
-  line-height: 1.35;
+.table-value {
+  font-size: .98rem;
+  line-height: 1.4;
   color: #1f2937;
+  word-break: break-word;
 }
 
-.status {
-  width: fit-content;
+.action-cell {
+  display: flex;
+  justify-content: flex-start;
+}
 
-  padding: .4rem .8rem;
-
+.delete-btn,
+.status-toggle {
+  min-height: 42px;
   border-radius: 999px;
-
-  font-size: .9rem;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
   font-weight: 800;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease, color .18s ease, border-color .18s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.delete-btn {
+  width: 42px;
+  color: #b91c1c;
+  background: #fff1f2;
+  box-shadow: inset 0 0 0 1px rgba(185, 28, 28, .12);
+
+  i {
+    font-size: 1.05rem;
+  }
+}
+
+.status-toggle {
+  width: fit-content;
+  min-width: 108px;
+  padding: .45rem .9rem;
+  font-size: .9rem;
 
   &.activo {
     background: #dcfce7;
     color: #15803d;
-  }
-
-  &.licencia {
-    background: #ffedd5;
-    color: #c2410c;
+    box-shadow: inset 0 0 0 1px rgba(21, 128, 61, .12);
   }
 
   &.inactivo {
     background: #fee2e2;
     color: #dc2626;
+    box-shadow: inset 0 0 0 1px rgba(220, 38, 38, .12);
   }
 }
 
@@ -258,8 +256,8 @@
 .table-footer {
   padding: 1.1rem 2rem;
 
-  background: #f1f1f4;
-  border-top: 1px solid #c9ced8;
+  background: linear-gradient(180deg, #f7f8fb 0%, #eef2f7 100%);
+  border-top: 1px solid #d7dceb;
 
   display: flex;
   align-items: center;
@@ -294,6 +292,21 @@
   }
 }
 
+.loading-state,
+.empty-state {
+  padding: 1rem 2rem 1.2rem;
+  color: #475569;
+  font-size: .98rem;
+}
+
+.empty-state {
+  padding-top: 1.1rem;
+}
+
+.pagination button:disabled {
+  opacity: .45;
+}
+
 /* BOTÓN FLOTANTE */
 
 .floating-btn {
@@ -322,6 +335,115 @@
   i {
     font-size: 2rem;
   }
+}
+
+@media (max-width: 767px) {
+
+  .content {
+    padding: 1rem;
+  }
+
+  .hero h2 {
+    font-size: 1.9rem;
+  }
+
+  .hero p {
+    font-size: .98rem;
+  }
+
+  .create-btn {
+    min-height: 58px;
+    font-size: 1rem;
+  }
+
+  .table-card {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .table-head {
+    display: none;
+  }
+
+  .table-row {
+    grid-template-columns: 1fr 1fr;
+    gap: .8rem .9rem;
+    padding: 1rem;
+    margin-bottom: .9rem;
+    background: rgba(255, 255, 255, .95);
+    border: 1px solid #d7dceb;
+    border-radius: 16px;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, .06);
+  }
+
+  .table-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .45rem;
+    min-width: 0;
+
+    &::before {
+      content: attr(data-label);
+      display: block;
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+  }
+
+  .teacher-info {
+    grid-column: 1 / -1;
+  }
+
+  .action-cell {
+    align-self: end;
+  }
+
+  .action-cell:last-child {
+    justify-content: flex-end;
+  }
+
+  .status-toggle {
+    min-width: 100%;
+  }
+
+  .delete-btn {
+    width: 44px;
+  }
+
+  .table-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .loading-state,
+  .empty-state {
+    padding: 1rem;
+  }
+
+  .pagination {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+
+  .floating-btn {
+    width: 64px;
+    height: 64px;
+    right: 1rem;
+    bottom: 5rem;
+
+    i {
+      font-size: 1.7rem;
+    }
+  }
+
 }
 
 /* TABLET */

@@ -1,395 +1,290 @@
 :host {
   display: block;
   min-height: 100vh;
-  background: #f7f7fb;
-  color: #080b13;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-.materias-docente-page {
-  min-height: 100vh;
-  padding-bottom: 76px;
-  background: #f7f7fb;
-}
-
-/* TOPBAR */
-
-.topbar {
-  height: 56px;
-  padding: 0 1rem;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  background: white;
-  border-bottom: 1px solid #d1d5db;
-
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: .45rem;
-
-  i {
-    font-size: 1rem;
+  :host {
+    display: block;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top left, rgba(0, 87, 194, .08), transparent 28%),
+      linear-gradient(180deg, #f6f8fc 0%, #eef3fb 100%);
+    color: #0f172a;
   }
 
-  h1 {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 800;
-  }
-}
-
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-
-  i {
-    font-size: 1.1rem;
+  * {
+    box-sizing: border-box;
   }
 
-  img {
-    width: 30px;
-    height: 30px;
-
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #111827;
-  }
-}
-
-/* CONTENT */
-
-.content {
-  width: 100%;
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-/* HERO */
-
-.hero {
-  margin-bottom: 1rem;
-
-  h2 {
-    margin: 0 0 .3rem;
-    font-size: 1.7rem;
-    font-weight: 800;
+  .materias-docente-page {
+    min-height: 100vh;
+    padding-bottom: 76px;
+    background: transparent;
   }
 
-  p {
-    margin: 0;
-    color: #374151;
-    line-height: 1.4;
-    font-size: .95rem;
-  }
-}
-
-/* SELECTOR */
-
-.period-selector {
-  height: 42px;
-
-  background: white;
-
-  border: 1px solid #c9ced8;
-  border-radius: 9px;
-
-  padding: 0 1rem;
-  margin-bottom: 1.4rem;
-
-  display: flex;
-  align-items: center;
-  gap: .8rem;
-
-  font-size: .85rem;
-
-  i:first-child {
-    color: #0057c2;
+  .content {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 1rem 1rem 1.5rem;
   }
 
-  i:last-child {
-    margin-left: auto;
+  .hero {
+    margin-bottom: 1rem;
+    padding: 1rem 1rem 0;
+
+    .eyebrow {
+      margin: 0 0 .35rem;
+      color: #0057c2;
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0 0 .35rem;
+      font-size: clamp(1.55rem, 3vw, 2.35rem);
+      font-weight: 800;
+      letter-spacing: -.03em;
+    }
+
+    p {
+      margin: 0;
+      color: #475569;
+      line-height: 1.4;
+      font-size: .95rem;
+    }
   }
-}
 
-/* SUBJECT CARDS */
+  .period-selector {
+    height: 44px;
+    background: rgba(255, 255, 255, .92);
+    border: 1px solid rgba(15, 23, 42, .12);
+    border-radius: 14px;
+    padding: 0 1rem;
+    margin: 0 1rem 1rem;
 
-.subjects-list {
-  display: grid;
-  gap: 1rem;
-}
+    display: flex;
+    align-items: center;
+    gap: .8rem;
 
-.subject-card,
-.tesis-card {
-  background: white;
+    font-size: .9rem;
+    font-weight: 600;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .05);
 
-  border: 1px solid #c9ced8;
-  border-radius: 10px;
+    i:first-child {
+      color: #0057c2;
+    }
 
-  padding: 1.2rem;
+    i:last-child {
+      margin-left: auto;
+    }
+  }
 
-  box-shadow: 0 6px 16px rgba(15, 23, 42, .04);
-}
+  .subjects-list {
+    display: grid;
+    gap: .8rem;
+    margin: 0 1rem;
+  }
 
-.card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  .subject-card {
+    background: rgba(255, 255, 255, .96);
+    border: 1px solid rgba(15, 23, 42, .1);
+    border-radius: 18px;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, .06);
+    padding: .65rem .75rem .7rem;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
 
-  margin-bottom: 1.2rem;
+  .subject-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 42px rgba(15, 23, 42, .09);
+  }
+
+  .card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .5rem;
+
+    h3 {
+      margin: .22rem 0 .12rem;
+      font-size: 1.02rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -.02em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #475569;
+      font-size: .8rem;
+    }
+  }
 
   .code {
+    display: inline-flex;
+    align-items: center;
+    padding: .24rem .55rem;
+    border-radius: 999px;
     background: #dbeafe;
     color: #0057c2;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+  }
 
-    padding: .25rem .6rem;
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 78px;
+    padding: .28rem .52rem;
     border-radius: 999px;
-
     font-size: .72rem;
     font-weight: 800;
+    letter-spacing: .02em;
+    background: #e2e8f0;
+    color: #334155;
   }
 
-  i {
-    color: #111827;
+  .status-pill.activo {
+    background: #e0f2fe;
+    color: #075985;
   }
-}
 
-.subject-card,
-.tesis-card {
-  h3 {
-    margin: 0 0 .35rem;
+  .status-pill.terminado {
+    background: #fee2e2;
+    color: #991b1b;
+  }
 
-    font-size: 1.35rem;
+  .schedule-grid {
+    border-top: 1px solid rgba(15, 23, 42, .08);
+    padding-top: .55rem;
+  }
+
+  .schedule-grid-head,
+  .schedule-row {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    align-items: center;
+    gap: .6rem;
+  }
+
+  .schedule-grid-head {
+    margin-bottom: .35rem;
+
+    span {
+      color: #64748b;
+      font-size: .72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+  }
+
+  .schedule-row {
+    padding: .24rem 0;
+    border-top: 1px dashed rgba(15, 23, 42, .08);
+  }
+
+  .day-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    background: #111827;
+    color: #fff;
+    font-size: .7rem;
     font-weight: 800;
-    line-height: 1.2;
   }
 
-  .faculty {
-    margin: 0 0 1.4rem;
-
-    color: #111827;
-    font-size: .9rem;
-  }
-}
-
-.students {
-  display: flex;
-  align-items: center;
-  gap: .55rem;
-
-  margin-bottom: 1.6rem;
-
-  color: #111827;
-  font-size: .9rem;
-
-  i {
-    color: #374151;
-  }
-}
-
-.progress-info {
-  display: flex;
-  justify-content: space-between;
-
-  margin-bottom: .45rem;
-
-  span {
-    color: #374151;
-    font-size: .75rem;
+  .hour-value {
+    font-size: .82rem;
+    font-weight: 700;
+    color: #0f172a;
   }
 
-  strong {
-    color: #0057c2;
-    font-size: .75rem;
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem;
+    margin-top: .55rem;
+    padding-top: .55rem;
+    border-top: 1px solid rgba(15, 23, 42, .08);
+    color: #475569;
+    flex-wrap: wrap;
+
+    .location-label {
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    strong {
+      color: #0f172a;
+      font-size: .86rem;
+    }
   }
-}
 
-.progress-bar {
-  width: 100%;
-  height: 5px;
-
-  background: #e5e7eb;
-  border-radius: 999px;
-
-  overflow: hidden;
-
-  margin-bottom: 1.3rem;
-
-  div {
-    height: 100%;
+  .details-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    min-height: 2rem;
+    padding: 0 .8rem;
+    border-radius: 999px;
     background: #0057c2;
-    border-radius: inherit;
-  }
-}
-
-.schedule {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  color: #6b7280;
-  font-size: .75rem;
-
-  i {
-    color: #0057c2;
-    font-size: 1.2rem;
-  }
-}
-
-/* TESIS CARD */
-
-.tesis-card {
-  margin-top: 1rem;
-
-  hr {
-    border: none;
-    border-top: 1px solid #d1d5db;
-    margin: 1.2rem 0;
-  }
-
-  .schedule-text {
-    margin: 0 0 1.2rem;
-    color: #6b7280;
-    font-size: .78rem;
-  }
-}
-
-.circle-box {
-  background: #f1f1f4;
-  border-radius: 8px;
-
-  padding: 1.4rem;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  p {
-    margin: .7rem 0 0;
-    font-size: .75rem;
-    color: #374151;
-  }
-}
-
-.circle-progress {
-  width: 78px;
-  height: 78px;
-
-  border-radius: 50%;
-
-  background:
-    conic-gradient(#0057c2 0 75%, #d1d5db 75% 100%);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    width: 58px;
-    height: 58px;
-    border-radius: 50%;
-    background: #f1f1f4;
-  }
-
-  span {
-    position: relative;
-    z-index: 1;
-    font-size: 1.2rem;
+    color: #fff;
+    text-decoration: none;
+    font-size: .74rem;
     font-weight: 800;
-  }
-}
-
-/* WEEKLY CARD */
-
-.weekly-card {
-  margin-top: 1.4rem;
-
-  background: #00234f;
-  color: white;
-
-  border-radius: 10px;
-  padding: 1.2rem;
-
-  i {
-    font-size: 1.8rem;
-    color: #7896c2;
+    transition: transform .18s ease, background-color .18s ease;
   }
 
-  h3 {
-    margin: .4rem 0;
-    font-size: 1.25rem;
-    color: #9fb3d5;
+  .details-button:hover {
+    background: #00479f;
+    transform: translateY(-1px);
   }
 
-  p {
-    margin: 0 0 1rem;
-    color: #9fb3d5;
-    line-height: 1.4;
+  @media (max-width: 767px) {
+    .content {
+      padding-inline: .75rem;
+    }
+
+    .hero {
+      padding-inline: .25rem;
+    }
+
+    .period-selector,
+    .subjects-list {
+      margin-inline: .25rem;
+    }
+
+    .card-head,
+    .card-footer {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .status-pill {
+      min-width: 0;
+    }
+
+    .details-button {
+      margin-left: 0;
+    }
+  }
+  .status-pill {
+    min-width: 0;
   }
 
-  button {
-    width: 100%;
-    height: 36px;
-
-    border: none;
-    border-radius: 6px;
-
-    background: white;
-    color: #111827;
-
-    font-weight: 800;
-    cursor: pointer;
+  .details-button {
+    margin-left: 0;
   }
-}
-
-/* TABLET */
-
-@media (min-width: 768px) {
-  .content {
-    padding: 1.5rem;
-  }
-
-  .subjects-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .hero h2 {
-    font-size: 2.2rem;
-  }
-}
-
-/* DESKTOP */
-
-@media (min-width: 1024px) {
-  .content {
-    padding: 2rem;
-  }
-
-  .subjects-list {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .tesis-card,
-  .weekly-card {
-    max-width: 420px;
-  }
-}
-.subject-card {
-  cursor: pointer;
 }

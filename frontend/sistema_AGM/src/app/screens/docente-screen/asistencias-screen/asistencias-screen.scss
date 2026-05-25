@@ -61,6 +61,125 @@
   }
 }
 
+.session-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+  margin-top: 1rem;
+}
+
+.session-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .45rem .7rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #1e293b;
+  font-size: .78rem;
+  font-weight: 800;
+
+  &.active {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  &.closed {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  &.soft {
+    background: #e0f2fe;
+    color: #075985;
+  }
+
+  &.materia-chip {
+    background: #fff7ed;
+    color: #9a3412;
+  }
+}
+
+.session-setup-card {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #dbe4f0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  display: grid;
+  gap: .9rem;
+}
+
+.session-setup-copy {
+  h3 {
+    margin: 0 0 .25rem;
+    font-size: 1.05rem;
+    font-weight: 900;
+  }
+
+  p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.45;
+  }
+}
+
+.materia-select-field {
+  display: grid;
+  gap: .45rem;
+
+  span {
+    font-size: .82rem;
+    font-weight: 800;
+    color: #334155;
+  }
+
+  select {
+    height: 46px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 0 .85rem;
+    background: white;
+    color: #0f172a;
+    font-weight: 700;
+    outline: none;
+
+    &:focus {
+      border-color: #075fc6;
+      box-shadow: 0 0 0 3px rgba(7, 95, 198, .12);
+    }
+
+    &:disabled {
+      background: #f8fafc;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.session-setup-helper {
+  padding: .85rem 1rem;
+  border-radius: 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+
+  strong {
+    display: block;
+    font-size: .95rem;
+    font-weight: 900;
+    color: #1d4ed8;
+    margin-bottom: .2rem;
+  }
+
+  p {
+    margin: 0;
+    color: #1e3a8a;
+    line-height: 1.4;
+    font-size: .88rem;
+  }
+}
+
 /* TABS */
 
 .tabs-control {
@@ -102,6 +221,260 @@
   margin-bottom: 1.8rem;
 
   text-align: center;
+}
+
+.session-setup-card {
+  background: #f8fafc;
+  border: 1px solid #dbe4f0;
+  border-radius: 16px;
+  padding: 1.2rem;
+  display: grid;
+  gap: 1rem;
+  text-align: left;
+  margin-bottom: 1rem;
+}
+
+.session-setup-copy {
+  h3 {
+    margin: 0 0 .35rem;
+    font-size: 1.2rem;
+    font-weight: 900;
+  }
+
+  p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.5;
+  }
+}
+
+.start-session-btn,
+.close-session-btn {
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  padding: 0 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.start-session-btn {
+  background: #075fc6;
+  color: white;
+
+  &:hover {
+    background: #054da3;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+  }
+}
+
+.close-session-btn {
+  background: #ef4444;
+  color: white;
+
+  &:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+  }
+}
+
+.session-summary-grid,
+.session-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+  margin-bottom: 1rem;
+
+  article {
+    background: white;
+    border: 1px solid #dbe4f0;
+    border-radius: 14px;
+    padding: .95rem;
+    text-align: left;
+
+    span {
+      display: block;
+      font-size: .78rem;
+      font-weight: 800;
+      color: #64748b;
+      margin-bottom: .25rem;
+    }
+
+    strong {
+      display: block;
+      font-size: 1rem;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1.25;
+    }
+  }
+}
+
+.session-summary-grid.compact {
+  margin-top: 1rem;
+  margin-bottom: 0;
+
+  article {
+    background: #f8fafc;
+  }
+}
+
+.session-note,
+.session-status-note,
+.scanner-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  padding: .85rem 1rem;
+  border-radius: 12px;
+  margin-top: .9rem;
+  text-align: left;
+  line-height: 1.45;
+}
+
+.session-note,
+.scanner-callout {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.session-status-note {
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #dbe4f0;
+}
+
+.scanner-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h3 {
+    margin: 0 0 .35rem;
+    font-size: 1.35rem;
+    font-weight: 900;
+  }
+
+  p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.5;
+  }
+}
+
+.scanner-badge {
+  padding: .45rem .7rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 900;
+  background: #f1f5f9;
+  color: #0f172a;
+
+  &.active {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  &.closed {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+}
+
+.progress-track {
+  height: 12px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+  margin: .85rem 0 1rem;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #075fc6, #0ea5e9);
+  transition: width .35s ease;
+}
+
+.session-actions-row {
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-top: 1rem;
+}
+
+.confirm-btn,
+.repeat-session-btn {
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  padding: 0 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.confirm-btn {
+  background: #10b981;
+  color: white;
+
+  &:hover {
+    background: #0ea36b;
+    transform: translateY(-1px);
+  }
+}
+
+.repeat-session-btn {
+  background: #f97316;
+  color: white;
+
+  &:hover {
+    background: #ea580c;
+    transform: translateY(-1px);
+  }
+}
+
+#reader {
+  width: 100%;
+  max-width: 460px;
+  margin: 1rem auto 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #dbe4f0;
+  background: #0f172a;
+}
+
+.student-initials {
+  width: 34px;
+  height: 34px;
+  margin-bottom: .5rem;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #075fc6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .78rem;
+  font-weight: 900;
 }
 
 .qr-image-box {
@@ -305,6 +678,12 @@
   }
 }
 
+.student-copy {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+}
+
 .status {
   padding: .35rem .55rem;
 
@@ -349,6 +728,121 @@
 
   .attendance-card {
     padding: 2rem;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .attendance-card {
+    padding: 1rem;
+  }
+
+  .hero h2 {
+    font-size: 1.55rem;
+  }
+
+  .tabs-control {
+    grid-template-columns: 1fr;
+    height: auto;
+
+    button {
+      height: 42px;
+    }
+  }
+
+  .session-summary-grid,
+  .session-metrics-grid,
+  .summary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .scanner-top {
+    flex-direction: column;
+  }
+
+  .session-actions-row {
+    flex-direction: column;
+  }
+
+  .start-session-btn,
+  .close-session-btn {
+    width: 100%;
+  }
+
+  .realtime-header,
+  .students-list {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .student-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .student-info {
+    width: 100%;
+  }
+
+  .status {
+    align-self: flex-start;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .content {
+    padding: .75rem;
+  }
+
+  .attendance-card,
+  .realtime-card {
+    border-radius: 16px;
+  }
+
+  .hero p,
+  .session-setup-copy p,
+  .scanner-top p {
+    font-size: .93rem;
+  }
+
+  .session-chip-row {
+    gap: .4rem;
+  }
+
+  .session-chip {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .session-summary-grid article,
+  .session-metrics-grid article {
+    padding: .85rem;
+  }
+
+  .session-summary-grid article strong,
+  .session-metrics-grid article strong {
+    font-size: .98rem;
+  }
+
+  .summary-row {
+    gap: .65rem;
+
+    article {
+      min-height: 72px;
+    }
+  }
+
+  .student-initials {
+    width: 30px;
+    height: 30px;
+    margin-bottom: .35rem;
+  }
+
+  .student-info strong {
+    line-height: 1.35;
   }
 
 }

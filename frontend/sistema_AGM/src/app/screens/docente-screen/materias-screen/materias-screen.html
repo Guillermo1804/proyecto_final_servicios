@@ -1,100 +1,58 @@
 <div class="materias-docente-page">
 
-<app-topbar-admin></app-topbar-admin>
+  <app-topbar-admin></app-topbar-admin>
 
   <main class="content">
 
     <section class="hero">
-      <h2>Asignaturas Vigentes</h2>
-      <p>Gestión de cursos para el periodo académico actual.</p>
+      <p class="eyebrow">Docente / Materias</p>
+      <h2>Mis materias</h2>
+      <p>Consulta los grupos que impartes, sus días de clase y el estado actual de cada materia.</p>
     </section>
 
     <section class="period-selector">
       <i class="bi bi-calendar"></i>
-      <span>Periodo 2024-1</span>
+      <span>Primavera 2026</span>
       <i class="bi bi-chevron-down"></i>
     </section>
 
     <section class="subjects-list">
+      <article
+        class="subject-card"
+        *ngFor="let materia of materias; trackBy: trackByMateria"
+      >
+        <header class="card-head">
+          <div>
+            <span class="code">NRC {{ materia.nrc }}</span>
+            <h3>{{ materia.materia }}</h3>
+            <p class="subtitle">Clave {{ materia.clave }} · Sección {{ materia.seccion }}</p>
+          </div>
 
-<article
-  class="subject-card"
-  *ngFor="let materia of materias"
-  [routerLink]="['/docente/materias', materia.codigo]"
->
+          <span class="status-pill" [ngClass]="materia.estado.toLowerCase()">
+            {{ materia.estado }}
+          </span>
+        </header>
 
-        <div class="card-head">
-          <span class="code">{{ materia.codigo }}</span>
-          <i class="bi bi-three-dots-vertical"></i>
+        <div class="schedule-grid">
+          <div class="schedule-grid-head">
+            <span>Día</span>
+            <span>Hora</span>
+          </div>
+
+          <div class="schedule-row" *ngFor="let sesion of materia.sesiones">
+            <span class="day-chip">{{ sesion.dia }}</span>
+            <span class="hour-value">{{ sesion.hora }}</span>
+          </div>
         </div>
 
-        <h3>{{ materia.nombre }}</h3>
-        <p class="faculty">{{ materia.facultad }}</p>
-
-        <div class="students">
-          <i class="bi bi-people"></i>
-          {{ materia.alumnos }} Alumnos inscritos
+        <div class="card-footer">
+          <span class="location-label">Salón</span>
+          <strong>{{ materia.salon }}</strong>
+          <a class="details-button" [routerLink]="['/docente/materias', materia.nrc]">
+            Ver detalles materia
+          </a>
         </div>
-
-        <div class="progress-info">
-          <span>Progreso del programa</span>
-          <strong>{{ materia.progreso }}%</strong>
-        </div>
-
-        <div class="progress-bar">
-          <div [style.width.%]="materia.progreso"></div>
-        </div>
-
-        <div class="schedule">
-          <span>{{ materia.horario }}</span>
-          <i class="bi bi-arrow-right"></i>
-        </div>
-
       </article>
-
-    </section>
-
-    <section class="tesis-card">
-
-      <div class="card-head">
-        <span class="code">INV-100</span>
-        <i class="bi bi-three-dots-vertical"></i>
-      </div>
-
-      <h3>Seminario de Tesis I</h3>
-      <p class="faculty">Facultad de Ingeniería / Postgrado</p>
-
-      <div class="students">
-        <i class="bi bi-people"></i>
-        12 Alumnos inscritos
-      </div>
-
-      <hr>
-
-      <p class="schedule-text">Sábados (09:00 - 13:00)</p>
-
-      <div class="circle-box">
-        <div class="circle-progress">
-          <span>75%</span>
-        </div>
-
-        <p>Tutorías completadas</p>
-      </div>
-
-    </section>
-
-    <section class="weekly-card">
-
-      <i class="bi bi-bar-chart"></i>
-
-      <h3>Resumen Semanal</h3>
-
-      <p>
-        Has calificado el 92% de las actividades pendientes esta semana.
-      </p>
-
-      <button>Ver Reporte Detallado</button>
-
     </section>
 
   </main>

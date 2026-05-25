@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bottom-navbar-docente';
+import { ReportesDocenteService, ReporteAcademicoPeriodoItem, ReporteComparativaItem, ReporteExportacionItem, ReportePeriodoEscolarItem } from '../../../services/docente-services/reportes-docente.service';
 
 @Component({
   selector: 'app-reportes-screen',
@@ -12,22 +13,16 @@ import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bot
 })
 export class ReportesScreen {
 
-  historial = [
-    {
-      documento: 'Acta Final - IA_1_A',
-      materia: 'Inteligencia Artificial I',
-      fecha: '12 May 2024, 09:45'
-    },
-    {
-      documento: 'Listado de Asistencia',
-      materia: 'Sistemas Operativos',
-      fecha: '10 May 2024, 14:20'
-    },
-    {
-      documento: 'Reporte Parcial',
-      materia: 'Estructuras de Datos',
-      fecha: '08 May 2024, 11:30'
-    }
-  ];
+  historial: ReporteExportacionItem[] = [];
+  historialAcademico: ReporteAcademicoPeriodoItem[] = [];
+  materiasComparadas: ReporteComparativaItem[] = [];
+  periodosEscolares: ReportePeriodoEscolarItem[] = [];
+
+  constructor(private readonly reportesService: ReportesDocenteService) {
+    this.historial = this.reportesService.getHistorial();
+    this.historialAcademico = this.reportesService.getHistorialAcademico();
+    this.materiasComparadas = this.reportesService.getMateriasComparadas();
+    this.periodosEscolares = this.reportesService.getPeriodosEscolares();
+  }
 
 }
