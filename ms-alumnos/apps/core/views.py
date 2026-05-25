@@ -257,7 +257,10 @@ class DocenteViewSet(viewsets.ModelViewSet):
                 message="El docente ya tiene usuario activo en MS-1.",
             )
 
-        docente, err = provision_docente_usuario(docente)
+        docente, err = provision_docente_usuario(
+            docente,
+            authorization_header=request.headers.get("Authorization", ""),
+        )
         if err:
             return error_response(err, status=400)
 
@@ -501,7 +504,10 @@ class AlumnoViewSet(viewsets.ModelViewSet):
                 message="El alumno ya tiene usuario activo en MS-1.",
             )
 
-        alumno, err = provision_alumno_usuario(alumno)
+        alumno, err = provision_alumno_usuario(
+            alumno,
+            authorization_header=request.headers.get("Authorization", ""),
+        )
         if err:
             return error_response(err, status=400)
 

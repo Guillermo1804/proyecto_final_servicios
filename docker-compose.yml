@@ -232,6 +232,7 @@ services:
       - "8001:8001"
       - "50051:50051"
     environment:
+      INTERNAL_API_KEY: cambiar-en-produccion
       USE_EVENT_BUS: "true"
       JWT_ALGORITHM: RS256
       EVENT_CONTRACTS_DIR: /contracts/events

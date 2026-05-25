@@ -417,13 +417,14 @@ def usuarios(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     password = serializer.validated_data.get('password') or secrets.token_urlsafe(12)
+    is_admin_jwt = bool(request.user and request.user.is_authenticated and request.user.rol == 'admin')
     user, error = create_user_account(
         email=serializer.validated_data['email'],
         nombre=serializer.validated_data['nombre'],
         rol=serializer.validated_data['rol'],
         password=password,
         activo=True,
-        link_existing=is_internal_api_key_valid(request),
+        link_existing=is_internal_api_key_valid(request) or is_admin_jwt,
     )
     if error:
         return Response({

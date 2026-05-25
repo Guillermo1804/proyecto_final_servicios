@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 
 import {
   ActividadesMateriaDto,
@@ -31,7 +31,15 @@ export class CalificacionesService {
   getPonderaciones(materiaId: number): Observable<PonderacionesMateriaDto> {
     return this.http
       .get<unknown>(buildApiUrl(`ponderaciones/${materiaId}`))
-      .pipe(map((response) => this.requireData<PonderacionesMateriaDto>(response, 'ponderaciones')));
+      .pipe(
+        map((response) => this.requireData<PonderacionesMateriaDto>(response, 'ponderaciones')),
+        catchError((error) => {
+          if (this.isNotFound(error)) {
+            return of({ materia_id: materiaId, ponderaciones: [], total: 0 });
+          }
+          return throwError(() => error);
+        }),
+      );
   }
 
   savePonderaciones(materiaId: number, ponderaciones: PonderacionFormItem[]): Observable<PonderacionesMateriaDto> {
@@ -51,13 +59,21 @@ export class CalificacionesService {
   getActividades(materiaId: number): Observable<ActividadesMateriaDto> {
     const params = new HttpParams({ fromObject: { materia: String(materiaId) } });
     return this.http
-      .get<unknown>(buildApiUrl('actividades/'), { params })
-      .pipe(map((response) => this.requireData<ActividadesMateriaDto>(response, 'actividades')));
+      .get<unknown>(buildApiUrl('actividades'), { params })
+      .pipe(
+        map((response) => this.requireData<ActividadesMateriaDto>(response, 'actividades')),
+        catchError((error) => {
+          if (this.isNotFound(error)) {
+            return of({ materia_id: materiaId, categorias: [] });
+          }
+          return throwError(() => error);
+        }),
+      );
   }
 
   createActividad(payload: ActividadCreatePayload): Observable<ActividadApiDto> {
     return this.http
-      .post<unknown>(buildApiUrl('actividades/'), payload)
+      .post<unknown>(buildApiUrl('actividades'), payload)
       .pipe(map((response) => this.requireData<ActividadApiDto>(response, 'actividad')));
   }
 
@@ -90,7 +106,15 @@ export class CalificacionesService {
   getConcentrado(materiaId: number): Observable<ConcentradoMateriaDto> {
     return this.http
       .get<unknown>(buildApiUrl(`concentrado/${materiaId}`))
-      .pipe(map((response) => this.requireData<ConcentradoMateriaDto>(response, 'concentrado')));
+      .pipe(
+        map((response) => this.requireData<ConcentradoMateriaDto>(response, 'concentrado')),
+        catchError((error) => {
+          if (this.isNotFound(error)) {
+            return of({ materia_id: materiaId, categorias: [], alumnos: [] });
+          }
+          return throwError(() => error);
+        }),
+      );
   }
 
   cerrarMateria(materiaId: number): Observable<{ materia_id: number; cerrada: boolean }> {
@@ -126,5 +150,14 @@ export class CalificacionesService {
       throw new Error(`Respuesta invalida al obtener ${context}`);
     }
     return data;
+  }
+
+  private isNotFound(error: unknown): boolean {
+    return Boolean(
+      error &&
+        typeof error === 'object' &&
+        'status' in error &&
+        Number((error as { status?: number }).status) === 404,
+    );
   }
 }

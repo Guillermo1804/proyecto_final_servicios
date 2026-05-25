@@ -17,9 +17,30 @@ export interface AgmListPage<T> {
   totalPages: number;
 }
 
+export function resolveApiBaseUrl(): string {
+  const rawBase = environment.apiBaseUrl || environment.url_api || '';
+  const baseUrl = rawBase.trim().replace(/\/$/, '');
+  if (!baseUrl) {
+    return '';
+  }
+
+  try {
+    const parsed = new URL(baseUrl);
+    const host = parsed.hostname.toLowerCase();
+    if ((host === 'localhost' || host === '127.0.0.1') && !parsed.port) {
+      return '';
+    }
+  } catch {
+    // Keep non-URL values as-is.
+  }
+
+  return baseUrl;
+}
+
 export function buildApiUrl(path: string): string {
-  const baseUrl = environment.apiBaseUrl || environment.url_api || '';
-  return `${baseUrl.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+  const baseUrl = resolveApiBaseUrl();
+  const normalizedPath = path.replace(/^\//, '');
+  return baseUrl ? `${baseUrl}/${normalizedPath}` : `/${normalizedPath}`;
 }
 
 export function isAgmEnvelope(value: unknown): value is AgmApiResponse<unknown> {

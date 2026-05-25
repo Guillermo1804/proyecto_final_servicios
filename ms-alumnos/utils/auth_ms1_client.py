@@ -36,13 +36,14 @@ def create_user_in_auth(
     nombre: str,
     rol: str,
     password: str,
+    authorization_header: str | None = None,
 ) -> tuple[int | None, str | None]:
     """
     Crea o vincula usuario en MS-1.
     Con USE_EVENT_BUS=true usa REST interno (no gRPC de negocio).
     """
     if _use_event_bus():
-        return _create_user_via_http(email, nombre, rol, password)
+        return _create_user_via_http(email, nombre, rol, password, authorization_header)
     return _create_user_via_grpc(email, nombre, rol, password)
 
 
@@ -51,6 +52,7 @@ def _create_user_via_http(
     nombre: str,
     rol: str,
     password: str,
+    authorization_header: str | None = None,
 ) -> tuple[int | None, str | None]:
     api_key = config("INTERNAL_API_KEY", default="").strip()
     if not api_key:
@@ -76,6 +78,7 @@ def _create_user_via_http(
         headers={
             "Content-Type": "application/json",
             "X-Internal-Api-Key": api_key,
+            **({"Authorization": authorization_header.strip()} if authorization_header and authorization_header.strip() else {}),
         },
     )
 

@@ -11,6 +11,7 @@ import {
   LoginData,
   RefreshTokenData,
 } from '../models/auth-api.model';
+import { buildApiUrl } from './tools/agm-api.helpers';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
@@ -28,9 +29,6 @@ const USER_EMAIL_KEY = 'agm_user_email';
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly apiBase =
-    environment.apiBaseUrl || environment.url_api || 'http://127.0.0.1:8080';
-
   private readonly currentUserSubject = new BehaviorSubject<Partial<AgmUser> | null>(
     this.getStoredUser(),
   );
@@ -282,7 +280,7 @@ export class AuthService {
   }
 
   private url(path: string): string {
-    return `${this.apiBase.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+    return buildApiUrl(path);
   }
 
   private decodeJwt(token: string | null): Record<string, unknown> | null {

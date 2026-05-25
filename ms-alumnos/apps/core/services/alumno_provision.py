@@ -7,7 +7,10 @@ from apps.core.services.identity import password_from_email
 from utils.auth_ms1_client import create_user_in_auth, deactivate_user_in_auth
 
 
-def provision_alumno_usuario(alumno: Alumno) -> tuple[Alumno, str | None]:
+def provision_alumno_usuario(
+    alumno: Alumno,
+    authorization_header: str | None = None,
+) -> tuple[Alumno, str | None]:
     """
     Crea o reutiliza usuario en MS-1 y guarda alumno.usuario_id.
     Retorna (alumno_actualizado, error).
@@ -27,6 +30,7 @@ def provision_alumno_usuario(alumno: Alumno) -> tuple[Alumno, str | None]:
         nombre_completo,
         "alumno",
         password,
+        authorization_header=authorization_header,
     )
     if not user_id:
         return alumno, err or "No se pudo crear el usuario en MS-1"
