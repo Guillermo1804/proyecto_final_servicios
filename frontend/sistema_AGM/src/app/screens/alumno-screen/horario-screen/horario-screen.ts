@@ -27,12 +27,24 @@ export class HorarioScreen {
     profesores: 0
   };
 
+  isLoading = true;
+  loadError = '';
+
   constructor(private readonly horarioScreenService: HorarioService) {}
 
   ngOnInit(): void {
     this.dias = this.horarioScreenService.getDiaActivo(this.diaSeleccionado);
-    this.horarios = this.horarioScreenService.getHorarios();
-    this.resumen = this.horarioScreenService.getResumen();
+    this.horarioScreenService.loadHorarios().subscribe({
+      next: () => {
+        this.horarios = this.horarioScreenService.getHorarios();
+        this.resumen = this.horarioScreenService.getResumen();
+        this.isLoading = false;
+      },
+      error: () => {
+        this.loadError = 'No se pudo cargar tu horario (MS-3). Inicia sesion como alumno.';
+        this.isLoading = false;
+      },
+    });
   }
 
   seleccionarDia(dia: string) {

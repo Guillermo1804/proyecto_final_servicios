@@ -1,4 +1,10 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable, map, of, switchMap } from 'rxjs';
+
+import { MateriaApiDto } from '../../models/periodos-api.model';
+import { AlumnosService } from '../alumno-services/alumnos.service';
+import { buildApiUrl, extractAgmListData, unwrapAgmData } from '../tools/agm-api.helpers';
 
 export interface DetalleMateriaAlumnoItem {
   iniciales: string;
@@ -45,6 +51,12 @@ export interface DetalleMateriaActividadBaseItem {
   providedIn: 'root'
 })
 export class DetalleMateriaDocenteService {
+  private readonly materiasPath = 'materias';
+
+  constructor(
+    private alumnos: AlumnosService,
+    private http: HttpClient,
+  ) {}
 
   private readonly resumen: DetalleMateriaResumenItem = {
     grupo: 'ENG-302',
@@ -52,15 +64,8 @@ export class DetalleMateriaDocenteService {
     horario: 'Lunes, Miércoles y Viernes | 08:00-10:00 AM'
   };
 
-  private readonly alumnos: DetalleMateriaAlumnoItem[] = [
-    { iniciales: 'AG', nombre: 'Alonso García, Roberto', matricula: '202300124', asistencia: '98%' },
-    { iniciales: 'BC', nombre: 'Barrera Cruz, Sofía', matricula: '202300456', asistencia: '85%' },
-    { iniciales: 'DV', nombre: 'Díaz Valdés, Marco', matricula: '202300891', asistencia: '62%' },
-    { iniciales: 'LM', nombre: 'López Mora, Elena', matricula: '202300321', asistencia: '100%' },
-    { iniciales: 'JP', nombre: 'Jiménez Pérez, Diego', matricula: '202300777', asistencia: '91%' },
-    { iniciales: 'RC', nombre: 'Ramírez Castillo, Ana', matricula: '202300884', asistencia: '73%' },
-    { iniciales: 'MT', nombre: 'Morales Trejo, Luis', matricula: '202300915', asistencia: '88%' }
-  ];
+  /** Lista en memoria; use loadAlumnosPorNrc para datos MS-3. */
+  private alumnosCargados: DetalleMateriaAlumnoItem[] = [];
 
   private readonly rubrosEvaluacion: DetalleMateriaRubroItem[] = [
     { nombre: 'Tareas', descripcion: 'Actividades y entregas semanales', porcentaje: 30 },
@@ -128,12 +133,72 @@ export class DetalleMateriaDocenteService {
     }
   ];
 
+  loadResumenPorNrc(nrc: string): Observable<DetalleMateriaResumenItem> {
+    const params = new HttpParams({ fromObject: { nrc, limit: '1', page: '1' } });
+    return this.http.get<unknown>(buildApiUrl(`${this.materiasPath}/`), { params }).pipe(
+      map((response) => {
+        const data = unwrapAgmData<{ results?: MateriaApiDto[] }>(response);
+        const list = Array.isArray(data?.results)
+          ? data.results
+          : extractAgmListData<MateriaApiDto>(response);
+        const materia = list[0];
+        if (!materia) {
+          return { grupo: nrc, materia: 'Materia no encontrada', horario: '' };
+        }
+        return {
+          grupo: materia.seccion,
+          materia: materia.nombre,
+          horario: String(materia.horario ?? ''),
+        };
+      }),
+    );
+  }
+
+  loadAlumnosPorNrc(nrc: string): Observable<DetalleMateriaAlumnoItem[]> {
+    return this.resolveMateriaIdByNrc(nrc).pipe(
+      switchMap((materiaId) => {
+        if (!materiaId) {
+          return of([]);
+        }
+        return this.alumnos.getAlumnosPorMateria(materiaId, 1, 100).pipe(
+          map((page) => {
+            this.alumnosCargados = page.results.map((inscripcion) => {
+              const alumno = inscripcion.alumno;
+              const nombre = AlumnosService.mapAlumnoNombre(alumno);
+              return {
+                iniciales: AlumnosService.inicialesDesdeNombre(nombre),
+                nombre,
+                matricula: alumno.matricula,
+                asistencia: '—',
+              };
+            });
+            return this.alumnosCargados;
+          }),
+        );
+      }),
+    );
+  }
+
   getResumen(): DetalleMateriaResumenItem {
     return { ...this.resumen };
   }
 
+  /** @deprecated Usar loadAlumnosPorNrc */
   getAlumnos(): DetalleMateriaAlumnoItem[] {
-    return this.alumnos.map((alumno) => ({ ...alumno }));
+    return this.alumnosCargados.map((alumno) => ({ ...alumno }));
+  }
+
+  private resolveMateriaIdByNrc(nrc: string): Observable<number | null> {
+    const params = new HttpParams({ fromObject: { nrc, limit: '1', page: '1' } });
+    return this.http.get<unknown>(buildApiUrl(`${this.materiasPath}/`), { params }).pipe(
+      map((response) => {
+        const data = unwrapAgmData<{ results?: MateriaApiDto[] }>(response);
+        const list = Array.isArray(data?.results)
+          ? data.results
+          : extractAgmListData<MateriaApiDto>(response);
+        return list[0] ? Number(list[0].id) : null;
+      }),
+    );
   }
 
   getRubrosEvaluacion(): DetalleMateriaRubroItem[] {

@@ -17,11 +17,10 @@ import { FormsModule } from '@angular/forms';
 })
 export class DetalleMateriaScreen implements OnInit {
 
-  ngOnInit(): void {
-    this.recalcularValoresInternosTodosRubros();
-  }
   codigoMateria = '';
   alumnos: DetalleMateriaAlumnoItem[] = [];
+  alumnosLoading = false;
+  alumnosError = '';
 
   busquedaAlumno = '';
   paginaActualAlumnos = 1;
@@ -33,17 +32,47 @@ export class DetalleMateriaScreen implements OnInit {
   alumnosPorPaginaActividad = 4;
   paginasAlumnosPorActividad: Record<number, number> = {};
 
+  resumenMateria = { grupo: '', materia: '', horario: '' };
+
   constructor(
     private route: ActivatedRoute,
     private materiasService: MateriasDocenteService,
-    private detalleMateriaService: DetalleMateriaDocenteService
+    private detalleMateriaService: DetalleMateriaDocenteService,
   ) {
     this.codigoMateria = this.route.snapshot.paramMap.get('id') ?? '';
-    this.alumnos = this.detalleMateriaService.getAlumnos();
     this.rubrosEvaluacion = this.detalleMateriaService.getRubrosEvaluacion();
     this.actividades = this.detalleMateriaService.getActividades();
-    this.resumenMateria = this.detalleMateriaService.getResumen();
     this.nuevaActividad = this.detalleMateriaService.crearActividadBase();
+  }
+
+  ngOnInit(): void {
+    this.recalcularValoresInternosTodosRubros();
+    this.loadMateriaContext();
+    this.loadAlumnos();
+  }
+
+  private loadMateriaContext(): void {
+    this.detalleMateriaService.loadResumenPorNrc(this.codigoMateria).subscribe({
+      next: (resumen) => {
+        this.resumenMateria = resumen;
+      },
+    });
+  }
+
+  private loadAlumnos(): void {
+    this.alumnosLoading = true;
+    this.alumnosError = '';
+    this.detalleMateriaService.loadAlumnosPorNrc(this.codigoMateria).subscribe({
+      next: (items) => {
+        this.alumnos = items;
+        this.alumnosLoading = false;
+      },
+      error: () => {
+        this.alumnosError = 'No se pudieron cargar los alumnos inscritos (MS-3).';
+        this.alumnos = [];
+        this.alumnosLoading = false;
+      },
+    });
   }
 
   tabActiva: 'alumnos' | 'evaluacion' | 'actividades' = 'alumnos';
@@ -85,12 +114,6 @@ paginaSiguienteAlumnos(): void {
   this.irAPaginaAlumnos(this.paginaActualAlumnos + 1);
 }
   rubrosEvaluacion: DetalleMateriaRubroItem[] = [];
-
-  resumenMateria = {
-    grupo: '',
-    materia: '',
-    horario: ''
-  };
 
   actividades: DetalleMateriaActividadItem[] = [];
 

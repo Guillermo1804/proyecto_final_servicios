@@ -12,10 +12,11 @@
       </p>
     </section>
 
-    <button class="create-btn">
+    <label class="create-btn">
       <i class="bi bi-person-plus"></i>
-      Importar Docentes
-    </button>
+      Importar Docentes (PDF)
+      <input type="file" accept=".pdf" hidden (change)="onImportarDocentes($event)" />
+    </label>
 
     <section class="filters-section">
 
@@ -76,15 +77,13 @@
         </div>
 
         <div class="table-cell action-cell" data-label="Estado">
-          <button
-            type="button"
+          <span
             class="status-toggle"
             [ngClass]="docente.estado === 'Activo' ? 'activo' : 'inactivo'"
-            (click)="toggleEstado(docente)"
-            [attr.aria-label]="'Cambiar estado de ' + docente.nombre"
+            [title]="docente.estado === 'Inactivo' ? 'Usuario MS-1 pendiente' : 'Vinculado a MS-1'"
           >
             {{ docente.estado }}
-          </button>
+          </span>
         </div>
 
       </div>

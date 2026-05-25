@@ -1,9 +1,9 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { catchError, shareReplay } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
-import { FacadeService } from '../facade.service';
+import { Observable, map, of, shareReplay, switchMap } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+import { AuthService } from '../auth.service';
+import { AlumnosService } from './alumnos.service';
 
 export interface Perfil {
   nombre: string;
@@ -11,33 +11,62 @@ export interface Perfil {
   carrera?: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class PerfilService {
   private profile$?: Observable<Perfil>;
 
-  constructor(private http: HttpClient, private facade: FacadeService) {}
+  constructor(
+    private auth: AuthService,
+    private alumnos: AlumnosService,
+  ) {}
 
   getProfile(forceRefresh = false): Observable<Perfil> {
     if (!this.profile$ || forceRefresh) {
-      const token = this.facade.getAccessToken();
-      const fromToken = this.extractFromToken(token);
-
-      if (fromToken) {
+      const fromToken = this.extractFromToken(this.auth.getAccessToken());
+      if (fromToken && !forceRefresh) {
         this.profile$ = of(fromToken).pipe(shareReplay(1));
       } else {
-        const base = (environment.apiBaseUrl || (environment as any).url_api || '').replace(/\/$/, '');
-        this.profile$ = this.http
-          .get<Perfil>(`${base}/alumnos/me`)
-          .pipe(
-            catchError((err) => {
-              console.warn('PerfilService: no se pudo contactar backend /alumnos/me, usando mock:', err);
-              const mock: Perfil = { nombre: 'Alumno de Prueba', matricula: '20210001' };
-              return of(mock);
-            }),
-            shareReplay(1)
-          );
+        this.profile$ = this.auth.getMe().pipe(
+          switchMap((response) => {
+            const user = response.data;
+            if (!user) {
+              throw new Error('Sin datos de usuario');
+            }
+            if (this.auth.getUserRole() === 'alumno') {
+              return this.alumnos.getMeMaterias(1, 1).pipe(
+                map((page) => {
+                  const inscripcion = page.results[0];
+                  const alumno = inscripcion?.alumno;
+                  if (alumno) {
+                    return {
+                      nombre: `${alumno.nombre} ${alumno.apellido}`.trim(),
+                      matricula: alumno.matricula,
+                      carrera: alumno.carrera,
+                    };
+                  }
+                  return {
+                    nombre: user.nombre,
+                    matricula: user.email,
+                    carrera: '',
+                  };
+                }),
+              );
+            }
+            return of({
+              nombre: user.nombre,
+              matricula: user.email,
+              carrera: '',
+            });
+          }),
+          catchError(() =>
+            of({
+              nombre: 'Alumno',
+              matricula: '—',
+              carrera: '',
+            } as Perfil),
+          ),
+          shareReplay(1),
+        );
       }
     }
 
@@ -45,22 +74,32 @@ export class PerfilService {
   }
 
   private extractFromToken(token: string | null): Perfil | null {
-    if (!token) return null;
+    if (!token) {
+      return null;
+    }
 
     try {
       const parts = token.split('.');
-      if (parts.length < 2) return null;
+      if (parts.length < 2) {
+        return null;
+      }
 
       const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
       const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
-      const decoded = atob(padded);
-      const payload = JSON.parse(decoded) as any;
+      const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
 
-      const nombre = payload?.nombre || payload?.name || payload?.user?.nombre || payload?.user?.name;
-      const matricula = payload?.matricula || payload?.matric || payload?.user?.matricula || payload?.user?.matric;
+      const nombre = String(
+        payload['nombre'] ?? payload['name'] ?? (payload['user'] as Record<string, unknown>)?.['nombre'] ?? '',
+      ).trim();
+      const matricula = String(
+        payload['matricula'] ??
+          payload['matric'] ??
+          (payload['user'] as Record<string, unknown>)?.['matricula'] ??
+          '',
+      ).trim();
 
       if (nombre && matricula) {
-        return { nombre, matricula } as Perfil;
+        return { nombre, matricula };
       }
     } catch {
       // ignore

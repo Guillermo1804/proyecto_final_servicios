@@ -34,9 +34,13 @@
         Asegúrese de que las columnas coincidan con la plantilla oficial.
       </p>
 
-      <button>
+      <label class="upload-btn">
         Seleccionar Archivo
-      </button>
+        <input type="file" accept=".csv,.xls,.xlsx" hidden (change)="onFileSelected($event)" />
+      </label>
+
+      <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
+      <p class="success-text" *ngIf="successMessage">{{ successMessage }}</p>
 
     </section>
 
@@ -125,7 +129,7 @@
       <div class="preview-footer">
 
         <p>
-          Mostrando 4 de 128 alumnos encontrados
+          Mostrando {{ alumnos.length }} registro(s) validos
         </p>
 
         <div class="pagination">
@@ -148,7 +152,7 @@
         Cancelar
       </button>
 
-      <button class="import-btn">
+      <button class="import-btn" type="button" (click)="confirmarImportacion()" [disabled]="isLoading">
         Importar Alumnos
       </button>
 

@@ -49,19 +49,38 @@ export class DocentesScreen implements OnInit {
     }
   }
 
-  toggleEstado(docente: DocenteItem): void {
-    const nuevoEstado = docente.estado === 'Activo' ? 'Inactivo' : 'Activo';
+  onImportarDocentes(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
 
-    this.docentesService.updateDocenteEstado(docente.id, nuevoEstado).subscribe({
-      next: () => this.loadDocentes(),
-      error: () => this.loadDocentes()
+    this.docentesService.importarDocentesPdf(file).subscribe({
+      next: (result) => {
+        alert(
+          `Importacion completada. Creados: ${result.creados}, omitidos: ${result.omitidos}, errores: ${result.errores}`,
+        );
+        this.loadDocentes();
+      },
+      error: (err) => {
+        alert(DocentesService.extractError(err, 'No se pudo importar el PDF de docentes.'));
+      },
     });
+    input.value = '';
   }
 
   eliminarDocente(docente: DocenteItem): void {
+    const confirmado = confirm(`¿Eliminar al docente ${docente.nombre}?`);
+    if (!confirmado) {
+      return;
+    }
+
     this.docentesService.deleteDocente(docente.id).subscribe({
       next: () => this.afterMutation(),
-      error: () => this.afterMutation()
+      error: (err) => {
+        alert(DocentesService.extractError(err, 'No se pudo eliminar el docente.'));
+      },
     });
   }
 
@@ -107,12 +126,15 @@ export class DocentesScreen implements OnInit {
         this.currentPage = response.page;
         this.pageSize = response.pageSize;
       },
-      error: () => {
-        this.errorMessage = 'No se pudo cargar el catálogo de docentes.';
+      error: (err) => {
+        this.errorMessage = DocentesService.extractError(
+          err,
+          'No se pudo cargar el catalogo de docentes.',
+        );
         this.docentes = [];
         this.totalItems = 0;
         this.totalPages = 1;
-      }
+      },
     });
   }
 
