@@ -5,157 +5,197 @@
   <main class="content">
 
     <section class="breadcrumb">
-      <span>Mis Materias</span>
+      <a [routerLink]="['/docente/materias']">Mis Materias</a>
       <i class="bi bi-chevron-right"></i>
-      <span>Estructura de Datos II</span>
+      <a [routerLink]="volverUrl()">{{ materiaNombre || codigoMateria }}</a>
       <i class="bi bi-chevron-right"></i>
       <strong>Importar Alumnos</strong>
     </section>
 
     <section class="hero">
-      <h2>Carga Masiva de Alumnos</h2>
-
+      <h2>Carga masiva de alumnos</h2>
       <p>
-        Agregue estudiantes a la materia utilizando un archivo CSV o Excel.
+        Sube el PDF de <strong>Lista de clase</strong> (Servicios Web BUAP). Revisa la vista previa
+        y luego confirma la importacion.
       </p>
-
+      <p class="nrc-hint" *ngIf="codigoMateria">
+        NRC: <strong>{{ codigoMateria }}</strong>
+        <span *ngIf="materiaId"> · Materia ID: {{ materiaId }}</span>
+        <span *ngIf="resolvingMateria"> · Cargando materia…</span>
+      </p>
     </section>
 
-    <section class="upload-card">
+    <section
+      class="drop-zone"
+      [class.drop-zone--active]="isDragOver"
+      [class.drop-zone--disabled]="!canPickFile"
+      role="button"
+      tabindex="0"
+      aria-label="Zona para subir PDF de lista de clase"
+      (click)="onDropZoneClick()"
+      (keydown)="onDropZoneKeydown($event)"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+    >
+      <input
+        #fileInput
+        type="file"
+        class="file-input-hidden"
+        accept=".pdf,application/pdf"
+        [disabled]="!canPickFile"
+        (change)="onFileSelected($event)"
+      />
 
-      <div class="upload-icon">
-        <i class="bi bi-file-earmark-arrow-up"></i>
+      <div class="upload-icon" [class.spinning]="isPreviewLoading">
+        <i class="bi" [ngClass]="isPreviewLoading ? 'bi-arrow-repeat' : 'bi-cloud-arrow-up'"></i>
       </div>
 
-      <h3>Arrastre su archivo aquí</h3>
+      <h3 *ngIf="!selectedFile">Arrastra tu PDF aqui</h3>
+      <h3 *ngIf="selectedFile && isPreviewLoading">Analizando PDF…</h3>
+      <h3 *ngIf="selectedFile && !isPreviewLoading && preview">Vista previa lista</h3>
+      <h3 *ngIf="selectedFile && !isPreviewLoading && !preview">Archivo seleccionado</h3>
 
-      <p>
-        Soporta archivos .CSV, .XLS y .XLSX (Máx. 5MB).
-        Asegúrese de que las columnas coincidan con la plantilla oficial.
+      <p *ngIf="!selectedFile">
+        Tambien puedes <strong>hacer clic</strong> en esta zona para abrir el explorador de archivos.
+        Solo PDF, max. 5 MB.
       </p>
 
-      <label class="upload-btn">
-        Seleccionar Archivo
-        <input type="file" accept=".csv,.xls,.xlsx" hidden (change)="onFileSelected($event)" />
-      </label>
+      <div class="file-chip" *ngIf="selectedFile as f" (click)="$event.stopPropagation()">
+        <i class="bi bi-file-earmark-pdf"></i>
+        <span class="file-name">{{ f.name }}</span>
+        <span class="file-size">{{ (f.size / 1024) | number:'1.0-0' }} KB</span>
+        <button type="button" class="file-clear" (click)="clearFile()" [disabled]="isLoading">
+          Quitar
+        </button>
+      </div>
 
-      <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
-      <p class="success-text" *ngIf="successMessage">{{ successMessage }}</p>
-
-    </section>
-
-    <section class="requirements-card">
-
-      <h4>
-        <i class="bi bi-info-circle"></i>
-        Requisitos del archivo
-      </h4>
-
-      <ul>
-        <li>
-          <i class="bi bi-check-circle"></i>
-          Columna 'Matrícula' es obligatoria.
-        </li>
-
-        <li>
-          <i class="bi bi-check-circle"></i>
-          Nombres Completo
-        </li>
-
-        <li>
-          <i class="bi bi-check-circle"></i>
-          Correo institucional válido.
-        </li>
-      </ul>
-
-    </section>
-
-    <section class="success-card">
-
-      <h4>
-        <i class="bi bi-patch-check"></i>
-        Archivo validado con éxito
-      </h4>
-
-      <p>
-        Se encontraron <strong>128 registros</strong> listos para importar.
-        Revise la previsualización debajo.
+      <p class="zone-hint" *ngIf="resolvingMateria">Resolviendo materia en el periodo activo…</p>
+      <p class="zone-hint zone-hint--warn" *ngIf="!resolvingMateria && !materiaId">
+        No hay materia vinculada a este NRC. No se puede importar hasta corregirlo.
       </p>
-
     </section>
 
-    <section class="preview-card">
-
+    <section class="preview-card" *ngIf="preview as p">
       <div class="preview-header">
-
-        <h3>Previsualización de Estudiantes</h3>
-
-        <div class="preview-badges">
-          <span class="validos">128<br>Válidos</span>
-          <span class="errores">0<br>Errores</span>
+        <div>
+          <h3>Vista previa</h3>
+          <p class="preview-meta" *ngIf="p.nombre_materia_pdf">
+            {{ p.nombre_materia_pdf }}
+            <span *ngIf="p.nrc_pdf"> · NRC {{ p.nrc_pdf }}</span>
+          </p>
         </div>
-
+        <div class="preview-badges">
+          <span class="validos">{{ p.resumen.nuevos }} nuevos</span>
+          <span class="validos badge--muted">{{ p.resumen.actualizados }} actualizar</span>
+          <span class="validos badge--muted">{{ p.resumen.inscripciones_nuevas }} inscribir</span>
+          <span class="errores" *ngIf="p.resumen.ya_inscritos">{{ p.resumen.ya_inscritos }} ya inscritos</span>
+        </div>
       </div>
 
       <div class="students-table">
-
         <div class="table-head">
-          <span>Matrícula</span>
-          <span>Nombre Completo</span>
-          <span>Correo</span>
+          <span>Matricula</span>
+          <span>Nombre</span>
+          <span>Email (PDF)</span>
+          <span>Alumno</span>
+          <span>Inscripcion</span>
         </div>
 
-        <div
-          class="table-row"
-          *ngFor="let alumno of alumnos"
-        >
-
-          <strong>
-            {{ alumno.matricula }}
-          </strong>
-
+        <div class="table-row" *ngFor="let fila of previewPageFilas">
+          <span><strong>{{ fila.matricula }}</strong></span>
+          <span>{{ fila.nombre_completo || (fila.apellido + ', ' + fila.nombre) }}</span>
           <span>
-            {{ alumno.nombre }}
+            <a *ngIf="fila.email" [href]="'mailto:' + fila.email">{{ fila.email }}</a>
+            <em *ngIf="!fila.email">Sin email</em>
           </span>
-
-          <a href="#">
-            {{ alumno.correo }}
-          </a>
-
+          <span>
+            <span class="tag" [class.tag--update]="fila.accion === 'actualizar'">
+              {{ accionLabel(fila.accion) }}
+            </span>
+            <small *ngIf="fila.accion === 'actualizar' && fila.email_actual && fila.email_actual !== fila.email">
+              Antes: {{ fila.email_actual }}
+            </small>
+          </span>
+          <span>
+            <span class="tag" [class.tag--muted]="fila.inscripcion === 'ya_inscrito'">
+              {{ inscripcionLabel(fila.inscripcion) }}
+            </span>
+          </span>
         </div>
-
       </div>
 
       <div class="preview-footer">
-
         <p>
-          Mostrando {{ alumnos.length }} registro(s) validos
+          Mostrando {{ previewPageFilas.length }} de {{ previewFilas.length }}
+          (pagina {{ previewPage }} / {{ previewTotalPages }})
         </p>
-
         <div class="pagination">
-          <button>
+          <button type="button" (click)="prevPreviewPage()" [disabled]="previewPage <= 1">
             <i class="bi bi-chevron-left"></i>
           </button>
-
-          <button>
+          <button type="button" (click)="nextPreviewPage()" [disabled]="previewPage >= previewTotalPages">
             <i class="bi bi-chevron-right"></i>
           </button>
         </div>
-
       </div>
 
+      <ul class="error-list preview-warnings" *ngIf="advertencias.length">
+        <li *ngFor="let msg of advertencias">{{ msg }}</li>
+      </ul>
     </section>
 
-    <section class="bottom-actions">
+    <div class="action-row">
+      <a class="cancel-link" [routerLink]="volverUrl()">Volver a la materia</a>
 
-      <button class="cancel-btn">
-        Cancelar
+      <button
+        type="button"
+        class="import-btn"
+        [disabled]="!canConfirm"
+        (click)="confirmarImportacion()"
+      >
+        {{ isConfirmLoading ? 'Importando…' : 'Confirmar importacion' }}
       </button>
+    </div>
 
-      <button class="import-btn" type="button" (click)="confirmarImportacion()" [disabled]="isLoading">
-        Importar Alumnos
-      </button>
+    <p class="feedback error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="feedback success-text" *ngIf="successMessage">{{ successMessage }}</p>
 
+    <section class="requirements-card">
+      <h4>
+        <i class="bi bi-info-circle"></i>
+        Como obtener el PDF
+      </h4>
+      <ul>
+        <li>
+          <i class="bi bi-check-circle"></i>
+          Servicios Web → Lista de clase de la materia.
+        </li>
+        <li>
+          <i class="bi bi-check-circle"></i>
+          Guardar como PDF (Ctrl+P) desde el navegador.
+        </li>
+        <li>
+          <i class="bi bi-check-circle"></i>
+          Debe incluir <strong>NRC:</strong> y filas con matricula 20XXXXXXXX.
+        </li>
+      </ul>
+    </section>
+
+    <section class="success-card" *ngIf="lastResult as r">
+      <h4>
+        <i class="bi bi-patch-check"></i>
+        Resumen de importacion
+      </h4>
+      <ul class="result-stats">
+        <li><span>Leidos</span><strong>{{ r.filas_leidas }}</strong></li>
+        <li><span>Creados</span><strong>{{ r.creados }}</strong></li>
+        <li><span>Actualizados</span><strong>{{ r.actualizados }}</strong></li>
+        <li><span>Inscritos</span><strong>{{ r.inscritos }}</strong></li>
+      </ul>
+      <ul class="error-list" *ngIf="detalleErrores.length">
+        <li *ngFor="let msg of detalleErrores">{{ msg }}</li>
+      </ul>
     </section>
 
   </main>

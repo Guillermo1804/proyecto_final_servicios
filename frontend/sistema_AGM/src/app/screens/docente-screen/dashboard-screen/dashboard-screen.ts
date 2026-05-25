@@ -1,22 +1,22 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bottom-navbar-docente';
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 import { AuthService } from '../../../services/auth.service';
 import {
-  DashboardDocenteService,
   DashboardClaseItem,
-  DashboardNotificacionItem,
-  DashboardPendienteItem,
+  DashboardDocenteService,
   DashboardResumenMateriaItem,
 } from '../../../services/docente-services/dashboard-docente.service';
 
 @Component({
   selector: 'app-dashboard-docente-screen',
   standalone: true,
-  imports: [CommonModule, BottomNavbarDocente, TopbarAdmin],
+  imports: [CommonModule, BottomNavbarDocente, TopbarAdmin, RouterLink],
   templateUrl: './dashboard-screen.html',
-  styleUrl: './dashboard-screen.scss'
+  styleUrl: './dashboard-screen.scss',
 })
 export class DashboardScreen implements OnInit {
   private readonly auth = inject(AuthService);
@@ -26,13 +26,15 @@ export class DashboardScreen implements OnInit {
   fechaHoy = '';
 
   clasesHoy: DashboardClaseItem[] = [];
-  pendientes: DashboardPendienteItem[] = [];
-  notificaciones: DashboardNotificacionItem[] = [];
   resumenMaterias: DashboardResumenMateriaItem[] = [];
 
   totalMateriasAsignadas = 0;
   totalAlumnosInscritos = 0;
-  porcentajeAsistenciaDelDia = 0;
+  periodoActivoNombre: string | null = null;
+  emptyMessage = '';
+  isLoading = true;
+  loadError = '';
+
   ultimaActualizacion = '';
 
   constructor(private readonly dashboardService: DashboardDocenteService) {}
@@ -53,17 +55,30 @@ export class DashboardScreen implements OnInit {
   }
 
   private cargarDashboard(): void {
-    this.clasesHoy = this.dashboardService.getClasesHoy();
-    this.pendientes = this.dashboardService.getPendientes();
-    this.notificaciones = this.dashboardService.getNotificaciones();
-    this.resumenMaterias = this.dashboardService.getResumenMaterias();
-    this.totalMateriasAsignadas = this.dashboardService.getTotalMateriasAsignadas();
-    this.totalAlumnosInscritos = this.dashboardService.getTotalAlumnosInscritos();
-    this.porcentajeAsistenciaDelDia = this.dashboardService.getPorcentajeAsistenciaDelDia();
-    this.ultimaActualizacion = new Date().toLocaleTimeString('es-MX', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
+    this.isLoading = true;
+    this.loadError = '';
 
+    this.dashboardService
+      .loadDashboard()
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (data) => {
+          this.periodoActivoNombre = data.periodoActivoNombre;
+          this.clasesHoy = data.clasesHoy;
+          this.resumenMaterias = data.resumenMaterias;
+          this.totalMateriasAsignadas = data.totalMateriasAsignadas;
+          this.totalAlumnosInscritos = data.totalAlumnosInscritos;
+          this.emptyMessage = data.emptyMessage;
+          this.ultimaActualizacion = new Date().toLocaleTimeString('es-MX', {
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+        },
+        error: () => {
+          this.loadError = 'No se pudo cargar el resumen del docente.';
+          this.clasesHoy = [];
+          this.resumenMaterias = [];
+        },
+      });
+  }
 }

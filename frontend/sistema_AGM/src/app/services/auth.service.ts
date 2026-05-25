@@ -168,9 +168,22 @@ export class AuthService {
     return user?.nombre?.trim() || user?.email?.split('@')[0] || 'Usuario';
   }
 
+  applyRefreshedTokens(access: string, refresh?: string): void {
+    const storage = this.getActiveStorage();
+    const other = storage === localStorage ? sessionStorage : localStorage;
+
+    storage.setItem(ACCESS_TOKEN_KEY, access);
+    other.removeItem(ACCESS_TOKEN_KEY);
+
+    if (refresh) {
+      storage.setItem(REFRESH_TOKEN_KEY, refresh);
+      other.removeItem(REFRESH_TOKEN_KEY);
+    }
+  }
+
+  /** @deprecated Usar applyRefreshedTokens */
   applyRefreshedAccess(access: string): void {
-    sessionStorage.setItem(ACCESS_TOKEN_KEY, access);
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    this.applyRefreshedTokens(access);
   }
 
   getAccessToken(): string | null {
@@ -260,7 +273,7 @@ export class AuthService {
       map((resp) => {
         const access = resp?.data?.access;
         if (resp?.success && access) {
-          this.applyRefreshedAccess(access);
+          this.applyRefreshedTokens(access, resp.data?.refresh);
           return access;
         }
         return null;

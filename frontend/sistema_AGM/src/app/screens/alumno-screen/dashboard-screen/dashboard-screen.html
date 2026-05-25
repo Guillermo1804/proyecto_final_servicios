@@ -18,11 +18,13 @@
         <span *ngIf="alumno.tipoFormacion && alumno.tipoFormacion !== '—'">Carrera: <strong>{{ alumno.tipoFormacion }}</strong></span>
       </div>
 
-      <span *ngIf="materiasHoy.length || evaluaciones.length">
-        Tienes {{ materiasHoy.length }} clases programadas para hoy y {{ evaluaciones.length }} evaluaciones próximas.
+      <span *ngIf="materiasLoading">Cargando materias inscritas…</span>
+      <span *ngIf="!materiasLoading && materiasError">{{ materiasError }}</span>
+      <span *ngIf="!materiasLoading && !materiasError && materiasActuales.length">
+        Tienes {{ materiasActuales.length }} materia(s) inscrita(s) en el periodo activo.
       </span>
-      <span *ngIf="!materiasHoy.length && !evaluaciones.length">
-        Sesión activa con MS-1. Horario y evaluaciones se cargan en siguientes integraciones.
+      <span *ngIf="!materiasLoading && !materiasError && !materiasActuales.length">
+        No tienes inscripciones activas. El docente debe importarte en su materia (MS-3).
       </span>
 
       <div class="hero-bg"></div>
@@ -33,14 +35,11 @@
 
     <section class="average-card">
 
-      <p>PROMEDIO GENERAL</p>
+      <p>MATERIAS INSCRITAS</p>
 
-      <h3>9.4</h3>
+      <h3>{{ materiasLoading ? '…' : materiasActuales.length }}</h3>
 
-      <span>
-        <i class="bi bi-graph-up-arrow"></i>
-        Superior al ciclo anterior
-      </span>
+      <span>Datos desde MS-3 (alumnos/me/materias)</span>
 
     </section>
 
@@ -76,6 +75,10 @@
 
       </div>
 
+      <p class="table-empty" *ngIf="!materiasLoading && !materiasActuales.length">
+        Sin materias para mostrar.
+      </p>
+
     </section>
 
     <!-- MATERIAS -->
@@ -84,7 +87,7 @@
 
       <div>
         <h2>Materias de Hoy</h2>
-        <p>Viernes, 24 de Mayo</p>
+        <p>{{ fechaHoyLabel }}</p>
       </div>
 
     </section>
@@ -150,7 +153,15 @@
 
       </div>
 
+      <p class="table-empty" *ngIf="!evaluaciones.length">
+        Sin evaluaciones proximas registradas (MS-4).
+      </p>
+
     </section>
+
+    <p class="table-empty" *ngIf="!materiasLoading && !materiasError && !materiasHoy.length && materiasActuales.length">
+      No tienes clases programadas para hoy segun el horario de tus materias.
+    </p>
 
 
   </main>

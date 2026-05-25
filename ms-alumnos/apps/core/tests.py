@@ -23,7 +23,8 @@ def _admin_user():
 
 
 def _install_jwt_mock(test_case):
-    test_case.patcher = patch("utils.jwt_local.validate_access_token")
+    # jwt_required importa validate_access_token en utils.auth (referencia local).
+    test_case.patcher = patch("utils.auth.validate_access_token")
     test_case.mock_validate = test_case.patcher.start()
     test_case.mock_validate.return_value = _admin_user()
 
@@ -213,7 +214,7 @@ class DocenteCRUDTests(TestCase):
 
 
 class AlumnoImportTests(TestCase):
-    """Tests para los flujos de importación de alumnos (Preview + Confirmar)."""
+    """Tests para POST /api/alumnos/importar/ (PDF lista de clase)."""
 
     def setUp(self):
         self.client = APIClient()
@@ -223,87 +224,169 @@ class AlumnoImportTests(TestCase):
     def tearDown(self):
         self.patcher.stop()
 
-    def test_import_preview_csv_valido(self):
-        """Verifica que un CSV se parsee correctamente en el preview."""
-        csv_content = "matricula,nombre,paterno,materno,email,carrera,semestre\n202012345,Juan,Perez,Lopez,juan@alumno.buap.mx,ICC,3"
-        csv_file = SimpleUploadedFile("alumnos.csv", csv_content.encode('utf-8'), content_type="text/csv")
-        
-        response = self.client.post("/api/alumnos/importar/preview/", {"archivo": csv_file}, format='multipart')
-        self.assertEqual(response.status_code, 200)
-        data = response.json()["data"]
-        self.assertEqual(data["total_validas"], 1)
-        self.assertEqual(data["validas"][0]["matricula"], "202012345")
-        self.assertEqual(data["validas"][0]["apellido"], "Perez Lopez")
-
     @override_settings(USE_EVENT_BUS=True)
-    def test_import_confirmar_upsert_event_bus(self):
-        """Upsert crea alumno, outbox y solicitud async de usuario (sin MS-6)."""
-        alumnos_data = {
-            "alumnos": [
+    @patch("apps.core.views.resolve_materia_context")
+    @patch("apps.core.views.parse_pdf_alumnos")
+    def test_import_pdf_alumnos_exitoso(self, mock_parse_pdf, mock_materia_ctx):
+        mock_parse_pdf.return_value = (
+            [
                 {
-                    "matricula": "202099999",
-                    "nombre": "Test",
-                    "apellido": "Import",
-                    "email": "test@buap.mx",
+                    "matricula": "202224429",
+                    "nombre": "ANGEL G.",
+                    "apellido": "AGUILAR SALDIVAR",
                     "carrera": "ICC",
                     "semestre": 1,
-                    "materia_id": 1,
-                    "periodo_id": 10,
-                    "clave_acceso": "clave-temp-01",
                 }
-            ]
+            ],
+            [],
+            {"nrc": "50130", "nombre_materia": "Servicios Web"},
+        )
+        mock_materia_ctx.return_value = {
+            "materia_id": 1,
+            "periodo_id": 10,
+            "docente_email": "doc@buap.mx",
+            "docente_nombre": "Doc",
+            "materia_nombre": "Servicios Web",
+            "nrc": "50130",
+            "docente_id": 0,
         }
 
+        pdf_file = SimpleUploadedFile("lista.pdf", b"%PDF-1.4", content_type="application/pdf")
         response = self.client.post(
-            "/api/alumnos/importar/confirmar/",
-            alumnos_data,
-            content_type="application/json",
+            "/api/alumnos/importar/",
+            {"file": pdf_file, "materia_id": 1},
+            format="multipart",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["data"]["creados"], 1)
-        self.assertTrue(Alumno.objects.filter(matricula="202099999").exists())
-        self.assertEqual(
-            EventOutbox.objects.filter(event_name="alumno.imported.v1").count(),
-            1,
+        data = response.json()["data"]
+        self.assertEqual(data["creados"], 1)
+        self.assertEqual(data["inscritos"], 1)
+        self.assertTrue(Alumno.objects.filter(matricula="202224429").exists())
+
+    def test_import_pdf_sin_materia_id_retorna_400(self):
+        pdf_file = SimpleUploadedFile("lista.pdf", b"%PDF-1.4", content_type="application/pdf")
+        response = self.client.post(
+            "/api/alumnos/importar/",
+            {"file": pdf_file},
+            format="multipart",
         )
-        self.assertEqual(
-            EventOutbox.objects.filter(event_name="user.create_requested.v1").count(),
-            1,
+        self.assertEqual(response.status_code, 400)
+
+    def test_import_pdf_sin_archivo_retorna_400(self):
+        response = self.client.post(
+            "/api/alumnos/importar/",
+            {"materia_id": 1},
+            format="multipart",
         )
-        self.assertEqual(PendingUserCreation.objects.count(), 1)
+        self.assertEqual(response.status_code, 400)
+
+    @patch("apps.core.views.resolve_materia_context")
+    @patch("apps.core.views.parse_pdf_alumnos")
+    def test_import_preview_no_persiste(self, mock_parse_pdf, mock_materia_ctx):
+        mock_parse_pdf.return_value = (
+            [
+                {
+                    "matricula": "202224429",
+                    "nombre": "ANGEL G.",
+                    "apellido": "AGUILAR SALDIVAR",
+                    "email": "angel@buap.mx",
+                    "carrera": "ICC",
+                    "semestre": 1,
+                }
+            ],
+            [],
+            {"nrc": "50130", "nombre_materia": "Servicios Web"},
+        )
+        mock_materia_ctx.return_value = {
+            "materia_id": 1,
+            "periodo_id": 10,
+            "nrc": "50130",
+        }
+
+        pdf_file = SimpleUploadedFile("lista.pdf", b"%PDF-1.4", content_type="application/pdf")
+        response = self.client.post(
+            "/api/alumnos/importar/preview/",
+            {"file": pdf_file, "materia_id": 1},
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()["data"]
+        self.assertEqual(len(data["filas"]), 1)
+        self.assertEqual(data["filas"][0]["accion"], "nuevo")
+        self.assertEqual(data["filas"][0]["inscripcion"], "nueva")
+        self.assertEqual(data["resumen"]["nuevos"], 1)
+        self.assertFalse(Alumno.objects.filter(matricula="202224429").exists())
 
     @override_settings(USE_EVENT_BUS=True)
-    def test_import_confirmar_lote_atomico_outbox(self):
-        """Import masivo: todos los eventos outbox en la misma transaccion."""
-        alumnos_data = {
-            "alumnos": [
-                {
-                    "matricula": "202088881",
-                    "nombre": "A",
-                    "apellido": "Uno",
-                    "email": "a1@buap.mx",
-                    "clave_acceso": "k1",
-                },
-                {
-                    "matricula": "202088882",
-                    "nombre": "B",
-                    "apellido": "Dos",
-                    "email": "a2@buap.mx",
-                    "clave_acceso": "k2",
-                },
-            ]
+    @patch("apps.core.views.resolve_materia_context")
+    def test_confirmar_import_desde_preview(self, mock_materia_ctx):
+        mock_materia_ctx.return_value = {
+            "materia_id": 1,
+            "periodo_id": 10,
+            "docente_email": "doc@buap.mx",
+            "docente_nombre": "Doc",
+            "materia_nombre": "Servicios Web",
+            "nrc": "50130",
+            "docente_id": 0,
         }
         response = self.client.post(
             "/api/alumnos/importar/confirmar/",
-            alumnos_data,
-            content_type="application/json",
+            {
+                "materia_id": 1,
+                "alumnos": [
+                    {
+                        "matricula": "202224430",
+                        "nombre": "MARIA",
+                        "apellido": "LOPEZ",
+                        "email": "maria@buap.mx",
+                        "carrera": "ICC",
+                        "semestre": 1,
+                    }
+                ],
+            },
+            format="json",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["data"]["creados"], 2)
-        self.assertEqual(
-            EventOutbox.objects.filter(event_name="alumno.imported.v1").count(),
-            2,
-        )
+        data = response.json()["data"]
+        self.assertEqual(data["creados"], 1)
+        self.assertTrue(Alumno.objects.filter(matricula="202224430").exists())
+
+
+class PdfAlumnosParserTests(TestCase):
+    """Parser contra ListaAlumnos_Servicios_Web.pdf (ejemplo BUAP)."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        candidates = [
+            os.path.join(base, "tests", "fixtures", "ListaAlumnos_Servicios_Web.pdf"),
+            os.path.join(base, "..", "ListaAlumnos_Servicios_Web.pdf"),
+        ]
+        cls.pdf_path = next((p for p in candidates if os.path.isfile(p)), None)
+
+    def test_parse_lista_servicios_web_30_alumnos(self):
+        if not self.pdf_path:
+            self.skipTest("Fixture ListaAlumnos_Servicios_Web.pdf no encontrado")
+
+        from utils.pdf_alumnos_parser import parse_pdf_alumnos
+
+        rows, errors, meta = parse_pdf_alumnos(self.pdf_path)
+        self.assertEqual(len(rows), 30, f"filas={len(rows)}, errors={errors[:5]}")
+        self.assertEqual(meta["nrc"], "50130")
+        self.assertIn("Servicios Web", meta["nombre_materia"])
+        self.assertIn("MENDEZ", meta["docente"].upper())
+
+        angel = next(r for r in rows if r["matricula"] == "202224429")
+        self.assertEqual(angel["apellido"], "AGUILAR SALDIVAR")
+        self.assertEqual(angel["nombre"], "ANGEL G.")
+
+        incompleto = next(r for r in rows if r["matricula"] == "202227348")
+        self.assertEqual(incompleto["nombre"], "HERNANDEZ PALESTINA")
+
+        self.assertEqual(angel["email"], "angel.aguilarsal@alumno.buap.mx")
+        emails_ok = sum(1 for r in rows if r.get("email"))
+        self.assertEqual(emails_ok, 30, f"emails={emails_ok}, sample err={errors[:3]}")
 
 
 class AlumnoPorMateriaTests(TestCase):
@@ -406,6 +489,138 @@ class AlumnoBajaMateriaTests(TestCase):
         response = self.client.post(f"/api/alumnos/{self.alumno.id}/baja-materia/", payload, content_type="application/json")
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["message"], "baja ya procesada")
+
+
+class AlumnoImportMs1ProvisionTests(TestCase):
+    """Importacion de alumnos intenta activar MS-1 de forma sincrona."""
+
+    @override_settings(USE_EVENT_BUS=True)
+    @patch("apps.core.services.alumno_ms1_sync.provision_alumno_usuario")
+    def test_import_batch_activa_ms1_en_creados_y_actualizados(self, mock_provision):
+        from apps.core.services.alumno_import import process_alumno_import_batch
+
+        next_user_id = 6001
+
+        def _provision(alumno):
+            nonlocal next_user_id
+            alumno.usuario_id = next_user_id
+            next_user_id += 1
+            alumno.save(update_fields=["usuario_id"])
+            return alumno, None
+
+        mock_provision.side_effect = _provision
+
+        creados, actualizados, inscritos = process_alumno_import_batch(
+            [
+                {
+                    "matricula": "202211111",
+                    "nombre": "Nuevo",
+                    "apellido": "Alumno",
+                    "email": "nuevo@buap.mx",
+                }
+            ],
+            materia_id=0,
+        )
+        self.assertEqual(creados, 1)
+        self.assertEqual(actualizados, 0)
+        self.assertEqual(mock_provision.call_count, 1)
+        self.assertEqual(Alumno.objects.get(matricula="202211111").usuario_id, 6001)
+
+        mock_provision.reset_mock()
+        creados, actualizados, _ = process_alumno_import_batch(
+            [
+                {
+                    "matricula": "202222222",
+                    "nombre": "Sin",
+                    "apellido": "Ms1",
+                    "email": "sin@buap.mx",
+                }
+            ],
+            materia_id=0,
+        )
+        self.assertEqual(creados, 1)
+        mock_provision.assert_called_once()
+
+        Alumno.objects.filter(matricula="202222222").update(usuario_id=None)
+        mock_provision.reset_mock()
+        _, actualizados, _ = process_alumno_import_batch(
+            [
+                {
+                    "matricula": "202222222",
+                    "nombre": "Sin",
+                    "apellido": "Ms1",
+                    "email": "sin@buap.mx",
+                }
+            ],
+            materia_id=0,
+        )
+        self.assertEqual(actualizados, 1)
+        mock_provision.assert_called_once()
+
+
+class AlumnoActivarUsuarioTests(TestCase):
+    """POST /api/alumnos/{id}/activar-usuario/ vincula MS-1."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
+        _install_jwt_mock(self)
+
+    def tearDown(self):
+        self.patcher.stop()
+
+    @patch("apps.core.services.alumno_provision.create_user_in_auth", return_value=(8888, None))
+    def test_activar_alumno_vincula_usuario(self, _mock_create):
+        alumno = Alumno.objects.create(
+            usuario_id=None,
+            matricula="202299999",
+            nombre="Pedro",
+            apellido="Garcia",
+            email="pedro.garcia@alumno.buap.mx",
+        )
+        response = self.client.post(f"/api/alumnos/{alumno.id}/activar-usuario/")
+        self.assertEqual(response.status_code, 200)
+        alumno.refresh_from_db()
+        self.assertEqual(alumno.usuario_id, 8888)
+
+    @patch("apps.core.services.alumno_provision.create_user_in_auth", return_value=(8888, None))
+    def test_activar_alumno_ya_vinculado_idempotente(self, _mock_create):
+        alumno = Alumno.objects.create(
+            usuario_id=42,
+            matricula="202288888",
+            nombre="Ana",
+            apellido="Lopez",
+            email="ana@alumno.buap.mx",
+        )
+        response = self.client.post(f"/api/alumnos/{alumno.id}/activar-usuario/")
+        self.assertEqual(response.status_code, 200)
+        _mock_create.assert_not_called()
+
+
+class AlumnoDesactivarUsuarioTests(TestCase):
+    """POST /api/alumnos/{id}/desactivar-usuario/ desvincula MS-1."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
+        _install_jwt_mock(self)
+
+    def tearDown(self):
+        self.patcher.stop()
+
+    @patch("apps.core.services.alumno_provision.deactivate_user_in_auth", return_value=None)
+    def test_desactivar_alumno_limpia_usuario_id(self, _mock_deactivate):
+        alumno = Alumno.objects.create(
+            usuario_id=999,
+            matricula="202277777",
+            nombre="Baja",
+            apellido="Ms1",
+            email="baja@buap.mx",
+        )
+        response = self.client.post(f"/api/alumnos/{alumno.id}/desactivar-usuario/")
+        self.assertEqual(response.status_code, 200)
+        alumno.refresh_from_db()
+        self.assertIsNone(alumno.usuario_id)
 
 
 class AlumnosGRPCTests(TestCase):
@@ -659,16 +874,54 @@ class AlumnoMeMateriasTests(TestCase):
         self.assertEqual(len(body["data"]["results"]), 0)
 
     def test_get_my_materias_sin_alumno_asociado(self):
-        """Usuario autenticado cuyo usuario_id no tiene Alumno asociado retorna 404."""
+        """Usuario autenticado sin registro de alumno retorna 404."""
         self.client.credentials(HTTP_AUTHORIZATION="Bearer token_alumno")
-        
-        # No creamos Alumno en la BD para usuario_id=50
+
         response = self.client.get("/api/alumnos/me/materias/")
         self.assertEqual(response.status_code, 404)
-        
+
         body = response.json()
         self.assertFalse(body["success"])
-        self.assertIn("asociado al usuario no existe", body["message"])
+        self.assertIn("registro de alumno", body["message"].lower())
+
+    def test_get_my_materias_vincula_por_email(self):
+        """Si usuario_id no esta en alumno pero el email coincide, vincula y lista materias."""
+        self.mock_validate.return_value = AuthenticatedUser(
+            user_id=312,
+            email="202228369@alumno.buap.mx",
+            rol="alumno",
+            nombre="EVER Z. LOPEZ RAMIREZ",
+        )
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer token_alumno")
+
+        alumno = Alumno.objects.create(
+            usuario_id=None,
+            matricula="202228369",
+            nombre="EVER Z.",
+            apellido="LOPEZ RAMIREZ",
+            email="202228369@alumno.buap.mx",
+            carrera="ICC",
+            semestre=5,
+        )
+        InscripcionMateria.objects.create(
+            alumno=alumno,
+            materia_id=64,
+            nrc="50130",
+            nombre_materia="Servicios Web",
+            docente_nombre="Docente Demo",
+            horario="L-M 08:00",
+            activa=True,
+        )
+
+        response = self.client.get("/api/alumnos/me/materias/")
+        self.assertEqual(response.status_code, 200)
+
+        alumno.refresh_from_db()
+        self.assertEqual(alumno.usuario_id, 312)
+
+        body = response.json()
+        self.assertEqual(len(body["data"]["results"]), 1)
+        self.assertEqual(body["data"]["results"][0]["materia_id"], 64)
 
 
 class PasswordFromEmailTests(TestCase):

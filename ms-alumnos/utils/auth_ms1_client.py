@@ -133,3 +133,60 @@ def _create_user_via_grpc(
     except Exception as exc:
         logger.error("Error inesperado CreateUser MS-1: %s", exc)
         return None, str(exc)
+
+
+def deactivate_user_in_auth(user_id: int) -> str | None:
+    """Desactiva usuario en MS-1 (activo=false). Retorna error o None si OK."""
+    if _use_event_bus():
+        return _deactivate_user_via_http(user_id)
+    return _deactivate_user_via_grpc(user_id)
+
+
+def _deactivate_user_via_http(user_id: int) -> str | None:
+    api_key = config("INTERNAL_API_KEY", default="").strip()
+    if not api_key:
+        return "INTERNAL_API_KEY no configurada en MS-3."
+
+    base_url = config("MS_AUTH_HTTP_URL", default="http://ms-auth:8001").rstrip("/")
+    url = f"{base_url}/usuarios/{int(user_id)}"
+    request = urllib.request.Request(
+        url,
+        data=json.dumps({"activo": False}).encode("utf-8"),
+        method="PUT",
+        headers={
+            "Content-Type": "application/json",
+            "X-Internal-Api-Key": api_key,
+        },
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=_http_timeout()) as response:
+            raw = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        try:
+            raw = json.loads(exc.read().decode("utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            raw = {}
+        message = raw.get("message")
+        if isinstance(message, dict):
+            message = str(message)
+        return str(message or f"MS-1 respondio HTTP {exc.code}")
+    except urllib.error.URLError as exc:
+        logger.warning("MS-1 deactivate HTTP fallo: %s", exc)
+        return f"No se pudo contactar MS-1 Auth: {exc.reason}"
+    except Exception as exc:
+        logger.error("Error inesperado deactivate HTTP MS-1: %s", exc)
+        return str(exc)
+
+    if raw.get("success"):
+        return None
+    return str(raw.get("message") or "No se pudo desactivar el usuario en MS-1")
+
+
+def _deactivate_user_via_grpc(user_id: int) -> str | None:
+    # Sin endpoint gRPC de baja; en legacy el docente podria seguir activo en MS-1.
+    logger.warning(
+        "deactivate_user_in_auth omitido (USE_EVENT_BUS=false) user_id=%s",
+        user_id,
+    )
+    return None

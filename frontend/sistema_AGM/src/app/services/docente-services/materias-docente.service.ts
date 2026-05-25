@@ -177,6 +177,35 @@ export class MateriasDocenteService {
     return this.getMateriaByNrc(nrc).pipe(map((m) => (m ? m.id : null)));
   }
 
+  /** Resuelve materia por NRC en periodo activo (sin filtrar por nombre de docente). */
+  findMateriaByNrcForImport(nrc: string): Observable<MateriaDocenteItem | null> {
+    const normalized = nrc.trim();
+    if (!normalized) {
+      return of(null);
+    }
+
+    return this.periodos.getPeriodoActivo().pipe(
+      switchMap((periodo) => {
+        const params: Record<string, string> = { nrc: normalized, limit: '10', page: '1' };
+        if (periodo) {
+          params['periodo_id'] = String(periodo.id);
+        }
+        const httpParams = new HttpParams({ fromObject: params });
+        return this.http.get<unknown>(buildApiUrl(`${this.materiasPath}/`), { params: httpParams });
+      }),
+      map((response) => {
+        const data = unwrapAgmData<{ results?: MateriaApiDto[] }>(response);
+        const list = Array.isArray(data?.results)
+          ? data.results
+          : extractAgmListData<MateriaApiDto>(response);
+        const dto =
+          list.find((m) => String(m.nrc ?? '').trim() === normalized) ?? list[0] ?? null;
+        return dto ? this.mapMateria(dto) : null;
+      }),
+      catchError(() => of(null)),
+    );
+  }
+
   /**
    * El PDF guarda el profesor en docente_nombre; MS-3 guarda nombre + apellido.
    * Coincide si comparten tokens significativos (orden distinto, acentos ignorados).

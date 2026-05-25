@@ -10,7 +10,9 @@
 
       <h1>Mis Calificaciones</h1>
 
-      <p>Periodo Académico: Primavera 2024</p>
+      <p *ngIf="isLoading">Cargando calificaciones desde tus inscripciones…</p>
+      <p *ngIf="loadError" class="load-error">{{ loadError }}</p>
+      <p *ngIf="!isLoading && !loadError && !materias.length">No tienes materias con calificaciones registradas.</p>
 
     </section>
 
@@ -26,7 +28,7 @@
         <div [style.width.%]="progresoPeriodo"></div>
       </div>
 
-      <p>Progreso del periodo: {{ progresoPeriodo }}% completado</p>
+      <p *ngIf="materias.length">Promedio calculado sobre {{ materias.length }} materia(s) activa(s).</p>
 
     </section>
 
@@ -113,7 +115,7 @@
           </button>
 
           <div class="dropped-note" *ngIf="materia.dropped">
-            Dado de baja el {{ materia.droppedAt | date:'short' }}
+            Dado de baja en esta materia
           </div>
         </div>
 

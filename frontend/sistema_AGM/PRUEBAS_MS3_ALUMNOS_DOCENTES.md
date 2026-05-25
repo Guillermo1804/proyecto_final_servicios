@@ -7,7 +7,7 @@ docker compose up -d rabbitmq db-auth ms-auth ms-auth-event-consumer ms-auth-out
   db-periodos ms-periodos db-alumnos ms-alumnos ms-alumnos-outbox-worker nginx
 ```
 
-**Importante:** con `USE_EVENT_BUS=true`, MS-3 **no usa gRPC** hacia Auth. El boton **Activar** llama a MS-1 por HTTP interno.
+**Importante:** con `USE_EVENT_BUS=true`, MS-3 **no usa gRPC** hacia Auth. Al **importar alumnos** se llama a MS-1 por HTTP interno; si MS-1 esta caido, quedan sin `usuario_id` y el boton **Activar** en la lista permite reintentar. **Docentes** siguen importandose sin activar (boton Activar en admin).
 
 En `ms-alumnos/.env` y `ms-auth/.env` la misma clave:
 
@@ -63,6 +63,10 @@ Login segun rol a probar (admin / docente / alumno con datos en BD).
 |---|--------|----------|
 | 1 | Tab alumnos | `GET /alumnos/por-materia/?materia_id=` (resuelve NRC via MS-2) |
 | 2 | Sin inscripciones | Lista vacia (no mock) |
+| 3 | Import lista clase | Al confirmar import, cada alumno intenta **activarse en MS-1** al vuelo (HTTP interno) |
+| 4 | Columna MS-1 | Por defecto **Desactivar** (vinculado); **Activar** solo si fallo MS-1 al importar |
+| 5 | Desactivar alumno | `POST /alumnos/{id}/desactivar-usuario/` — `activo=false` en MS-1 y `usuario_id` null en MS-3 |
+| 6 | Reactivar (respaldo) | `POST /alumnos/{id}/activar-usuario/` si quedo sin usuario tras caida de MS-1 |
 
 Evaluacion / actividades / calificaciones siguen en UI local (MS-4 en siguiente integracion).
 
@@ -72,20 +76,27 @@ Evaluacion / actividades / calificaciones siguen en UI local (MS-4 en siguiente 
 
 | # | Prueba | Esperado |
 |---|--------|----------|
-| 1 | Subir Excel/CSV | `POST /alumnos/importar/preview/` |
-| 2 | Ver preview | Tabla con filas validas |
-| 3 | Confirmar | `POST /alumnos/importar/confirmar/` con body `{ alumnos: [...] }` |
+| 1 | Resolver materia | NRC de la ruta → `materia_id` (MS-2, periodo activo) |
+| 2 | Subir PDF lista de clase | Al elegir archivo → `POST /alumnos/importar/preview/` (`file`, `materia_id`) |
+| 3 | Vista previa | Tabla: matricula, nombre, email, accion (Nuevo/Actualizar), inscripcion (5 por pagina) |
+| 4 | Confirmar | `POST /alumnos/importar/confirmar/` JSON: `materia_id`, `alumnos` (filas de la preview) |
+| 5 | Resumen | `creados`, `actualizados`, `inscritos` |
 
-Columnas requeridas en archivo: `matricula`, `nombre`, `apellido`, `email`.
+PDF: exportar desde **Servicios Web → Lista de clase** (Ctrl+P). Debe traer `NRC:` y filas con matricula `20XXXXXXXX` (como `ListaAlumnos_Servicios_Web.pdf` en la raiz del repo).
+
+El correo **no aparece como texto** en el PDF (al imprimir desde Chrome), pero sí en **enlaces `mailto:`** (icono de correo). El parser de MS-3 los lee con pdfplumber y crea el usuario en MS-1 con ese email. Si faltan enlaces, fallback `{matricula}@alumno.buap.mx`.
 
 ---
 
-## Alumno — Perfil y horario
+## Alumno — Dashboard, perfil y horario
 
 | Ruta | API |
 |------|-----|
-| `/alumno/perfil` | `GET /auth/me` + `GET /alumnos/me/materias/` (rol alumno) |
-| `/alumno/horario` | `GET /alumnos/me/materias/` |
+| `/alumno/dashboard` | `GET /alumnos/me/` (perfil) + `GET /alumnos/me/materias/` |
+| `/alumno/perfil` | `GET /alumnos/me/` |
+| `/alumno/horario` | `GET /alumnos/me/materias/` (horario por dia) |
+
+Si el alumno fue importado antes de crear usuario MS-1, el primer acceso **vincula** `usuario_id` por email o matricula en el correo (`202228369@alumno.buap.mx`).
 
 Login con usuario **alumno** que tenga registro en tabla `alumnos` e inscripciones.
 
@@ -99,10 +110,14 @@ Login con usuario **alumno** que tenga registro en tabla `alumnos` e inscripcion
 | Importar docentes PDF | POST | `/docentes/importar/` |
 | Eliminar docente | DELETE | `/docentes/{id}/` |
 | Activar docente (MS-1) | POST | `/docentes/{id}/activar-usuario/` |
+| Activar alumno (MS-1, respaldo) | POST | `/alumnos/{id}/activar-usuario/` |
+| Desactivar alumno (MS-1) | POST | `/alumnos/{id}/desactivar-usuario/` |
 | Alumnos por materia | GET | `/alumnos/por-materia/?materia_id=` |
+| Perfil alumno (MS-3) | GET | `/alumnos/me/` |
 | Mis materias (alumno) | GET | `/alumnos/me/materias/` |
-| Preview import | POST | `/alumnos/importar/preview/` |
-| Confirmar import | POST | `/alumnos/importar/confirmar/` |
+| Vista previa import alumnos | POST | `/alumnos/importar/preview/` (`file`, `materia_id`) |
+| Confirmar import alumnos | POST | `/alumnos/importar/confirmar/` (`materia_id`, `alumnos[]`) |
+| Importar alumnos PDF (directo) | POST | `/alumnos/importar/` (`file`, `materia_id`) |
 
 ---
 
@@ -114,7 +129,8 @@ Login con usuario **alumno** que tenga registro en tabla `alumnos` e inscripcion
 | Docente sin materias | Crear docente con `usuario_id` y materias en MS-2 con su nombre |
 | Activar 400 gRPC deshabilitado | Rebuild `ms-alumnos` + `INTERNAL_API_KEY` en `.env` de MS-3 = MS-1 |
 | Alumno sin horario | Inscripciones activas en MS-3 + login alumno |
-| 403 en import | Solo **admin** puede importar alumnos (preview/confirmar) |
+| 403 en import | Requiere rol **admin** o **docente** |
+| materia_id 400 | Enviar ID de materia MS-2, no solo NRC en la URL |
 
 ---
 

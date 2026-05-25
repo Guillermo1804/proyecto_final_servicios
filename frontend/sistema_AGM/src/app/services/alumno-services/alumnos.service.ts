@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 
 import {
   AlumnoApiDto,
-  ImportarAlumnosConfirmarDto,
+  ImportarAlumnosPdfResultDto,
   ImportarAlumnosPreviewDto,
   InscripcionMateriaApiDto,
 } from '../../models/alumnos-api.model';
@@ -57,6 +57,18 @@ export class AlumnosService {
       );
   }
 
+  getMe(): Observable<AlumnoApiDto> {
+    return this.http.get<unknown>(buildApiUrl(`${this.basePath}/me/`)).pipe(
+      map((response) => {
+        const data = unwrapAgmData<AlumnoApiDto>(response);
+        if (!data) {
+          throw new Error('Respuesta invalida al consultar perfil de alumno');
+        }
+        return data;
+      }),
+    );
+  }
+
   getMeMaterias(page = 1, pageSize = 50): Observable<AgmListPage<InscripcionMateriaApiDto>> {
     const params = new HttpParams({
       fromObject: { page: String(page), limit: String(pageSize) },
@@ -83,9 +95,13 @@ export class AlumnosService {
       );
   }
 
-  importarPreview(archivo: File): Observable<ImportarAlumnosPreviewDto> {
+  previewImportarAlumnosPdf(
+    materiaId: number,
+    file: File,
+  ): Observable<ImportarAlumnosPreviewDto> {
     const formData = new FormData();
-    formData.append('archivo', archivo, archivo.name);
+    formData.append('file', file, file.name);
+    formData.append('materia_id', String(materiaId));
 
     return this.http
       .post<unknown>(buildApiUrl(`${this.basePath}/importar/preview/`), formData)
@@ -93,21 +109,45 @@ export class AlumnosService {
         map((response) => {
           const data = unwrapAgmData<ImportarAlumnosPreviewDto>(response);
           if (!data) {
-            throw new Error('Respuesta invalida en preview de importacion');
+            throw new Error('Respuesta invalida al generar vista previa');
           }
           return data;
         }),
       );
   }
 
-  importarConfirmar(alumnos: Record<string, unknown>[]): Observable<ImportarAlumnosConfirmarDto> {
+  confirmarImportarAlumnos(
+    materiaId: number,
+    alumnos: ImportarAlumnosPreviewDto['filas'],
+  ): Observable<ImportarAlumnosPdfResultDto> {
     return this.http
-      .post<unknown>(buildApiUrl(`${this.basePath}/importar/confirmar/`), { alumnos })
+      .post<unknown>(buildApiUrl(`${this.basePath}/importar/confirmar/`), {
+        materia_id: materiaId,
+        alumnos,
+      })
       .pipe(
         map((response) => {
-          const data = unwrapAgmData<ImportarAlumnosConfirmarDto>(response);
+          const data = unwrapAgmData<ImportarAlumnosPdfResultDto>(response);
           if (!data) {
             throw new Error('Respuesta invalida al confirmar importacion');
+          }
+          return data;
+        }),
+      );
+  }
+
+  importarAlumnosPdf(materiaId: number, file: File): Observable<ImportarAlumnosPdfResultDto> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    formData.append('materia_id', String(materiaId));
+
+    return this.http
+      .post<unknown>(buildApiUrl(`${this.basePath}/importar/`), formData)
+      .pipe(
+        map((response) => {
+          const data = unwrapAgmData<ImportarAlumnosPdfResultDto>(response);
+          if (!data) {
+            throw new Error('Respuesta invalida al importar alumnos');
           }
           return data;
         }),
@@ -122,12 +162,51 @@ export class AlumnosService {
       .pipe(map((response) => unwrapAgmData(response)));
   }
 
+  activarAlumno(alumnoId: number): Observable<AlumnoApiDto> {
+    return this.http
+      .post<unknown>(buildApiUrl(`${this.basePath}/${alumnoId}/activar-usuario/`), {})
+      .pipe(
+        map((response) => {
+          const data = unwrapAgmData<AlumnoApiDto>(response);
+          if (!data) {
+            throw new Error('Respuesta invalida al activar alumno');
+          }
+          return data;
+        }),
+      );
+  }
+
+  desactivarAlumno(alumnoId: number): Observable<AlumnoApiDto> {
+    return this.http
+      .post<unknown>(buildApiUrl(`${this.basePath}/${alumnoId}/desactivar-usuario/`), {})
+      .pipe(
+        map((response) => {
+          const data = unwrapAgmData<AlumnoApiDto>(response);
+          if (!data) {
+            throw new Error('Respuesta invalida al desactivar alumno');
+          }
+          return data;
+        }),
+      );
+  }
+
   static extractError(error: unknown, fallback: string): string {
     return extractApiErrorMessage(error, fallback);
   }
 
   static mapAlumnoNombre(alumno: AlumnoApiDto): string {
-    return `${alumno.apellido}, ${alumno.nombre}`.trim();
+    const apellido = String(alumno.apellido ?? '').trim();
+    const nombre = String(alumno.nombre ?? '').trim();
+    if (apellido && nombre) {
+      return `${apellido}, ${nombre}`;
+    }
+    if (apellido) {
+      return apellido;
+    }
+    if (nombre) {
+      return nombre;
+    }
+    return '—';
   }
 
   static inicialesDesdeNombre(nombreCompleto: string): string {

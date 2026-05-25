@@ -40,12 +40,14 @@ export class DocentesService {
   getDocentes(query: DocentesQuery = {}): Observable<DocentesPage> {
     const normalized = this.normalizeQuery(query);
     const term = normalized.search.trim();
-    const needsClientFilter = Boolean(term);
 
     const params: Record<string, string> = {
-      page: String(needsClientFilter ? 1 : normalized.page),
-      limit: String(needsClientFilter ? 100 : normalized.pageSize),
+      page: String(normalized.page),
+      limit: String(normalized.pageSize),
     };
+    if (term) {
+      params['buscar'] = term;
+    }
 
     const httpParams = new HttpParams({ fromObject: params });
 
@@ -55,12 +57,6 @@ export class DocentesService {
         const rawList = Array.isArray(data?.results)
           ? data.results
           : extractAgmListData<DocenteApiDto>(response);
-
-        if (needsClientFilter) {
-          const filtered = this.filterDocentesFromDto(rawList, term);
-          const items = filtered.map((dto) => this.mapDocente(dto));
-          return this.paginateLocally(items, normalized.page, normalized.pageSize);
-        }
 
         const items = rawList.map((dto) => this.mapDocente(dto));
         return buildListPage(
@@ -158,37 +154,4 @@ export class DocentesService {
     };
   }
 
-  /** Filtra por coincidencia en cualquier parte del nombre completo, correo o departamento. */
-  private filterDocentesFromDto(items: DocenteApiDto[], search: string): DocenteApiDto[] {
-    const tokens = this.normalizeText(search).split(/\s+/).filter(Boolean);
-    if (!tokens.length) {
-      return items;
-    }
-
-    return items.filter((dto) => {
-      const haystack = this.normalizeText(
-        [dto.nombre, dto.apellido, dto.email, dto.departamento].join(' '),
-      );
-      return tokens.every((token) => haystack.includes(token));
-    });
-  }
-
-  private paginateLocally(
-    items: DocenteItem[],
-    page: number,
-    pageSize: number,
-  ): DocentesPage {
-    const count = items.length;
-    const totalPages = Math.max(1, Math.ceil(count / pageSize));
-    const safePage = Math.min(Math.max(1, page), totalPages);
-    const start = (safePage - 1) * pageSize;
-    return buildListPage(items.slice(start, start + pageSize), safePage, pageSize, count);
-  }
-
-  private normalizeText(value: string): string {
-    return value
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-  }
 }

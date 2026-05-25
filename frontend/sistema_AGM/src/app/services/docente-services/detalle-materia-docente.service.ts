@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
+import { InscripcionMateriaApiDto } from '../../models/alumnos-api.model';
 import { ConcentradoMateriaDto } from '../../models/calificaciones-api.model';
 import { MateriaApiDto } from '../../models/periodos-api.model';
 import { AlumnosService } from '../alumno-services/alumnos.service';
@@ -12,8 +13,10 @@ export interface DetalleMateriaAlumnoItem {
   iniciales: string;
   nombre: string;
   matricula: string;
+  email: string;
   asistencia: string;
   alumnoId?: number;
+  usuarioId?: number | null;
   promedioReal?: number;
   promedioRedondeado?: number;
 }
@@ -104,24 +107,63 @@ export class DetalleMateriaDocenteService {
         if (!materiaId) {
           return of([]);
         }
-        return this.alumnos.getAlumnosPorMateria(materiaId, 1, 100).pipe(
-          map((page) => {
-            this.alumnosCargados = page.results.map((inscripcion) => {
-              const alumno = inscripcion.alumno;
-              const nombre = AlumnosService.mapAlumnoNombre(alumno);
-              return {
-                iniciales: AlumnosService.inicialesDesdeNombre(nombre),
-                nombre,
-                matricula: alumno.matricula,
-                alumnoId: alumno.id,
-                asistencia: '—',
-              };
-            });
+        return this.fetchAllInscripcionesPorMateria(materiaId).pipe(
+          map((inscripciones) => {
+            this.alumnosCargados = this.mapInscripcionesToAlumnos(inscripciones);
             return this.alumnosCargados;
           }),
         );
       }),
     );
+  }
+
+  private fetchAllInscripcionesPorMateria(
+    materiaId: number,
+    pageSize = 100,
+  ): Observable<InscripcionMateriaApiDto[]> {
+    return this.alumnos.getAlumnosPorMateria(materiaId, 1, pageSize).pipe(
+      switchMap((firstPage) => {
+        const acumulado = [...firstPage.results];
+        const total = Number(firstPage.count ?? acumulado.length);
+        const totalPaginas = Math.max(1, Math.ceil(total / pageSize));
+
+        if (totalPaginas <= 1) {
+          return of(acumulado);
+        }
+
+        const restantes = Array.from({ length: totalPaginas - 1 }, (_, index) =>
+          this.alumnos.getAlumnosPorMateria(materiaId, index + 2, pageSize),
+        );
+
+        return forkJoin(restantes).pipe(
+          map((paginas) => {
+            for (const pagina of paginas) {
+              acumulado.push(...pagina.results);
+            }
+            return acumulado;
+          }),
+        );
+      }),
+    );
+  }
+
+  private mapInscripcionesToAlumnos(
+    inscripciones: InscripcionMateriaApiDto[],
+  ): DetalleMateriaAlumnoItem[] {
+    return inscripciones.map((inscripcion) => {
+      const alumno = inscripcion.alumno;
+      const nombre = AlumnosService.mapAlumnoNombre(alumno);
+      return {
+        iniciales: AlumnosService.inicialesDesdeNombre(nombre),
+        nombre,
+        matricula: alumno.matricula,
+        email: String(alumno.email ?? '').trim() || '—',
+        alumnoId: alumno.id,
+        usuarioId: alumno.usuario_id ?? null,
+        promedioRedondeado: 0,
+        asistencia: '—',
+      };
+    });
   }
 
   /** @deprecated Usar loadAlumnosPorNrc */
@@ -319,7 +361,7 @@ export class DetalleMateriaDocenteService {
     }
 
     return alumnos.filter((alumno) =>
-      [alumno.nombre, alumno.matricula, alumno.iniciales, alumno.asistencia]
+      [alumno.nombre, alumno.matricula, alumno.email, alumno.iniciales, alumno.asistencia]
         .join(' ')
         .toLowerCase()
         .includes(filtro)
@@ -340,6 +382,27 @@ export class DetalleMateriaDocenteService {
 
   generarPaginas(totalPaginas: number): number[] {
     return Array.from({ length: Math.max(1, totalPaginas) }, (_, index) => index + 1);
+  }
+
+  generarPaginasVentana(
+    totalPaginas: number,
+    paginaActual: number,
+    maxVisible = 5,
+  ): number[] {
+    const total = Math.max(1, totalPaginas);
+    if (total <= maxVisible) {
+      return this.generarPaginas(total);
+    }
+
+    let inicio = Math.max(1, paginaActual - Math.floor(maxVisible / 2));
+    let fin = inicio + maxVisible - 1;
+
+    if (fin > total) {
+      fin = total;
+      inicio = fin - maxVisible + 1;
+    }
+
+    return Array.from({ length: fin - inicio + 1 }, (_, index) => inicio + index);
   }
 
   getValorTotalRubros(rubros: DetalleMateriaRubroItem[]): number {

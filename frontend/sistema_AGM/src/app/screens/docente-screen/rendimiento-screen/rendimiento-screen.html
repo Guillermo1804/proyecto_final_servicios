@@ -6,13 +6,16 @@
 
     <section class="hero">
       <p>
-        Análisis de Desempeño: Cálculo Integral
+        Alumnos en riesgo — NRC <strong>{{ codigoMateria }}</strong>
         <br>
-        Métricas detalladas y alertas de seguimiento académico.
+        Promedio redondeado menor a 7.0 (MS-4 concentrado).
       </p>
     </section>
 
-    <section class="actions-row">
+    <p *ngIf="isLoading">Cargando datos de rendimiento…</p>
+    <p *ngIf="loadError" class="load-error">{{ loadError }}</p>
+
+    <section class="actions-row" *ngIf="!isLoading && estudiantesRiesgo.length">
 
       <button class="export-btn" type="button" (click)="exportarCsv()">
         <i class="bi bi-download"></i>
@@ -21,75 +24,26 @@
 
       <button class="pdf-btn" type="button" (click)="exportarPdf()">
         <i class="bi bi-file-earmark-pdf"></i>
-        Reporte PDF
+        Reporte HTML
       </button>
 
     </section>
 
-    <section class="average-card">
-
-      <p>PROMEDIO ACTUAL</p>
-
-      <div class="average-row">
-        <h2>84.2</h2>
-
-        <span>
-          <i class="bi bi-graph-up-arrow"></i>
-          3.4%
-        </span>
-      </div>
-
-    </section>
-
-    <section class="chart-card">
-
-      <div class="chart-header">
-        <h3>Distribución de Calificaciones</h3>
-
-        <span>
-          <i class="bi bi-circle-fill"></i>
-          Estudiantes
-        </span>
-      </div>
-
-      <div class="chart-space">
-
-        <div class="chart-bars">
-          <span style="height: 22%"></span>
-          <span style="height: 35%"></span>
-          <span style="height: 58%"></span>
-          <span style="height: 78%"></span>
-          <span style="height: 45%"></span>
-        </div>
-
-      </div>
-
-      <div class="chart-labels">
-        <span>0-59</span>
-        <span>60-69</span>
-        <span>70-79</span>
-        <span>80-89</span>
-        <span>90-100</span>
-      </div>
-
-    </section>
-
-    <section class="risk-card">
+    <section class="risk-card" *ngIf="!isLoading">
 
       <div class="risk-header">
-        <h3>
-          Alumnos en Riesgo Académico
-          <br>
-          (&lt; 70)
-        </h3>
-
+        <h3>Alumnos en riesgo académico</h3>
         <div class="alert-badge">
-          <strong>4</strong>
-          Alertas
+          <strong>{{ totalEstudiantesRiesgo }}</strong>
+          {{ totalEstudiantesRiesgo === 1 ? 'alumno' : 'alumnos' }}
         </div>
       </div>
 
-      <div class="risk-table">
+      <p *ngIf="!estudiantesRiesgo.length" class="empty-hint">
+        No hay alumnos bajo el umbral de riesgo, o aún no hay concentrado en MS-4.
+      </p>
+
+      <div class="risk-table" *ngIf="estudiantesRiesgo.length">
 
         <div class="table-head">
           <span>Estudiante</span>
@@ -97,70 +51,26 @@
           <span>Asistencia</span>
         </div>
 
-        <div
-          class="table-row"
-          *ngFor="let estudiante of estudiantesRiesgoPaginados"
-        >
-
+        <div class="table-row" *ngFor="let estudiante of estudiantesRiesgoPaginados">
           <div class="student-cell">
-
-            <div class="initials">
-              {{ estudiante.iniciales }}
-            </div>
-
+            <div class="initials">{{ estudiante.iniciales }}</div>
             <div>
               <strong>{{ estudiante.nombre }}</strong>
               <p>Matrícula: {{ estudiante.matricula }}</p>
             </div>
-
           </div>
-
-          <strong class="danger">
-            {{ estudiante.promedio }}
-          </strong>
-
-          <span>
-            {{ estudiante.asistencia }}
-          </span>
-
+          <strong class="danger">{{ estudiante.promedio }}</strong>
+          <span>{{ estudiante.asistencia }}</span>
         </div>
 
       </div>
 
-      <section class="pagination-section">
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button type="button" (click)="paginaAnterior()" [disabled]="currentPage <= 1">Anterior</button>
+        <span>{{ desdeRegistro }}–{{ hastaRegistro }} de {{ totalEstudiantesRiesgo }}</span>
+        <button type="button" (click)="paginaSiguiente()" [disabled]="currentPage >= totalPages">Siguiente</button>
+      </div>
 
-        <p>
-          Mostrando {{ desdeRegistro }} de {{ hastaRegistro }} de {{ totalEstudiantesRiesgo }} estudiantes
-        </p>
-
-        <div class="pagination">
-
-          <button type="button" (click)="paginaAnterior()" [disabled]="currentPage === 1">
-            <i class="bi bi-chevron-left"></i>
-          </button>
-
-          <button
-            type="button"
-            *ngFor="let pagina of pageNumbers"
-            [class.active]="pagina === currentPage"
-            (click)="cambiarPagina(pagina)"
-          >
-            {{ pagina }}
-          </button>
-
-          <button type="button" (click)="paginaSiguiente()" [disabled]="currentPage === totalPages">
-            <i class="bi bi-chevron-right"></i>
-          </button>
-
-        </div>
-
-      </section>
-
-    </section>
-
-    <section class="source-info">
-      <p>Última actualización de datos: Hoy, 09:45 AM</p>
-      <p>Fuente: Sistema de Control Escolar Academic v4.2</p>
     </section>
 
   </main>

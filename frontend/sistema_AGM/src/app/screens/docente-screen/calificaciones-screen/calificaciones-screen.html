@@ -5,151 +5,24 @@
   <main class="content">
 
     <section class="hero">
-
-      <h2>Gestión de Calificaciones</h2>
-
+      <h2>Calificaciones por materia</h2>
       <p>
-        Listado de alumnos y registro de evaluaciones para el Corte Actual.
+        El registro de calificaciones, plan de evaluacion y concentrado viven en el detalle de cada materia (MS-4).
       </p>
-
     </section>
 
-    <section class="actions-row">
+    <p *ngIf="isLoading">Cargando materias…</p>
+    <p *ngIf="!isLoading && emptyMessage">{{ emptyMessage }}</p>
 
-      <button class="outline-btn">
-        <i class="bi bi-floppy"></i>
-        Guardar Cambios
-      </button>
-
-      <button class="primary-btn">
-        <i class="bi bi-upload"></i>
-        Publicar Notas
-      </button>
-
-    </section>
-
-    <section class="stats-grid">
-
-      <article class="stat-card">
-
-        <div class="stat-icon azul">
-          <i class="bi bi-people"></i>
-        </div>
-
-        <div>
-          <p>Estudiantes</p>
-          <h3>32</h3>
-        </div>
-
-      </article>
-
-      <article class="stat-card">
-
-        <div class="stat-icon verde">
-          <i class="bi bi-check-circle"></i>
-        </div>
-
-        <div>
-          <p>Promedio General</p>
-          <h3>8.4 / 10</h3>
-        </div>
-
-      </article>
-
-      <article class="stat-card">
-
-        <div class="stat-icon rojo">
-          <i class="bi bi-exclamation-triangle"></i>
-        </div>
-
-        <div>
-          <p>En riesgo</p>
-          <h3>3 alumnos</h3>
-        </div>
-
-      </article>
-
-    </section>
-
-    <section class="grades-card">
-
-      <div class="grades-table">
-
-        <div class="table-head">
-
-          <span>Estudiante</span>
-          <span>Parcial 1 <br> (20%)</span>
-          <span>Parcial 2 <br> (30%)</span>
-          <span>Final <br> (50%)</span>
-
-        </div>
-
-        <div
-          class="table-row"
-          *ngFor="let estudiante of estudiantes"
-        >
-
-          <div class="student-cell">
-
-            <img
-              [src]="estudiante.foto"
-              [alt]="estudiante.nombre"
-            >
-
-            <div>
-              <strong>{{ estudiante.nombre }}</strong>
-              <p>ID: {{ estudiante.id }}</p>
-            </div>
-
-          </div>
-
-          <input
-            type="text"
-            [value]="estudiante.parcial1"
-            [class.riesgo]="estudiante.riesgo"
-          >
-
-          <input
-            type="text"
-            [value]="estudiante.parcial2"
-            [class.riesgo]="estudiante.riesgo"
-          >
-
-          <input
-            type="text"
-            [value]="estudiante.final"
-          >
-
-        </div>
-
-      </div>
-
-    </section>
-
-    <section class="pagination-section">
-
-      <p>
-        Mostrando 4 de 32 estudiantes
-      </p>
-
-      <div class="pagination">
-
-        <button>
-          <i class="bi bi-chevron-left"></i>
-        </button>
-
-        <button class="active">1</button>
-
-        <button>2</button>
-
-        <button>3</button>
-
-        <button>
-          <i class="bi bi-chevron-right"></i>
-        </button>
-
-      </div>
-
+    <section class="materias-list" *ngIf="!isLoading && materias.length">
+      <a
+        class="materia-link"
+        *ngFor="let m of materias"
+        [routerLink]="['/docente/materias', m.nrc]"
+      >
+        <strong>{{ m.nombre }}</strong>
+        <span>NRC {{ m.nrc }}</span>
+      </a>
     </section>
 
   </main>

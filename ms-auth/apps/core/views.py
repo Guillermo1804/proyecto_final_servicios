@@ -177,11 +177,12 @@ def refresh_token(request):
     serializer = CustomTokenRefreshSerializer(data=request.data)
     
     if serializer.is_valid():
+        payload = {'access': serializer.validated_data['access']}
+        if serializer.validated_data.get('refresh'):
+            payload['refresh'] = serializer.validated_data['refresh']
         return Response({
             'success': True,
-            'data': {
-                'access': serializer.validated_data['access']
-            },
+            'data': payload,
             'message': 'Token renovado exitosamente'
         }, status=status.HTTP_200_OK)
     
@@ -456,7 +457,7 @@ def usuarios(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated, IsAdminRole])
+@permission_classes([IsAuthenticated])
 def usuario_detail(request, user_id):
     user = User.objects.filter(id=user_id).first()
     if not user:
@@ -466,7 +467,16 @@ def usuario_detail(request, user_id):
             'message': 'Usuario no encontrado'
         }, status=status.HTTP_404_NOT_FOUND)
 
+    is_admin = request.user and request.user.is_authenticated and request.user.rol == 'admin'
+    is_internal = is_internal_api_key_valid(request)
+
     if request.method == 'GET':
+        if not is_admin and not is_internal:
+            return Response({
+                'success': False,
+                'data': None,
+                'message': 'No autorizado'
+            }, status=status.HTTP_401_UNAUTHORIZED)
         return Response({
             'success': True,
             'data': _admin_user_payload(user),
@@ -474,6 +484,12 @@ def usuario_detail(request, user_id):
         }, status=status.HTTP_200_OK)
 
     if request.method == 'PUT':
+        if not is_admin and not is_internal:
+            return Response({
+                'success': False,
+                'data': None,
+                'message': 'No autorizado'
+            }, status=status.HTTP_401_UNAUTHORIZED)
         serializer = AdminUserUpdateSerializer(user, data=request.data, partial=True)
         if not serializer.is_valid():
             return Response({
@@ -488,6 +504,13 @@ def usuario_detail(request, user_id):
             'data': _admin_user_payload(user),
             'message': 'Usuario actualizado exitosamente'
         }, status=status.HTTP_200_OK)
+
+    if not is_admin and not is_internal:
+        return Response({
+            'success': False,
+            'data': None,
+            'message': 'No autorizado'
+        }, status=status.HTTP_401_UNAUTHORIZED)
 
     user.activo = False
     user.save(update_fields=['activo'])

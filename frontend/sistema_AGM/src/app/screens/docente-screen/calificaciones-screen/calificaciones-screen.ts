@@ -1,65 +1,40 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bottom-navbar-docente';
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
+import { MateriasDocenteService } from '../../../services/docente-services/materias-docente.service';
 
 @Component({
   selector: 'app-calificaciones-screen',
   standalone: true,
-  imports: [CommonModule, TopbarAdmin, BottomNavbarDocente],
+  imports: [CommonModule, TopbarAdmin, BottomNavbarDocente, RouterLink],
   templateUrl: './calificaciones-screen.html',
-  styleUrl: './calificaciones-screen.scss'
+  styleUrl: './calificaciones-screen.scss',
 })
-export class CalificacionesScreen {
+export class CalificacionesScreen implements OnInit {
+  materias: { nrc: string; nombre: string }[] = [];
+  isLoading = true;
+  emptyMessage = '';
 
+  constructor(private materiasDocente: MateriasDocenteService) {}
 
-  calcularPromedioRedondeado(promedio: number): number {
-
-  const entero = Math.floor(promedio);
-
-  const decimal = promedio - entero;
-
-  return decimal >= 0.5
-    ? entero + 1
-    : entero;
-}
-  estudiantes = [
-    {
-      foto: '/assets/alumno1.jpg',
-      nombre: 'García, María Fernanda',
-      id: '20210459',
-      parcial1: '9.5',
-      parcial2: '8.0',
-      final: '8.5',
-      riesgo: false
-    },
-    {
-      foto: '/assets/alumno2.jpg',
-      nombre: 'Ruiz, Carlos Alberto',
-      id: '20210872',
-      parcial1: '4.0',
-      parcial2: '5.5',
-      final: '--',
-      riesgo: true
-    },
-    {
-      foto: '/assets/alumno3.jpg',
-      nombre: 'Méndez, Lucía Isabel',
-      id: '20220115',
-      parcial1: '7.0',
-      parcial2: '7.5',
-      final: '8.0',
-      riesgo: false
-    },
-    {
-      foto: '/assets/alumno4.jpg',
-      nombre: 'López, Jorge Eduardo',
-      id: '20210223',
-      parcial1: '10.0',
-      parcial2: '9.0',
-      final: '9.5',
-      riesgo: false
-    }
-  ];
-
+  ngOnInit(): void {
+    this.materiasDocente
+      .loadMateriasDocente()
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (result) => {
+          this.materias = result.materias.map((m) => ({
+            nrc: m.nrc,
+            nombre: m.materia,
+          }));
+          this.emptyMessage = result.emptyMessage;
+        },
+        error: () => {
+          this.emptyMessage = 'No se pudieron cargar tus materias.';
+        },
+      });
+  }
 }

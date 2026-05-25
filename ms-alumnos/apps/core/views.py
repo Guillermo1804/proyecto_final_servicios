@@ -11,13 +11,16 @@ from rest_framework.decorators import action
 
 from apps.core.models import Alumno, Docente, InscripcionMateria
 from apps.core.serializers import AlumnoSerializer, DocenteSerializer, InscripcionMateriaSerializer
+from apps.core.services.alumno_identity import resolve_alumno_for_request
 from apps.core.services.alumno_import import process_alumno_import_batch
+from apps.core.services.alumno_import_preview import build_alumno_import_preview
 from apps.core.services.docente_import import process_docente_import_rows
+from utils.pdf_alumnos_parser import parse_pdf_alumnos
+from apps.core.services.alumno_provision import deprovision_alumno_usuario, provision_alumno_usuario
 from apps.core.services.docente_provision import provision_docente_usuario
 from apps.core.services.materia_context import resolve_materia_context
 from apps.core.event_bus.publishers import publish_alumno_withdrawn
 from utils.auth import jwt_required
-from utils.excel_parser import parse_alumnos_file
 from utils.notificaciones_client import send_baja_notif
 from utils.pagination import AGMPagination
 from utils.pdf_docentes_parser import parse_pdf_docentes
@@ -26,6 +29,66 @@ from utils.periodos_ms2_client import get_materia_detail
 from utils.responses import error_response, success_response
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_pdf_alumnos_upload(pdf_file, materia_id: int) -> tuple[list, list, dict, list, str]:
+    """
+    Guarda PDF temporal, parsea filas y valida NRC vs materia.
+    Retorna (rows, parse_errors, meta, errores, temp_file_path).
+    """
+    temp_dir = os.path.join(settings.BASE_DIR, "temp")
+    os.makedirs(temp_dir, exist_ok=True)
+
+    rows: list = []
+    parse_errors: list = []
+    meta: dict = {}
+    errores: list = []
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=temp_dir) as temp_file:
+        for chunk in pdf_file.chunks():
+            temp_file.write(chunk)
+        temp_file_path = temp_file.name
+
+    try:
+        rows, parse_errors, meta = parse_pdf_alumnos(temp_file_path)
+        for pe in parse_errors:
+            errores.append({"error": pe})
+
+        materia_ctx = resolve_materia_context(materia_id)
+        pdf_nrc = (meta.get("nrc") or "").strip()
+        if pdf_nrc and materia_ctx.get("nrc") and pdf_nrc != materia_ctx["nrc"]:
+            errores.append(
+                {
+                    "error": (
+                        f"NRC del PDF ({pdf_nrc}) no coincide con la materia "
+                        f"({materia_ctx['nrc']}). Revise que subio el PDF correcto."
+                    )
+                }
+            )
+    except Exception:
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+        raise
+
+    return rows, parse_errors, meta, errores, temp_file_path
+
+
+def _enrich_inscripcion_item(item: dict) -> dict:
+    """Completa NRC/nombre/horario desde MS-2 si la inscripcion local esta incompleta."""
+    detail = item.get("materia_detail")
+    if not detail:
+        detail = get_materia_detail(int(item.get("materia_id") or 0))
+    if detail:
+        item["materia_detail"] = detail
+        if not (item.get("nrc") or "").strip():
+            item["nrc"] = detail.get("nrc") or ""
+        if not (item.get("nombre_materia") or "").strip():
+            item["nombre_materia"] = detail.get("nombre") or ""
+        if not (item.get("docente_nombre") or "").strip():
+            item["docente_nombre"] = detail.get("docente_nombre") or ""
+        if not (item.get("horario") or "").strip():
+            item["horario"] = detail.get("horario") or ""
+    return item
 
 
 def _use_event_bus() -> bool:
@@ -212,45 +275,191 @@ class AlumnoViewSet(viewsets.ModelViewSet):
     serializer_class = AlumnoSerializer
     pagination_class = AGMPagination
 
-    @jwt_required(roles=["admin"])
+    @jwt_required(roles=["admin", "docente"])
     @action(detail=False, methods=["post"], url_path="importar/preview")
     def importar_preview(self, request):
-        archivo = request.FILES.get("archivo")
-        if not archivo:
-            return error_response(
-                "No se proporcionó ningún archivo ('archivo' multipart esperado).",
-                status=400,
-            )
+        """Parsea PDF y devuelve vista previa sin guardar en BD."""
+        pdf_file = request.FILES.get("file")
+        if not pdf_file:
+            return error_response("El archivo 'file' es requerido.", status=400)
 
-        validas, errores = parse_alumnos_file(archivo, archivo.name)
-        return success_response(
-            {
-                "validas": validas,
-                "errores": errores,
-                "total_validas": len(validas),
-                "total_errores": len(errores),
-            }
-        )
-
-    @jwt_required(roles=["admin"])
-    @action(detail=False, methods=["post"], url_path="importar/confirmar")
-    def importar_confirmar(self, request):
-        alumnos_data = request.data.get("alumnos", [])
-        if not alumnos_data:
-            return error_response(
-                "No se proporcionaron datos de alumnos (JSON con lista 'alumnos' esperado).",
-                status=400,
-            )
+        if not pdf_file.name.lower().endswith(".pdf"):
+            return error_response("El archivo debe ser un PDF valido.", status=400)
 
         try:
-            creados, actualizados = process_alumno_import_batch(alumnos_data)
-            return success_response(
-                {"creados": creados, "actualizados": actualizados},
-                message="Importación completada con éxito.",
+            materia_id = int(request.data.get("materia_id") or request.query_params.get("materia_id") or 0)
+        except (TypeError, ValueError):
+            return error_response("materia_id debe ser un entero.", status=400)
+
+        if materia_id <= 0:
+            return error_response(
+                "materia_id es obligatorio (ID de la materia en MS-2).",
+                status=400,
             )
-        except Exception as e:
-            logger.exception("importar_confirmar failed")
-            return error_response(f"Error durante la persistencia de datos: {e}", status=500)
+
+        temp_file_path = ""
+        try:
+            rows, parse_errors, meta, errores, temp_file_path = _parse_pdf_alumnos_upload(
+                pdf_file, materia_id
+            )
+            preview_rows, resumen = build_alumno_import_preview(rows, materia_id)
+        except Exception as exc:
+            logger.exception("importar alumnos preview failed")
+            return error_response(f"Error al generar vista previa: {exc}", status=500)
+        finally:
+            if temp_file_path and os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+
+        payload = {
+            "filas": preview_rows,
+            "resumen": resumen,
+            "errores_parseo": len(parse_errors),
+            "nrc_pdf": meta.get("nrc") or "",
+            "nombre_materia_pdf": meta.get("nombre_materia") or "",
+            "docente_pdf": meta.get("docente") or "",
+            "periodo_pdf": meta.get("periodo") or "",
+        }
+        if errores:
+            payload["advertencias"] = errores[:20]
+
+        msg = "Vista previa generada"
+        if not preview_rows:
+            msg = (
+                "PDF procesado pero no se encontraron filas validas de alumnos. "
+                "Exporte la lista de clase desde Servicios Web (Ctrl+P)."
+            )
+        return success_response(payload, message=msg)
+
+    @jwt_required(roles=["admin", "docente"])
+    @action(detail=False, methods=["post"], url_path="importar/confirmar")
+    def importar_confirmar(self, request):
+        """Confirma importacion con filas devueltas por importar/preview."""
+        try:
+            materia_id = int(request.data.get("materia_id") or 0)
+        except (TypeError, ValueError):
+            return error_response("materia_id debe ser un entero.", status=400)
+
+        if materia_id <= 0:
+            return error_response(
+                "materia_id es obligatorio (ID de la materia en MS-2).",
+                status=400,
+            )
+
+        alumnos = request.data.get("alumnos")
+        if not isinstance(alumnos, list) or not alumnos:
+            return error_response(
+                "alumnos es obligatorio (lista de filas de la vista previa).",
+                status=400,
+            )
+
+        rows = []
+        for item in alumnos:
+            if not isinstance(item, dict):
+                continue
+            matricula = str(item.get("matricula") or "").strip()
+            if not matricula:
+                continue
+            rows.append(
+                {
+                    "matricula": matricula,
+                    "nombre": item.get("nombre") or "",
+                    "apellido": item.get("apellido") or "",
+                    "email": item.get("email") or "",
+                    "carrera": item.get("carrera") or "",
+                    "semestre": item.get("semestre") or 1,
+                    "materia_id": materia_id,
+                }
+            )
+
+        if not rows:
+            return error_response("No hay filas validas para importar.", status=400)
+
+        try:
+            creados, actualizados, inscritos = process_alumno_import_batch(
+                rows,
+                materia_id=materia_id,
+            )
+        except Exception as exc:
+            logger.exception("importar alumnos confirmar failed")
+            return error_response(f"Error durante la importacion: {exc}", status=500)
+
+        summary = {
+            "creados": creados,
+            "actualizados": actualizados,
+            "inscritos": inscritos,
+            "errores": 0,
+            "filas_leidas": len(rows),
+            "errores_parseo": 0,
+        }
+        return success_response(summary, message="Importacion de alumnos completada")
+
+    @jwt_required(roles=["admin", "docente"])
+    @action(detail=False, methods=["post"], url_path="importar")
+    def importar(self, request):
+        """
+        Importa alumnos desde PDF lista de clase BUAP (mismo flujo que docentes/materias).
+        Multipart: file (PDF), materia_id (obligatorio para inscribir en la materia).
+        """
+        pdf_file = request.FILES.get("file")
+        if not pdf_file:
+            return error_response("El archivo 'file' es requerido.", status=400)
+
+        if not pdf_file.name.lower().endswith(".pdf"):
+            return error_response("El archivo debe ser un PDF valido.", status=400)
+
+        try:
+            materia_id = int(request.data.get("materia_id") or request.query_params.get("materia_id") or 0)
+        except (TypeError, ValueError):
+            return error_response("materia_id debe ser un entero.", status=400)
+
+        if materia_id <= 0:
+            return error_response(
+                "materia_id es obligatorio (ID de la materia en MS-2).",
+                status=400,
+            )
+
+        temp_file_path = ""
+        errores: list = []
+        try:
+            rows, parse_errors, meta, errores, temp_file_path = _parse_pdf_alumnos_upload(
+                pdf_file, materia_id
+            )
+
+            for row in rows:
+                row["materia_id"] = materia_id
+
+            creados, actualizados, inscritos = process_alumno_import_batch(
+                rows,
+                materia_id=materia_id,
+            )
+        except Exception as exc:
+            logger.exception("importar alumnos PDF failed")
+            return error_response(f"Error durante la importacion: {exc}", status=500)
+        finally:
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+
+        filas_leidas = len(rows)
+        summary = {
+            "creados": creados,
+            "actualizados": actualizados,
+            "inscritos": inscritos,
+            "errores": len(errores),
+            "filas_leidas": filas_leidas,
+            "errores_parseo": len(parse_errors),
+            "nrc_pdf": meta.get("nrc") or "",
+            "nombre_materia_pdf": meta.get("nombre_materia") or "",
+        }
+        if errores:
+            summary["detalle_errores"] = errores[:20]
+
+        msg = "Importacion de alumnos completada"
+        if filas_leidas == 0 and creados == 0:
+            msg = (
+                "PDF procesado pero no se encontraron filas validas de alumnos. "
+                "Exporte la lista de clase desde Servicios Web (Ctrl+P)."
+            )
+        return success_response(summary, message=msg)
 
     @jwt_required()
     @action(detail=False, methods=["get"], url_path="por-materia")
@@ -280,6 +489,46 @@ class AlumnoViewSet(viewsets.ModelViewSet):
 
         serializer = InscripcionMateriaSerializer(queryset, many=True)
         return success_response(serializer.data)
+
+    @jwt_required(roles=["admin", "docente"])
+    @action(detail=True, methods=["post"], url_path="activar-usuario")
+    def activar_usuario(self, request, pk=None):
+        """Crea o vincula usuario MS-1 para un alumno sin usuario_id."""
+        alumno = self.get_object()
+        if alumno.usuario_id:
+            return success_response(
+                AlumnoSerializer(alumno).data,
+                message="El alumno ya tiene usuario activo en MS-1.",
+            )
+
+        alumno, err = provision_alumno_usuario(alumno)
+        if err:
+            return error_response(err, status=400)
+
+        return success_response(
+            AlumnoSerializer(alumno).data,
+            message="Usuario de alumno activado en MS-1.",
+        )
+
+    @jwt_required(roles=["admin", "docente"])
+    @action(detail=True, methods=["post"], url_path="desactivar-usuario")
+    def desactivar_usuario(self, request, pk=None):
+        """Desactiva usuario MS-1 y desvincula alumno.usuario_id."""
+        alumno = self.get_object()
+        if not alumno.usuario_id:
+            return success_response(
+                AlumnoSerializer(alumno).data,
+                message="El alumno ya esta sin acceso en MS-1.",
+            )
+
+        alumno, err = deprovision_alumno_usuario(alumno)
+        if err:
+            return error_response(err, status=400)
+
+        return success_response(
+            AlumnoSerializer(alumno).data,
+            message="Acceso del alumno desactivado en MS-1.",
+        )
 
     @jwt_required(roles=["admin"])
     @action(detail=True, methods=["post"], url_path="baja-materia")
@@ -342,14 +591,29 @@ class AlumnoViewSet(viewsets.ModelViewSet):
             logger.exception("baja_materia failed")
             return error_response(f"Error inesperado al procesar la baja: {e}", status=500)
 
-    @jwt_required()
+    @jwt_required(roles=["alumno", "admin"])
+    @action(detail=False, methods=["get"], url_path="me")
+    def me(self, request):
+        """Perfil del alumno autenticado (vincula usuario_id por email si hace falta)."""
+        alumno = resolve_alumno_for_request(request)
+        if not alumno:
+            return error_response(
+                "No hay registro de alumno vinculado a tu cuenta. "
+                "Pide al docente que te importe en la lista de clase.",
+                status=404,
+            )
+        return success_response(AlumnoSerializer(alumno).data)
+
+    @jwt_required(roles=["alumno", "admin"])
     @action(detail=False, methods=["get"], url_path="me/materias")
     def me_materias(self, request):
-        user_id = request.user_id
-        try:
-            alumno = Alumno.objects.get(usuario_id=user_id)
-        except Alumno.DoesNotExist:
-            return error_response("El alumno asociado al usuario no existe.", status=404)
+        alumno = resolve_alumno_for_request(request)
+        if not alumno:
+            return error_response(
+                "No hay registro de alumno vinculado a tu cuenta. "
+                "Pide al docente que te importe en la lista de clase.",
+                status=404,
+            )
 
         queryset = InscripcionMateria.objects.filter(alumno=alumno, activa=True).order_by(
             "id"
@@ -358,13 +622,9 @@ class AlumnoViewSet(viewsets.ModelViewSet):
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = InscripcionMateriaSerializer(page, many=True)
-            data = serializer.data
-            for item in data:
-                item["materia_detail"] = get_materia_detail(item["materia_id"])
+            data = [_enrich_inscripcion_item(dict(item)) for item in serializer.data]
             return self.get_paginated_response(data)
 
         serializer = InscripcionMateriaSerializer(queryset, many=True)
-        data = serializer.data
-        for item in data:
-            item["materia_detail"] = get_materia_detail(item["materia_id"])
-        return success_response(data)
+        data = [_enrich_inscripcion_item(dict(item)) for item in serializer.data]
+        return success_response({"count": len(data), "results": data})

@@ -1,4 +1,10 @@
 import { Injectable } from '@angular/core';
+import { Observable, map, of, switchMap } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+import { AlumnosService } from '../alumno-services/alumnos.service';
+import { CalificacionesService } from './calificaciones.service';
+import { MateriasDocenteService } from './materias-docente.service';
 
 export interface RendimientoEstudianteItem {
   iniciales: string;
@@ -8,46 +14,56 @@ export interface RendimientoEstudianteItem {
   asistencia: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class RendimientoDocenteService {
+  readonly pageSizeDefault = 10;
+  readonly umbralRiesgo = 7;
 
-  readonly pageSizeDefault = 2;
+  constructor(
+    private materiasDocente: MateriasDocenteService,
+    private calificaciones: CalificacionesService,
+    private alumnos: AlumnosService,
+  ) {}
 
-  private readonly estudiantesRiesgo: RendimientoEstudianteItem[] = [
-    {
-      iniciales: 'LM',
-      nombre: 'Lucía Méndez',
-      matricula: '20210452',
-      promedio: 58.5,
-      asistencia: '72%'
-    },
-    {
-      iniciales: 'RG',
-      nombre: 'Roberto Gómez',
-      matricula: '20210981',
-      promedio: 62.0,
-      asistencia: '85%'
-    },
-    {
-      iniciales: 'SF',
-      nombre: 'Sofía Figueroa',
-      matricula: '20220110',
-      promedio: 64.5,
-      asistencia: '60%'
-    },
-    {
-      iniciales: 'DV',
-      nombre: 'Daniel Vera',
-      matricula: '20210622',
-      promedio: 68.0,
-      asistencia: '92%'
-    }
-  ];
-
-  getEstudiantesRiesgo(): RendimientoEstudianteItem[] {
-    return this.estudiantesRiesgo.map((estudiante) => ({ ...estudiante }));
+  loadEstudiantesRiesgoPorNrc(nrc: string): Observable<RendimientoEstudianteItem[]> {
+    return this.materiasDocente.findMateriaByNrcForImport(nrc).pipe(
+      switchMap((materia) => {
+        if (!materia?.id) {
+          return of([]);
+        }
+        return this.calificaciones.getConcentrado(materia.id).pipe(
+          map((concentrado) => {
+            const rows = concentrado?.alumnos ?? [];
+            return rows
+              .filter((row) => (Number(row.promedio_redondeado) || 0) < this.umbralRiesgo)
+              .map((row) => ({
+                iniciales: AlumnosService.inicialesDesdeNombre(row.nombre),
+                nombre: row.nombre,
+                matricula: row.matricula,
+                promedio: Number(row.promedio_redondeado) || 0,
+                asistencia: '—',
+              }))
+              .sort((a, b) => a.promedio - b.promedio);
+          }),
+          catchError(() =>
+            this.alumnos.getAlumnosPorMateria(materia.id, 1, 100).pipe(
+              map((page) =>
+                page.results.map((inscripcion) => {
+                  const nombre = AlumnosService.mapAlumnoNombre(inscripcion.alumno);
+                  return {
+                    iniciales: AlumnosService.inicialesDesdeNombre(nombre),
+                    nombre,
+                    matricula: inscripcion.alumno.matricula,
+                    promedio: 0,
+                    asistencia: '—',
+                  };
+                }),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
   }
 
   getTotalPages(totalItems: number, pageSize: number): number {
@@ -58,31 +74,40 @@ export class RendimientoDocenteService {
     const normalizedPage = Math.max(1, page);
     const normalizedPageSize = Math.max(1, pageSize);
     const startIndex = (normalizedPage - 1) * normalizedPageSize;
-
     return items.slice(startIndex, startIndex + normalizedPageSize);
   }
 
   buildCsv(rows: RendimientoEstudianteItem[]): string {
     const header = ['Estudiante', 'Matrícula', 'Promedio', 'Asistencia'];
-    const lines = rows.map((row) => [
-      this.escapeCsvValue(row.nombre),
-      this.escapeCsvValue(row.matricula),
-      this.escapeCsvValue(row.promedio.toFixed(1)),
-      this.escapeCsvValue(row.asistencia)
-    ].join(','));
-
+    const lines = rows.map((row) =>
+      [
+        this.escapeCsvValue(row.nombre),
+        this.escapeCsvValue(row.matricula),
+        this.escapeCsvValue(row.promedio.toFixed(1)),
+        this.escapeCsvValue(row.asistencia),
+      ].join(','),
+    );
     return [header.join(','), ...lines].join('\r\n');
   }
 
-  buildPdfHtml(options: { title: string; subtitle: string; rows: RendimientoEstudianteItem[]; summary: string }): string {
-    const rowsHtml = options.rows.map((row) => `
+  buildPdfHtml(options: {
+    title: string;
+    subtitle: string;
+    rows: RendimientoEstudianteItem[];
+    summary: string;
+  }): string {
+    const rowsHtml = options.rows
+      .map(
+        (row) => `
       <tr>
         <td>${this.escapeHtml(row.nombre)}</td>
         <td>${this.escapeHtml(row.matricula)}</td>
         <td>${row.promedio.toFixed(1)}</td>
         <td>${this.escapeHtml(row.asistencia)}</td>
       </tr>
-    `).join('');
+    `,
+      )
+      .join('');
 
     return `<!doctype html>
 <html lang="es">
@@ -112,9 +137,7 @@ export class RendimientoDocenteService {
         <th>Asistencia</th>
       </tr>
     </thead>
-    <tbody>
-      ${rowsHtml}
-    </tbody>
+    <tbody>${rowsHtml}</tbody>
   </table>
 </body>
 </html>`;
@@ -122,7 +145,6 @@ export class RendimientoDocenteService {
 
   private escapeCsvValue(value: string): string {
     const escaped = value.replace(/"/g, '""');
-
     return /[",\n]/.test(escaped) ? `"${escaped}"` : escaped;
   }
 

@@ -23,4 +23,5 @@ export interface LoginData {
 
 export interface RefreshTokenData {
   access: string;
+  refresh?: string;
 }

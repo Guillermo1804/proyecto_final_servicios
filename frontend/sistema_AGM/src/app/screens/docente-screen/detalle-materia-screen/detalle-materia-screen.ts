@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CalificacionesService } from '../../../services/docente-services/calificaciones.service';
 import { MateriasDocenteService } from '../../../services/docente-services/materias-docente.service';
 import { DetalleMateriaDocenteService, DetalleMateriaActividadBaseItem, DetalleMateriaActividadItem, DetalleMateriaAlumnoItem, DetalleMateriaRubroItem } from '../../../services/docente-services/detalle-materia-docente.service';
+import { AlumnosService } from '../../../services/alumno-services/alumnos.service';
 import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bottom-navbar-docente';
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 import { RouterLink } from '@angular/router';
@@ -22,10 +23,11 @@ export class DetalleMateriaScreen implements OnInit {
   alumnos: DetalleMateriaAlumnoItem[] = [];
   alumnosLoading = false;
   alumnosError = '';
+  procesandoMs1AlumnoId: number | null = null;
 
   busquedaAlumno = '';
   paginaActualAlumnos = 1;
-  alumnosPorPagina = 2;
+  alumnosPorPagina = 5;
   paginaActualConcentrado = 1;
   alumnosPorPaginaConcentrado = 4;
   paginaActualActividades = 1;
@@ -44,9 +46,11 @@ export class DetalleMateriaScreen implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private materiasService: MateriasDocenteService,
     private detalleMateriaService: DetalleMateriaDocenteService,
     private calificacionesService: CalificacionesService,
+    private alumnosService: AlumnosService,
   ) {
     this.codigoMateria = this.route.snapshot.paramMap.get('id') ?? '';
     this.nuevaActividad = this.detalleMateriaService.crearActividadBase();
@@ -57,12 +61,44 @@ export class DetalleMateriaScreen implements OnInit {
     this.loadAlumnos();
   }
 
+  irImportarAlumnos(): void {
+    void this.router.navigate(
+      ['/docente/materias', this.codigoMateria, 'importar-alumnos'],
+      {
+        state: {
+          materiaId: this.materiaId,
+          materiaNombre: this.resumenMateria.materia || this.codigoMateria,
+        },
+      },
+    );
+  }
+
   private loadMateriaContext(): void {
     this.detalleMateriaService.loadResumenPorNrc(this.codigoMateria).subscribe({
       next: (resumen) => {
         this.resumenMateria = resumen;
       },
+      error: () => {
+        this.resumenMateria = {
+          grupo: this.codigoMateria,
+          materia: 'Materia',
+          horario: '',
+        };
+      },
     });
+  }
+
+  get totalAlumnosInscritos(): number {
+    return this.alumnos.length;
+  }
+
+  get promedioGrupal(): string {
+    const conPromedio = this.alumnos.filter((a) => (a.promedioRedondeado ?? 0) > 0);
+    if (!conPromedio.length) {
+      return '—';
+    }
+    const suma = conPromedio.reduce((acc, a) => acc + (a.promedioRedondeado ?? 0), 0);
+    return (suma / conPromedio.length).toFixed(2);
   }
 
   private loadAlumnos(): void {
@@ -122,11 +158,98 @@ get totalPaginasAlumnos(): number {
 }
 
 get paginasAlumnos(): number[] {
-  return this.detalleMateriaService.generarPaginas(this.totalPaginasAlumnos);
+  return this.detalleMateriaService.generarPaginasVentana(
+    this.totalPaginasAlumnos,
+    this.paginaActualAlumnos,
+  );
 }
 
 get alumnosPaginados() {
   return this.detalleMateriaService.paginar(this.alumnosFiltrados, this.paginaActualAlumnos, this.alumnosPorPagina);
+}
+
+get alumnosDesdeRegistro(): number {
+  if (!this.alumnosFiltrados.length) {
+    return 0;
+  }
+  return (this.paginaActualAlumnos - 1) * this.alumnosPorPagina + 1;
+}
+
+get alumnosHastaRegistro(): number {
+  return Math.min(this.paginaActualAlumnos * this.alumnosPorPagina, this.alumnosFiltrados.length);
+}
+
+esEmailPlaceholder(email: string): boolean {
+  const value = (email || '').trim().toLowerCase();
+  return value.endsWith('@alumno.buap.mx') && /^\d{8,9}@alumno\.buap\.mx$/.test(value);
+}
+
+puedeDesactivarAlumno(alumno: DetalleMateriaAlumnoItem): boolean {
+  return alumno.alumnoId != null && alumno.usuarioId != null;
+}
+
+puedeActivarAlumno(alumno: DetalleMateriaAlumnoItem): boolean {
+  return (
+    alumno.alumnoId != null &&
+    alumno.usuarioId == null &&
+    !!alumno.email &&
+    alumno.email !== '—'
+  );
+}
+
+desactivarAlumno(alumno: DetalleMateriaAlumnoItem): void {
+  if (!this.puedeDesactivarAlumno(alumno) || !alumno.alumnoId) {
+    return;
+  }
+
+  const confirmado = confirm(
+    `¿Desactivar acceso de ${alumno.nombre} en MS-1?\n\nYa no podra iniciar sesion hasta que lo reactives.`,
+  );
+  if (!confirmado) {
+    return;
+  }
+
+  this.procesandoMs1AlumnoId = alumno.alumnoId;
+  this.alumnosService.desactivarAlumno(alumno.alumnoId).subscribe({
+    next: () => {
+      this.procesandoMs1AlumnoId = null;
+      alert(`Acceso desactivado para ${alumno.nombre}.`);
+      this.loadAlumnos();
+    },
+    error: (err) => {
+      this.procesandoMs1AlumnoId = null;
+      alert(AlumnosService.extractError(err, 'No se pudo desactivar el alumno.'));
+    },
+  });
+}
+
+activarAlumno(alumno: DetalleMateriaAlumnoItem): void {
+  if (!this.puedeActivarAlumno(alumno) || !alumno.alumnoId) {
+    return;
+  }
+
+  const confirmado = confirm(
+    `¿Reactivar acceso de ${alumno.nombre}?\n\nSe creara o vinculara su usuario en MS-1 con ${alumno.email}.`,
+  );
+  if (!confirmado) {
+    return;
+  }
+
+  this.procesandoMs1AlumnoId = alumno.alumnoId;
+  this.alumnosService.activarAlumno(alumno.alumnoId).subscribe({
+    next: () => {
+      this.procesandoMs1AlumnoId = null;
+      alert(
+        `Alumno reactivado. Puede iniciar sesion con ${alumno.email} ` +
+          'y contraseña inicial = parte del correo antes de @.',
+      );
+      this.loadAlumnos();
+    },
+    error: (err) => {
+      this.procesandoMs1AlumnoId = null;
+      alert(AlumnosService.extractError(err, 'No se pudo activar el alumno.'));
+    },
+  });
 }
 
 irAPaginaAlumnos(pagina: number): void {

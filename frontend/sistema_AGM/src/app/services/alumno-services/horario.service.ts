@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, of } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 import { InscripcionMateriaApiDto } from '../../models/alumnos-api.model';
 import { AlumnosService } from './alumnos.service';
@@ -27,23 +27,25 @@ export interface HorarioResumen {
   profesores: number;
 }
 
+const DIAS_SEMANA = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE'] as const;
+
+const MAPA_DIAS: Record<string, string[]> = {
+  LUN: ['LUN', 'L', 'LU', 'LUNES'],
+  MAR: ['MAR', 'MA', 'M', 'MARTES'],
+  'MIÉ': ['MIÉ', 'MIE', 'MI', 'X', 'MIERCOLES', 'MIÉRCOLES'],
+  JUE: ['JUE', 'J', 'JU', 'JUEVES'],
+  VIE: ['VIE', 'V', 'VI', 'VIERNES'],
+};
+
 @Injectable({ providedIn: 'root' })
 export class HorarioService {
-  private readonly diasBase: HorarioDia[] = [
-    { dia: 'LUN', numero: 15, activo: true },
-    { dia: 'MAR', numero: 16, activo: false },
-    { dia: 'MIÉ', numero: 17, activo: false },
-    { dia: 'JUE', numero: 18, activo: false },
-    { dia: 'VIE', numero: 19, activo: false },
-  ];
-
   private horarios: HorarioMateria[] = [];
   private loaded = false;
 
   constructor(private alumnos: AlumnosService) {}
 
   loadHorarios(): Observable<HorarioMateria[]> {
-    return this.alumnos.getMeMaterias(1, 50).pipe(
+    return this.alumnos.getMeMaterias(1, 100).pipe(
       map((page) => {
         this.horarios = page.results.flatMap((item) => this.mapInscripcion(item));
         this.loaded = true;
@@ -53,9 +55,11 @@ export class HorarioService {
   }
 
   getDiaActivo(diaSeleccionado?: string): HorarioDia[] {
-    return this.diasBase.map((dia) => ({
-      ...dia,
-      activo: dia.dia === (diaSeleccionado ?? 'LUN'),
+    const hoy = new Date().getDate();
+    return DIAS_SEMANA.map((dia, index) => ({
+      dia,
+      numero: hoy + index,
+      activo: dia === (diaSeleccionado ?? 'LUN'),
     }));
   }
 
@@ -83,18 +87,20 @@ export class HorarioService {
 
   private mapInscripcion(item: InscripcionMateriaApiDto): HorarioMateria[] {
     const detail = item.materia_detail as Record<string, unknown> | undefined;
-    const horarioTexto = String(item.horario ?? detail?.['horario'] ?? '');
+    const horarioTexto = String(item.horario ?? detail?.['horario'] ?? '').trim();
     const materia = String(item.nombre_materia ?? detail?.['nombre'] ?? 'Materia');
     const docente = String(item.docente_nombre ?? detail?.['docente_nombre'] ?? '');
+    const aula = String(detail?.['salon'] ?? detail?.['aula'] ?? '—');
+    const dias = this.parseDias(horarioTexto);
 
-    if (!horarioTexto) {
+    if (!dias.length) {
       return [
         {
-          hora: '—',
+          hora: this.extractHora(horarioTexto),
           materia,
           docente,
-          aula: '—',
-          horario: 'Sin horario',
+          aula,
+          horario: horarioTexto || 'Sin horario',
           color: 'azul',
           icono: 'bi-clock',
           dia: 'LUN',
@@ -102,17 +108,41 @@ export class HorarioService {
       ];
     }
 
-    return [
-      {
-        hora: horarioTexto.slice(0, 5),
-        materia,
-        docente,
-        aula: '—',
-        horario: horarioTexto,
-        color: 'azul',
-        icono: 'bi-clock',
-        dia: 'LUN',
-      },
-    ];
+    return dias.map((dia, index) => ({
+      hora: this.extractHora(horarioTexto),
+      materia,
+      docente,
+      aula,
+      horario: horarioTexto,
+      color: index % 2 === 0 ? 'azul' : 'naranja',
+      icono: 'bi-clock',
+      dia,
+    }));
+  }
+
+  private parseDias(horario: string): string[] {
+    if (!horario) {
+      return [];
+    }
+    const tokens = horario
+      .toUpperCase()
+      .replace(/[\/\s,]+/g, ' ')
+      .split(' ')
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const encontrados: string[] = [];
+    for (const dia of DIAS_SEMANA) {
+      const aliases = MAPA_DIAS[dia] ?? [];
+      if (tokens.some((token) => aliases.includes(token))) {
+        encontrados.push(dia);
+      }
+    }
+    return encontrados;
+  }
+
+  private extractHora(horario: string): string {
+    const match = horario.match(/\d{1,2}:\d{2}/);
+    return match ? match[0] : '—';
   }
 }

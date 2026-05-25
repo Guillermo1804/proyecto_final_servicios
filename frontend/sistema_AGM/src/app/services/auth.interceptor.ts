@@ -1,7 +1,7 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, switchMap, throwError } from 'rxjs';
+import { catchError, finalize, shareReplay, switchMap, throwError } from 'rxjs';
 
 import { AuthService } from './auth.service';
 
@@ -12,6 +12,22 @@ const AUTH_EXCLUDED_PATTERNS = [
   '/auth/forgot-password',
   '/auth/reset-password',
 ];
+
+const AUTH_RETRY_HEADER = 'X-Auth-Retry';
+
+let refreshInFlight: ReturnType<AuthService['refreshTokenAndStore']> | null = null;
+
+function refreshOnce(auth: AuthService) {
+  if (!refreshInFlight) {
+    refreshInFlight = auth.refreshTokenAndStore().pipe(
+      finalize(() => {
+        refreshInFlight = null;
+      }),
+      shareReplay(1),
+    );
+  }
+  return refreshInFlight;
+}
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
@@ -32,7 +48,17 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         return throwError(() => err);
       }
 
-      return auth.refreshTokenAndStore().pipe(
+      if (request.headers.has(AUTH_RETRY_HEADER)) {
+        return throwError(() => err);
+      }
+
+      if (request.url.includes('/auth/refresh-token')) {
+        auth.clearSession();
+        router.navigate(['/login']);
+        return throwError(() => err);
+      }
+
+      return refreshOnce(auth).pipe(
         switchMap((newAccess) => {
           if (!newAccess) {
             auth.clearSession();
@@ -40,7 +66,10 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
             return throwError(() => err);
           }
           const retried = request.clone({
-            setHeaders: { Authorization: `Bearer ${newAccess}` },
+            setHeaders: {
+              Authorization: `Bearer ${newAccess}`,
+              [AUTH_RETRY_HEADER]: '1',
+            },
           });
           return next(retried);
         }),

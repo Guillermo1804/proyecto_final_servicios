@@ -1,145 +1,119 @@
 import { Injectable } from '@angular/core';
+import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
+
+import { AlumnosService } from '../alumno-services/alumnos.service';
+import { MateriaDocenteItem, MateriasDocenteService } from './materias-docente.service';
 
 export interface DashboardClaseItem {
   hora: string;
   materia: string;
   grupo: string;
+  nrc: string;
+  materiaId: number;
   aula: string;
   icono: string;
   activo: boolean;
   alumnosInscritos: number;
-  asistenciaHoy: number;
-}
-
-export interface DashboardPendienteItem {
-  icono: string;
-  color: 'rojo' | 'azul';
-  titulo: string;
-  detalle: string;
-}
-
-export interface DashboardNotificacionItem {
-  fecha: string;
-  asunto: string;
-  emisor: string;
 }
 
 export interface DashboardResumenMateriaItem {
   materia: string;
   grupo: string;
+  nrc: string;
+  materiaId: number;
   alumnosInscritos: number;
-  asistenciaHoy: number;
-  estado: 'Activa' | 'Pendiente' | 'Finalizada';
+  estado: 'Activa' | 'Pendiente' | 'Terminado';
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+export interface DashboardDocenteData {
+  periodoActivoNombre: string | null;
+  clasesHoy: DashboardClaseItem[];
+  resumenMaterias: DashboardResumenMateriaItem[];
+  totalMateriasAsignadas: number;
+  totalAlumnosInscritos: number;
+  emptyMessage: string;
+}
+
+@Injectable({ providedIn: 'root' })
 export class DashboardDocenteService {
+  constructor(
+    private materiasDocente: MateriasDocenteService,
+    private alumnos: AlumnosService,
+  ) {}
 
-  private readonly clasesHoy: DashboardClaseItem[] = [
-    {
-      hora: '08:00-10:00',
-      materia: 'Cálculo Integral',
-      grupo: 'Grupo A - Ingeniería Civil',
-      aula: 'Aula Magna 302',
-      icono: 'bi-broadcast',
-      activo: true,
-      alumnosInscritos: 38,
-      asistenciaHoy: 92
-    },
-    {
-      hora: '11:30-13:30',
-      materia: 'Física Mecánica',
-      grupo: 'Grupo B - Ingeniería Mecánica',
-      aula: 'Laboratorio L4',
-      icono: 'bi-people',
-      activo: false,
-      alumnosInscritos: 34,
-      asistenciaHoy: 84
-    },
-    {
-      hora: '15:00-17:00',
-      materia: 'Programación Orientada a Objetos',
-      grupo: 'Grupo C - Ingeniería en Sistemas',
-      aula: 'Aula 204',
-      icono: 'bi-laptop',
-      activo: false,
-      alumnosInscritos: 41,
-      asistenciaHoy: 88
-    }
-  ];
+  loadDashboard(): Observable<DashboardDocenteData> {
+    return this.materiasDocente.loadMateriasDocente().pipe(
+      switchMap((load) => {
+        const materias = load.materias;
+        if (!materias.length) {
+          return of({
+            periodoActivoNombre: load.periodoActivoNombre,
+            clasesHoy: [],
+            resumenMaterias: [],
+            totalMateriasAsignadas: 0,
+            totalAlumnosInscritos: 0,
+            emptyMessage: load.emptyMessage,
+          });
+        }
 
-  private readonly pendientes: DashboardPendienteItem[] = [
-    {
-      icono: 'bi-clipboard2-alert',
-      color: 'rojo',
-      titulo: 'Práctica: Leyes de Newton',
-      detalle: '12 entregas nuevas'
-    },
-    {
-      icono: 'bi-clipboard-check',
-      color: 'azul',
-      titulo: 'Proyecto Final Parcial',
-      detalle: '4 entregas nuevas'
-    }
-  ];
+        const counts$ = materias.map((materia) =>
+          this.alumnos.getAlumnosPorMateria(materia.id, 1, 1).pipe(
+            map((page) => ({
+              materia,
+              alumnosInscritos: Number(page.count ?? page.results.length ?? 0),
+            })),
+          ),
+        );
 
-  private readonly notificaciones: DashboardNotificacionItem[] = [
-    {
-      fecha: 'Hoy, 10:15',
-      asunto: 'Cierre de actas - Periodo Otoño 2023',
-      emisor: 'Dirección Académica'
-    },
-    {
-      fecha: 'Ayer, 16:40',
-      asunto: 'Nueva solicitud de examen extraordinario',
-      emisor: 'Control Escolar'
-    }
-  ];
+        return forkJoin(counts$).pipe(
+          map((rows) => {
+            const resumenMaterias: DashboardResumenMateriaItem[] = rows.map(
+              ({ materia, alumnosInscritos }) => ({
+                materia: materia.materia,
+                grupo: materia.seccion || materia.clave,
+                nrc: materia.nrc,
+                materiaId: materia.id,
+                alumnosInscritos,
+                estado:
+                  materia.estado === 'Activo'
+                    ? 'Activa'
+                    : materia.estado === 'Terminado'
+                      ? 'Terminado'
+                      : 'Pendiente',
+              }),
+            );
 
-  getClasesHoy(): DashboardClaseItem[] {
-    return this.clasesHoy.map((clase) => ({ ...clase }));
-  }
+            const clasesHoy: DashboardClaseItem[] = rows.map(({ materia, alumnosInscritos }, index) => {
+              const sesion = materia.sesiones[0];
+              return {
+                hora: sesion?.hora ?? '—',
+                materia: materia.materia,
+                grupo: `NRC ${materia.nrc} · ${materia.seccion || materia.clave}`,
+                nrc: materia.nrc,
+                materiaId: materia.id,
+                aula: materia.salon,
+                icono: index === 0 ? 'bi-broadcast' : 'bi-journal-bookmark',
+                activo: index === 0,
+                alumnosInscritos,
+              };
+            });
 
-  getPendientes(): DashboardPendienteItem[] {
-    return this.pendientes.map((pendiente) => ({ ...pendiente }));
-  }
+            const totalAlumnosInscritos = resumenMaterias.reduce(
+              (sum, item) => sum + item.alumnosInscritos,
+              0,
+            );
 
-  getNotificaciones(): DashboardNotificacionItem[] {
-    return this.notificaciones.map((notificacion) => ({ ...notificacion }));
-  }
-
-  getTotalMateriasAsignadas(): number {
-    return this.clasesHoy.length;
-  }
-
-  getTotalAlumnosInscritos(): number {
-    return this.clasesHoy.reduce((total, clase) => total + clase.alumnosInscritos, 0);
-  }
-
-  getPorcentajeAsistenciaDelDia(): number {
-    const totalAlumnos = this.getTotalAlumnosInscritos();
-
-    if (totalAlumnos === 0) {
-      return 0;
-    }
-
-    const asistenciaPonderada = this.clasesHoy.reduce(
-      (total, clase) => total + (clase.alumnosInscritos * clase.asistenciaHoy),
-      0
+            return {
+              periodoActivoNombre: load.periodoActivoNombre,
+              clasesHoy,
+              resumenMaterias,
+              totalMateriasAsignadas: materias.length,
+              totalAlumnosInscritos,
+              emptyMessage: '',
+            };
+          }),
+        );
+      }),
     );
-
-    return Math.round((asistenciaPonderada / totalAlumnos) * 10) / 10;
-  }
-
-  getResumenMaterias(): DashboardResumenMateriaItem[] {
-    return this.clasesHoy.map((clase) => ({
-      materia: clase.materia,
-      grupo: clase.grupo,
-      alumnosInscritos: clase.alumnosInscritos,
-      asistenciaHoy: clase.asistenciaHoy,
-      estado: clase.activo ? 'Activa' : 'Pendiente'
-    }));
   }
 }
