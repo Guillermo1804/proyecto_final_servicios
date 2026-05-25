@@ -8,7 +8,7 @@ from django.db import transaction
 
 from apps.core.event_bus.publishers import publish_docente_imported
 from apps.core.models import Docente, PendingUserCreation
-from apps.core.services.identity import generate_temporary_password, request_user_creation
+from apps.core.services.identity import password_from_email, request_user_creation
 from utils.auth_ms1_client import create_user_in_auth
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ def process_docente_import_rows(rows: list[dict]) -> tuple[int, int, list]:
                 omitidos += 1
                 continue
 
-            temp_pwd = generate_temporary_password()
+            temp_pwd = password_from_email(email)
             usuario_id = None
 
             if _use_event_bus():

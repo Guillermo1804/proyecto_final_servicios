@@ -144,14 +144,23 @@ class DocenteViewSet(viewsets.ModelViewSet):
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
 
+        filas_leidas = len(rows)
         summary = {
             "creados": creados,
             "omitidos": omitidos,
             "errores": len(errores),
+            "filas_leidas": filas_leidas,
+            "errores_parseo": len(parse_errors),
         }
         if errores:
-            summary["detalle_errores"] = errores
-        return success_response(summary, message="Importación de docentes completada")
+            summary["detalle_errores"] = errores[:20]
+        msg = "Importación de docentes completada"
+        if filas_leidas == 0 and creados == 0:
+            msg = (
+                "PDF procesado pero no se encontraron filas validas de docentes. "
+                "Revise detalle_errores."
+            )
+        return success_response(summary, message=msg)
 
 
 class AlumnoViewSet(viewsets.ModelViewSet):

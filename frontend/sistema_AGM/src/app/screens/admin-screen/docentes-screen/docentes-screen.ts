@@ -58,9 +58,21 @@ export class DocentesScreen implements OnInit {
 
     this.docentesService.importarDocentesPdf(file).subscribe({
       next: (result) => {
-        alert(
-          `Importacion completada. Creados: ${result.creados}, omitidos: ${result.omitidos}, errores: ${result.errores}`,
-        );
+        const leidas = result.filas_leidas ?? 0;
+        let msg = `Filas leidas del PDF: ${leidas}\nCreados: ${result.creados}\nOmitidos: ${result.omitidos}\nErrores: ${result.errores}`;
+
+        if (leidas === 0 && result.creados === 0) {
+          msg +=
+            '\n\nEl PDF no trajo docentes en el formato esperado ' +
+            '(tabla BUAP: Nombre | Correo | Ubicacion | Extension).\n' +
+            'Si es programacion de materias (NRC), importala en Periodos (MS-2), no aqui.';
+          const detalle = result.detalle_errores?.slice(0, 3) ?? [];
+          if (detalle.length) {
+            msg += '\n\nDetalle:\n' + detalle.map((d) => d.error ?? JSON.stringify(d)).join('\n');
+          }
+        }
+
+        alert(msg);
         this.loadDocentes();
       },
       error: (err) => {

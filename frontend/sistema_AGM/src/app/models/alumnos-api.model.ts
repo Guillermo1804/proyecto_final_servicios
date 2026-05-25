@@ -52,5 +52,7 @@ export interface ImportarDocentesResultDto {
   creados: number;
   omitidos: number;
   errores: number;
-  detalle_errores?: Record<string, unknown>[];
+  filas_leidas?: number;
+  errores_parseo?: number;
+  detalle_errores?: Array<{ error?: string } | Record<string, unknown>>;
 }

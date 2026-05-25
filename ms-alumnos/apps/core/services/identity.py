@@ -17,7 +17,25 @@ def _use_event_bus() -> bool:
     return bool(getattr(settings, "USE_EVENT_BUS", False))
 
 
-def generate_temporary_password() -> str:
+def password_from_email(email: str) -> str:
+    """
+    Contraseña inicial = parte local del correo (antes de @).
+    Ej: samantha.acostar@correo.buap.mx -> samantha.acostar
+    """
+    normalized = (email or "").strip()
+    if "@" in normalized:
+        local = normalized.split("@", 1)[0].strip()
+        if local:
+            return local
+    if normalized:
+        return normalized
+    return str(uuid.uuid4())[:12]
+
+
+def generate_temporary_password(email: str | None = None) -> str:
+    """Alias para imports existentes; usa el email cuando esta disponible."""
+    if email:
+        return password_from_email(email)
     return str(uuid.uuid4())[:12]
 
 
@@ -37,7 +55,7 @@ def request_user_creation(
     if entity.usuario_id:
         return None
 
-    temp_password = (password or "").strip() or generate_temporary_password()
+    temp_password = (password or "").strip() or password_from_email(email)
 
     if not _use_event_bus():
         return None

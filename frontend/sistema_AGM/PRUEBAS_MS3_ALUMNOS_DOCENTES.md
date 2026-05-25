@@ -3,8 +3,11 @@
 ## Requisitos previos
 
 ```bash
-docker compose up -d rabbitmq db-auth ms-auth db-periodos ms-periodos db-alumnos ms-alumnos nginx
+docker compose up -d rabbitmq db-auth ms-auth ms-auth-event-consumer ms-auth-outbox-worker \
+  db-periodos ms-periodos db-alumnos ms-alumnos ms-alumnos-outbox-worker nginx
 ```
+
+**Importante:** sin `ms-auth-event-consumer` los docentes quedan sin usuario en MS-1 y el login falla. Levanta el consumer **antes** de importar el PDF (o reinicia la cola si reimportas).
 
 Frontend:
 
@@ -28,6 +31,8 @@ Login segun rol a probar (admin / docente / alumno con datos en BD).
 | 5 | Estado | Activo = tiene `usuario_id` en MS-1; Inactivo = pendiente |
 
 **Nota:** No hay toggle de estado en API; solo lectura del vinculo con MS-1.
+
+**Login tras import (docentes/alumnos nuevos):** contraseña inicial = parte del correo **antes de `@`** (ej. `maria.garcia@correo.buap.mx` → `maria.garcia`). Espera a que el consumer de MS-1 cree el usuario (`usuario_id` en lista = Activo) y prueba en `/login` con ese email y contraseña.
 
 ---
 

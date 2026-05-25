@@ -1,5 +1,4 @@
 import logging
-import uuid
 import os
 import sys
 
@@ -11,6 +10,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE_DIR, "proto_generated"))
 
 from proto_generated import auth_pb2, auth_pb2_grpc
+
+from apps.core.services.identity import password_from_email
 
 """DEPRECATED (Fase 9): cliente gRPC de negocio. Bloqueado con USE_EVENT_BUS=true."""
 from agm_events.grpc_legacy import block_business_grpc
@@ -36,7 +37,7 @@ def create_user_alumno(email: str, nombre: str) -> tuple[int | None, str | None,
     Crea usuario alumno en MS-1.
     Retorna (user_id, clave_acceso temporal, mensaje_error).
     """
-    clave_acceso = str(uuid.uuid4())
+    clave_acceso = password_from_email(email)
     try:
         with grpc.insecure_channel(_auth_target()) as channel:
             stub = auth_pb2_grpc.AuthServiceStub(channel)

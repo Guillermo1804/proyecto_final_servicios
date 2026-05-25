@@ -10,7 +10,7 @@ from django.db import transaction
 
 from apps.core.event_bus.publishers import publish_alumno_imported, publish_alumno_updated
 from apps.core.models import Alumno, PendingUserCreation
-from apps.core.services.identity import generate_temporary_password, request_user_creation
+from apps.core.services.identity import password_from_email, request_user_creation
 from apps.core.services.materia_context import resolve_materia_context
 from utils.auth_client import create_user_alumno
 from utils.notificaciones_client import send_bienvenida
@@ -60,7 +60,7 @@ def process_alumno_import_batch(alumnos_data: list) -> tuple[int, int]:
 
             if created:
                 creados += 1
-                password = clave_acceso or generate_temporary_password()
+                password = clave_acceso or password_from_email(alumno.email)
 
                 if not alumno.usuario_id:
                     if _use_event_bus():

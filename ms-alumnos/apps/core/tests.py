@@ -635,4 +635,22 @@ class AlumnoMeMateriasTests(TestCase):
         self.assertIn("asociado al usuario no existe", body["message"])
 
 
+class PasswordFromEmailTests(TestCase):
+    def test_local_part_before_at(self):
+        from apps.core.services.identity import password_from_email
+
+        self.assertEqual(
+            password_from_email("maria.garcia@correo.buap.mx"),
+            "maria.garcia",
+        )
+        self.assertEqual(password_from_email("david@correo.buap.mx"), "david")
+
+    def test_strips_whitespace(self):
+        from apps.core.services.identity import password_from_email
+
+        self.assertEqual(
+            password_from_email("  ana.lopez@correo.buap.mx  "),
+            "ana.lopez",
+        )
+
 
