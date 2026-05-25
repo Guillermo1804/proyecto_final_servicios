@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { CalificacionesService } from '../../../services/docente-services/calificaciones.service';
 import { MateriasDocenteService } from '../../../services/docente-services/materias-docente.service';
 import { DetalleMateriaDocenteService, DetalleMateriaActividadBaseItem, DetalleMateriaActividadItem, DetalleMateriaAlumnoItem, DetalleMateriaRubroItem } from '../../../services/docente-services/detalle-materia-docente.service';
 import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bottom-navbar-docente';
@@ -34,19 +35,24 @@ export class DetalleMateriaScreen implements OnInit {
 
   resumenMateria = { grupo: '', materia: '', horario: '' };
 
+  materiaId: number | null = null;
+  evaluacionLoading = false;
+  evaluacionError = '';
+  listaImpresa = false;
+  guardandoPlan = false;
+  guardandoCalificacion = false;
+
   constructor(
     private route: ActivatedRoute,
     private materiasService: MateriasDocenteService,
     private detalleMateriaService: DetalleMateriaDocenteService,
+    private calificacionesService: CalificacionesService,
   ) {
     this.codigoMateria = this.route.snapshot.paramMap.get('id') ?? '';
-    this.rubrosEvaluacion = this.detalleMateriaService.getRubrosEvaluacion();
-    this.actividades = this.detalleMateriaService.getActividades();
     this.nuevaActividad = this.detalleMateriaService.crearActividadBase();
   }
 
   ngOnInit(): void {
-    this.recalcularValoresInternosTodosRubros();
     this.loadMateriaContext();
     this.loadAlumnos();
   }
@@ -66,11 +72,32 @@ export class DetalleMateriaScreen implements OnInit {
       next: (items) => {
         this.alumnos = items;
         this.alumnosLoading = false;
+        this.loadEvaluacion();
       },
       error: () => {
         this.alumnosError = 'No se pudieron cargar los alumnos inscritos (MS-3).';
         this.alumnos = [];
         this.alumnosLoading = false;
+      },
+    });
+  }
+
+  private loadEvaluacion(): void {
+    this.evaluacionLoading = true;
+    this.evaluacionError = '';
+    this.detalleMateriaService.loadEvaluacionPorNrc(this.codigoMateria).subscribe({
+      next: (bundle) => {
+        this.materiaId = bundle.materiaId;
+        this.rubrosEvaluacion = bundle.rubros;
+        this.actividades = bundle.actividades;
+        this.recalcularValoresInternosTodosRubros();
+        this.evaluacionLoading = false;
+      },
+      error: () => {
+        this.evaluacionError = 'No se pudo cargar el plan de evaluacion (MS-4).';
+        this.rubrosEvaluacion = [];
+        this.actividades = [];
+        this.evaluacionLoading = false;
       },
     });
   }
@@ -149,14 +176,30 @@ crearActividad(): void {
     return;
   }
 
+  if (!this.materiaId) {
+    alert('No se encontro la materia en el sistema.');
+    return;
+  }
+
   const rubroActividad = this.nuevaActividad.rubro;
 
-  this.actividades.push(this.detalleMateriaService.crearActividadConCalificaciones(this.alumnos, this.nuevaActividad));
-
-  this.recalcularValoresInternosRubro(rubroActividad);
-  this.paginaActualActividades = this.totalPaginasActividades;
-
-  this.cancelarActividad();
+  this.detalleMateriaService
+    .crearActividadRemota(this.rubrosEvaluacion, this.nuevaActividad, this.alumnos)
+    .subscribe({
+      next: (actividad) => {
+        this.actividades.push(actividad);
+        this.recalcularValoresInternosRubro(rubroActividad);
+        this.paginaActualActividades = this.totalPaginasActividades;
+        this.cancelarActividad();
+      },
+      error: (err) => {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : this.calificacionesService.mapApiError(err, 'No se pudo crear la actividad.');
+        alert(msg);
+      },
+    });
 }
 
 recalcularValoresInternosTodosRubros(): void {
@@ -183,11 +226,35 @@ obtenerCalificacionActividad(actividad: { calificaciones?: Record<string, number
   return this.detalleMateriaService.obtenerCalificacionActividad(actividad, matricula);
 }
 
-setCalificacionActividad(actividad: { calificaciones: Record<string, number> }, matricula: string, valor: number | string): void {
+setCalificacionActividad(actividad: DetalleMateriaActividadItem, matricula: string, valor: number | string): void {
   this.detalleMateriaService.setCalificacionActividad(actividad, matricula, valor);
 }
 
-onCalificacionInput(event: Event, actividad: { calificaciones: Record<string, number> }, matricula: string): void {
+guardarCalificacionEnServidor(actividad: DetalleMateriaActividadItem, alumno: DetalleMateriaAlumnoItem, valor: number | string): void {
+  if (this.listaImpresa) {
+    alert('La lista ya fue impresa: no se pueden editar calificaciones.');
+    return;
+  }
+  this.guardandoCalificacion = true;
+  this.detalleMateriaService.persistirCalificacion(actividad, alumno, valor).subscribe({
+    next: () => {
+      this.guardandoCalificacion = false;
+      if (this.materiaId) {
+        this.detalleMateriaService.recargarConcentrado(this.materiaId).subscribe({
+          next: (alumnos) => {
+            this.alumnos = alumnos;
+          },
+        });
+      }
+    },
+    error: (err) => {
+      this.guardandoCalificacion = false;
+      alert(this.calificacionesService.mapApiError(err, 'No se pudo guardar la calificacion.'));
+    },
+  });
+}
+
+onCalificacionInput(event: Event, actividad: DetalleMateriaActividadItem, matricula: string): void {
   const input = event.target as HTMLInputElement;
   const calificacion = this.detalleMateriaService.setCalificacionActividad(actividad, matricula, input.value);
   input.value = String(calificacion);
@@ -280,16 +347,25 @@ onCalificacionesExcelSeleccionado(event: Event): void {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
 
-  if (!file) {
+  if (!file || !this.materiaId) {
     return;
   }
 
-  const actividad = this.actividadImportacionIndex >= 0 ? this.actividades[this.actividadImportacionIndex] : null;
-  const nombreActividad = actividad?.titulo ?? 'actividad';
-
-  alert(`Archivo ${file.name} seleccionado para ${nombreActividad}. Aquí se puede importar el Excel de calificaciones.`);
-  input.value = '';
-  this.actividadImportacionIndex = -1;
+  this.detalleMateriaService.importarCalificacionesExcel(this.materiaId, file).subscribe({
+    next: (resumen) => {
+      alert(
+        `Importacion MS-4: ${resumen.importadas} calificaciones guardadas, ${resumen.fallos} fallos.`,
+      );
+      this.loadEvaluacion();
+      input.value = '';
+      this.actividadImportacionIndex = -1;
+    },
+    error: (err) => {
+      alert(this.calificacionesService.mapApiError(err, 'No se pudo importar el Excel.'));
+      input.value = '';
+      this.actividadImportacionIndex = -1;
+    },
+  });
 }
 
 get promedioPonderadoReal(): number {
@@ -343,15 +419,23 @@ guardarPlanEvaluacion(): void {
     return;
   }
 
-  const payload = {
-    materia: this.codigoMateria,
-    rubros: this.rubrosEvaluacion
-  };
+  if (!this.materiaId) {
+    alert('No se encontro la materia en el sistema.');
+    return;
+  }
 
-  console.log('Datos para backend:', payload);
-
-  // después:
-  // this.materiaService.guardarPlanEvaluacion(payload).subscribe(...)
+  this.guardandoPlan = true;
+  this.detalleMateriaService.guardarPlanEvaluacion(this.materiaId, this.rubrosEvaluacion).subscribe({
+    next: (rubros) => {
+      this.rubrosEvaluacion = rubros;
+      this.guardandoPlan = false;
+      alert('Plan de evaluacion guardado en MS-4.');
+    },
+    error: (err) => {
+      this.guardandoPlan = false;
+      alert(this.calificacionesService.mapApiError(err, 'No se pudo guardar el plan de evaluacion.'));
+    },
+  });
 }
 
 abrirImportacionExcel(): void {
@@ -362,27 +446,60 @@ onExcelSeleccionado(event: Event): void {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
 
-  if (!file) {
+  if (!file || !this.materiaId) {
     return;
   }
 
-  alert(`Archivo ${file.name} seleccionado. Aquí se puede procesar el Excel para cargar el plan de evaluación.`);
-  input.value = '';
+  this.detalleMateriaService.importarPlanEvaluacionExcel(this.materiaId, file).subscribe({
+    next: (rubros) => {
+      this.rubrosEvaluacion = rubros;
+      alert('Plan de evaluacion importado desde Excel (MS-4).');
+      input.value = '';
+    },
+    error: (err) => {
+      alert(this.calificacionesService.mapApiError(err, 'No se pudo importar el plan.'));
+      input.value = '';
+    },
+  });
 }
 cerrarMateria(): void {
-  const confirmar = confirm('¿Cerrar la materia y marcarla como "Terminado"? Esta acción se puede revertir manualmente.');
-  if (!confirmar) {
+  const confirmar = confirm('¿Cerrar la materia? Se publicara el cierre de calificaciones (MS-4).');
+  if (!confirmar || !this.materiaId) {
     return;
   }
 
-  this.materiasService.updateMateriaEstado(this.codigoMateria, 'Terminado').subscribe((res) => {
-    alert('Materia marcada como Terminado.');
-  }, () => {
-    alert('No se pudo actualizar el estado en el servidor. Estado local actualizado.');
+  this.detalleMateriaService.cerrarMateriaCalificaciones(this.materiaId).subscribe({
+    next: () => {
+      alert('Materia cerrada en MS-4.');
+      this.materiasService.updateMateriaEstado(this.codigoMateria, 'Terminado').subscribe({
+        next: () => undefined,
+        error: () => undefined,
+      });
+    },
+    error: (err) => {
+      alert(this.calificacionesService.mapApiError(err, 'No se pudo cerrar la materia.'));
+    },
   });
 }
 
 imprimirListaNotas(): void {
+  if (!this.materiaId) {
+    alert('Materia no disponible.');
+    return;
+  }
+
+  this.detalleMateriaService.marcarListaImpresa(this.materiaId).subscribe({
+    next: () => {
+      this.listaImpresa = true;
+      this.abrirVentanaImpresionConcentrado();
+    },
+    error: (err) => {
+      alert(this.calificacionesService.mapApiError(err, 'No se pudo marcar la lista como impresa.'));
+    },
+  });
+}
+
+private abrirVentanaImpresionConcentrado(): void {
   const title = `Concentrado de calificaciones - ${this.codigoMateria}`;
   const cols = ['Alumno', 'Matrícula', 'Promedio real', 'Promedio redondeado'];
 
