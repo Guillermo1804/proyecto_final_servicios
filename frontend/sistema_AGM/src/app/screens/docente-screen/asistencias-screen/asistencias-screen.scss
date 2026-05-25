@@ -93,6 +93,91 @@
     background: #e0f2fe;
     color: #075985;
   }
+
+  &.materia-chip {
+    background: #fff7ed;
+    color: #9a3412;
+  }
+}
+
+.session-setup-card {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #dbe4f0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  display: grid;
+  gap: .9rem;
+}
+
+.session-setup-copy {
+  h3 {
+    margin: 0 0 .25rem;
+    font-size: 1.05rem;
+    font-weight: 900;
+  }
+
+  p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.45;
+  }
+}
+
+.materia-select-field {
+  display: grid;
+  gap: .45rem;
+
+  span {
+    font-size: .82rem;
+    font-weight: 800;
+    color: #334155;
+  }
+
+  select {
+    height: 46px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 0 .85rem;
+    background: white;
+    color: #0f172a;
+    font-weight: 700;
+    outline: none;
+
+    &:focus {
+      border-color: #075fc6;
+      box-shadow: 0 0 0 3px rgba(7, 95, 198, .12);
+    }
+
+    &:disabled {
+      background: #f8fafc;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.session-setup-helper {
+  padding: .85rem 1rem;
+  border-radius: 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+
+  strong {
+    display: block;
+    font-size: .95rem;
+    font-weight: 900;
+    color: #1d4ed8;
+    margin-bottom: .2rem;
+  }
+
+  p {
+    margin: 0;
+    color: #1e3a8a;
+    line-height: 1.4;
+    font-size: .88rem;
+  }
 }
 
 /* TABS */

@@ -21,6 +21,15 @@ export interface RegistroProcesado {
   minuto: number;
 }
 
+export interface ContextoMateriaSesion {
+  id: number;
+  nrc: string;
+  clave: string;
+  materia: string;
+  seccion: string;
+  salon: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -106,8 +115,16 @@ export class AsistenciasDocenteService {
 
   // Placeholder para confirmar la sesión en el backend.
   // Actualmente devuelve una promesa resuelta; reemplazar por llamada HttpClient cuando exista API.
-  confirmarSesion(codigoSesion: string, registros: RegistroAsistencia[]): Promise<void> {
-    // Aquí podría enviarse un POST al backend con la lista de asistencias.
+  confirmarSesion(
+    codigoSesion: string,
+    registros: RegistroAsistencia[],
+    materia: ContextoMateriaSesion | null
+  ): Promise<void> {
+    void codigoSesion;
+    void registros;
+    void materia;
+
+    // Aquí podría enviarse un POST al backend con la lista de asistencias y la materia seleccionada.
     return Promise.resolve();
   }
 

@@ -10,7 +10,7 @@
         <h2>Control de Asistencia</h2>
 
         <p>
-          Inicia una sesión de 10 minutos para escanear QR dinámicos de tus alumnos.
+          Selecciona primero la materia que vas a pasar lista y luego activa la cámara para escanear QR dinámicos.
         </p>
 
         <div class="session-chip-row">
@@ -29,10 +29,50 @@
           <span class="session-chip soft">
             Restante: {{ tiempoRestanteFormateado }}
           </span>
+
+          <span class="session-chip materia-chip" *ngIf="materiaSeleccionada">
+            Materia: {{ materiaSeleccionada.clave }} - {{ materiaSeleccionada.materia }}
+          </span>
         </div>
       </div>
 
       <section class="scanner-section">
+
+        <div class="session-setup-card" *ngIf="!sesionActiva && !sesionFinalizada">
+
+          <div class="session-setup-copy">
+            <h3>1. Elige la materia</h3>
+
+            <p>
+              Antes de encender la cámara, selecciona la materia para la que vas a registrar asistencia.
+            </p>
+          </div>
+
+          <label class="materia-select-field">
+            <span>Materia impartida</span>
+
+            <select
+              [ngModel]="materiaSeleccionadaId"
+              (ngModelChange)="seleccionarMateria($event)"
+              [disabled]="materiasDocente.length === 0"
+            >
+              <option [ngValue]="null" disabled>
+                Selecciona una materia
+              </option>
+
+              <option *ngFor="let materia of materiasDocente" [ngValue]="materia.id">
+                {{ materia.clave }} - {{ materia.materia }} (Grupo {{ materia.seccion }})
+              </option>
+            </select>
+          </label>
+
+          <div class="session-setup-helper" *ngIf="materiaSeleccionada">
+            <strong>{{ materiaSeleccionada.materia }}</strong>
+            <p>
+              NRC {{ materiaSeleccionada.nrc }} | {{ materiaSeleccionada.salon }}
+            </p>
+          </div>
+        </div>
 
         <div class="scanner-top">
 
@@ -75,14 +115,16 @@
 
         <div class="scanner-callout" *ngIf="!sesionActiva && !sesionFinalizada">
           <i class="bi bi-shield-lock"></i>
-          <span>Inicia la sesión para habilitar la cámara y comenzar a leer QR.</span>
+          <span>
+            {{ materiaSeleccionada ? 'La materia ya está lista. Inicia la sesión para habilitar la cámara.' : 'Selecciona una materia para habilitar la cámara y comenzar a leer QR.' }}
+          </span>
         </div>
 
         <div id="reader" *ngIf="sesionActiva"></div>
 
         <div class="session-actions-row">
 
-          <button class="start-session-btn" type="button" (click)="iniciarSesion()" *ngIf="!sesionActiva">
+          <button class="start-session-btn" type="button" (click)="iniciarSesion()" *ngIf="!sesionActiva" [disabled]="!materiaSeleccionada">
             <i class="bi bi-play-circle"></i>
             Iniciar sesión de 10 minutos
           </button>

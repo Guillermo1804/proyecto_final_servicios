@@ -1,19 +1,28 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bottom-navbar-docente';
 import { OnDestroy } from '@angular/core';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { AsistenciasDocenteService, RegistroAsistencia } from '../../../services/docente-services/asistencias-docente.service';
+import {
+  AsistenciasDocenteService,
+  ContextoMateriaSesion,
+  RegistroAsistencia
+} from '../../../services/docente-services/asistencias-docente.service';
+import {
+  MateriaDocenteItem,
+  MateriasDocenteService
+} from '../../../services/docente-services/materias-docente.service';
 
 @Component({
   selector: 'app-asistencias-screen',
   standalone: true,
-  imports: [CommonModule, TopbarAdmin, BottomNavbarDocente],
+  imports: [CommonModule, FormsModule, TopbarAdmin, BottomNavbarDocente],
   templateUrl: './asistencias-screen.html',
   styleUrl: './asistencias-screen.scss'
 })
-export class AsistenciasScreen implements OnDestroy {
+export class AsistenciasScreen implements OnInit, OnDestroy {
   registros: RegistroAsistencia[] = [];
   listaConfirmada = false;
   scanner: Html5QrcodeScanner | null = null;
@@ -23,11 +32,51 @@ export class AsistenciasScreen implements OnDestroy {
   codigoSesion = '';
   tiempoRestanteSegundos = 0;
   mensajeSesion = 'La sesión aún no inicia.';
+  materiasDocente: MateriaDocenteItem[] = [];
+  materiaSeleccionadaId: number | null = null;
   private timerId: ReturnType<typeof setInterval> | null = null;
 
-  constructor(private readonly asistenciasService: AsistenciasDocenteService) {
+  constructor(
+    private readonly asistenciasService: AsistenciasDocenteService,
+    private readonly materiasService: MateriasDocenteService
+  ) {
     this.codigoSesion = this.asistenciasService.generarCodigoSesion();
     this.tiempoRestanteSegundos = this.asistenciasService.duracionSesionSegundos;
+  }
+
+  ngOnInit(): void {
+    this.cargarMateriasDocente();
+  }
+
+  get materiaSeleccionada(): MateriaDocenteItem | null {
+    return this.materiasDocente.find((materia) => materia.id === this.materiaSeleccionadaId) ?? null;
+  }
+
+  get contextoMateriaSeleccionada(): ContextoMateriaSesion | null {
+    const materia = this.materiaSeleccionada;
+
+    if (!materia) {
+      return null;
+    }
+
+    return {
+      id: materia.id,
+      nrc: materia.nrc,
+      clave: materia.clave,
+      materia: materia.materia,
+      seccion: materia.seccion,
+      salon: materia.salon
+    };
+  }
+
+  get etiquetaMateriaSeleccionada(): string {
+    const materia = this.materiaSeleccionada;
+
+    if (!materia) {
+      return 'Ninguna materia seleccionada';
+    }
+
+    return `${materia.clave} · ${materia.materia} · Grupo ${materia.seccion}`;
   }
 
   get tiempoTranscurridoSegundos(): number {
@@ -59,6 +108,11 @@ export class AsistenciasScreen implements OnDestroy {
   }
 
   iniciarSesion(): void {
+    if (!this.materiaSeleccionada) {
+      this.mensajeSesion = 'Selecciona una materia antes de activar la cámara.';
+      return;
+    }
+
     this.registros = [];
     this.resultadoQr = '';
     this.codigoSesion = this.asistenciasService.generarCodigoSesion();
@@ -68,6 +122,29 @@ export class AsistenciasScreen implements OnDestroy {
     this.mensajeSesion = 'Sesión iniciada. La cámara está lista para escanear QR dinámicos.';
     this.iniciarTemporizador();
     setTimeout(() => this.iniciarScanner(), 100);
+  }
+
+  cargarMateriasDocente(): void {
+    this.materiasService.getMateriasDocente().subscribe((materias) => {
+      const materiasActivas = materias.filter((materia) => materia.estado === 'Activo');
+
+      this.materiasDocente = materiasActivas.length > 0 ? materiasActivas : materias;
+    });
+  }
+
+  seleccionarMateria(materiaId: number | null): void {
+    this.materiaSeleccionadaId = materiaId;
+
+    if (this.sesionActiva) {
+      return;
+    }
+
+    if (this.materiaSeleccionada) {
+      this.mensajeSesion = `Materia seleccionada: ${this.etiquetaMateriaSeleccionada}. Ya puedes iniciar la cámara.`;
+      return;
+    }
+
+    this.mensajeSesion = 'Selecciona una materia para continuar.';
   }
 
   finalizarSesion(mensaje = 'La sesión se cerró automáticamente al llegar a cero.'): void {
@@ -212,7 +289,7 @@ export class AsistenciasScreen implements OnDestroy {
     this.mensajeSesion = 'Confirmando la lista...';
 
     try {
-      await this.asistenciasService.confirmarSesion(this.codigoSesion, this.registros);
+      await this.asistenciasService.confirmarSesion(this.codigoSesion, this.registros, this.contextoMateriaSeleccionada);
       this.mensajeSesion = 'Lista confirmada por el docente.';
     } catch (e) {
       this.mensajeSesion = 'Error al confirmar la lista. Intenta nuevamente.';

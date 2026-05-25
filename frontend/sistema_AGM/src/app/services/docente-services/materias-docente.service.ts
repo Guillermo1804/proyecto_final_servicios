@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, map, Observable, of } from 'rxjs';
 
@@ -86,7 +86,15 @@ export class MateriasDocenteService {
   constructor(private http: HttpClient) {}
 
   getMaterias(): Observable<MateriaDocenteItem[]> {
-    return this.http.get<unknown>(this.buildApiUrl(this.materiasApiUrl)).pipe(
+    return this.getMateriasDocente();
+  }
+
+  getMateriasDocente(docenteId?: number | string): Observable<MateriaDocenteItem[]> {
+    const params = docenteId === undefined || docenteId === null || docenteId === ''
+      ? undefined
+      : new HttpParams().set('docente_id', String(docenteId));
+
+    return this.http.get<unknown>(this.buildApiUrl(this.materiasApiUrl), { params }).pipe(
       map((response) => this.normalizeResponse(response)),
       catchError(() => of(this.getLocalMaterias()))
     );
