@@ -342,6 +342,9 @@ services:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
       JWT_JWKS_URL: http://ms-auth:8001/.well-known/jwks.json
+      MS_AUTH_HTTP_URL: http://ms-auth:8001
+      MS_AUTH_HTTP_TIMEOUT: "10"
+      INTERNAL_API_KEY: cambiar-en-produccion
     ports:
       - "8003:8003"
       - "50053:50053"

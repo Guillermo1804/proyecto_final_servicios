@@ -87,6 +87,7 @@ class AuthServiceServicer(auth_pb2_grpc.AuthServiceServicer):
                 rol=request.rol,
                 password=request.password,
                 activo=True,
+                link_existing=True,
             )
 
             if error:

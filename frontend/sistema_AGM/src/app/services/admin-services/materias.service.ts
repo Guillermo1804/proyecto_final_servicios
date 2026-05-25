@@ -8,6 +8,7 @@ import {
   buildApiUrl,
   buildListPage,
   extractAgmListData,
+  extractApiErrorMessage,
   unwrapAgmData,
 } from '../tools/agm-api.helpers';
 
@@ -43,20 +44,42 @@ export class MateriasService {
 
   constructor(private http: HttpClient) {}
 
+  countByPeriodo(periodoId: number): Observable<number> {
+    return this.getMaterias({ periodoId, page: 1, pageSize: 1 }).pipe(
+      map((page) => page.count),
+    );
+  }
+
+  deleteMateria(materiaId: number): Observable<void> {
+    return this.http.delete<unknown>(buildApiUrl(`${this.basePath}/${materiaId}/`)).pipe(
+      map((response) => {
+        if (response && typeof response === 'object' && 'success' in response) {
+          const envelope = response as { success?: boolean; message?: string };
+          if (envelope.success === false) {
+            throw new Error(envelope.message || 'No se pudo eliminar la materia');
+          }
+        }
+        return undefined;
+      }),
+    );
+  }
+
+  static extractError(error: unknown, fallback: string): string {
+    return extractApiErrorMessage(error, fallback);
+  }
+
   getMaterias(query: MateriasQuery = {}): Observable<MateriasPage> {
     const normalized = this.normalizeQuery(query);
+    const search = normalized.search.trim();
+    const needsClientFilter = Boolean(search);
+
     const params: Record<string, string> = {
-      page: String(normalized.page),
-      limit: String(normalized.pageSize),
+      page: String(needsClientFilter ? 1 : normalized.page),
+      limit: String(needsClientFilter ? 200 : normalized.pageSize),
     };
 
     if (normalized.periodoId) {
       params['periodo_id'] = String(normalized.periodoId);
-    }
-
-    const search = normalized.search.trim();
-    if (search) {
-      params['nombre'] = search;
     }
 
     const httpParams = new HttpParams({ fromObject: params });
@@ -74,8 +97,9 @@ export class MateriasService {
 
         let items = rawList.map((dto) => this.mapMateria(dto));
 
-        if (search) {
-          items = this.filterMaterias(items, search);
+        if (needsClientFilter) {
+          items = this.filterMateriasPorNrcONombre(items, search);
+          return this.paginateLocally(items, normalized.page, normalized.pageSize);
         }
 
         const count = Number(data?.count ?? items.length);
@@ -137,22 +161,29 @@ export class MateriasService {
     return { horarios, salon };
   }
 
-  private filterMaterias(items: MateriaItem[], search: string): MateriaItem[] {
-    const term = search.toLowerCase();
-    return items.filter((materia) => {
-      const haystack = [
-        materia.nrc,
-        materia.clave,
-        materia.nombre,
-        materia.seccion,
-        materia.docente,
-        materia.salon,
-        materia.horarios.map((h) => `${h.dia} ${h.hora}`).join(' '),
-      ]
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
-    });
+  private filterMateriasPorNrcONombre(items: MateriaItem[], search: string): MateriaItem[] {
+    const term = search.trim().toLowerCase();
+    if (!term) {
+      return items;
+    }
+
+    return items.filter(
+      (materia) =>
+        materia.nrc.toLowerCase().includes(term) ||
+        materia.nombre.toLowerCase().includes(term),
+    );
+  }
+
+  private paginateLocally(
+    items: MateriaItem[],
+    page: number,
+    pageSize: number,
+  ): MateriasPage {
+    const count = items.length;
+    const totalPages = Math.max(1, Math.ceil(count / pageSize));
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    return buildListPage(items.slice(start, start + pageSize), safePage, pageSize, count);
   }
 
   private normalizeQuery(query: MateriasQuery): {

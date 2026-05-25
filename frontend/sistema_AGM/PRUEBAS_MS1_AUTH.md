@@ -20,6 +20,16 @@ Abre: http://localhost:4200
 
 API gateway: http://127.0.0.1:8080 (el front en dev usa `proxy.conf.json` hacia ese puerto)
 
+## Datos visibles en UI (MS-1)
+
+Tras login, en **todas** las pantallas con barra superior:
+
+- Nombre real del usuario (`GET /auth/me` + login)
+- Rol: Administrador / Docente / Alumno
+- Correo
+
+Dashboards ya no muestran nombres inventados (ej. "Dr. Silva"); la fecha del docente es la de hoy.
+
 ## Credenciales de prueba
 
 | Rol | Email | Password |

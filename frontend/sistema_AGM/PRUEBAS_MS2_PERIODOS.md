@@ -42,6 +42,8 @@ Ruta: **http://localhost:4200/admin/periodos**
 
 Filtros **temporada** y **busqueda**: se aplican en el cliente sobre la lista (el API no los expone).
 
+**Nota:** Si ves periodos o materias con nombre "Demo", no son mocks del front: son filas **guardadas en MySQL** de pruebas anteriores. Elimínalas con el icono de basura (materias primero, luego periodos sin materias).
+
 ---
 
 ## Casos de prueba — Materias
@@ -52,11 +54,11 @@ Ruta: **http://localhost:4200/admin/materias**
 |---|--------|-------------------|
 | 1 | Sin periodo activo | Mensaje indicando que active un periodo primero |
 | 2 | Con periodo activo | Lista `GET /materias/?periodo_id={id}&page=&limit=` |
-| 3 | Buscar por NRC/clave/docente | Filtra resultados (param `nombre` + filtro local) |
+| 3 | Buscar por NRC o nombre de materia | Filtra en el periodo seleccionado (solo NRC y nombre) |
 | 4 | Paginacion | Botones anterior/siguiente segun `count` del API |
 | 5 | Columnas | Docente desde `docente_nombre`; horario parseado en dias/hora |
 
-El boton **Importar Materias** en UI aun no abre archivo; el endpoint existe: `POST /periodos/{id}/importar-materias/` (PDF).
+| 6 | **Importar Materias (PDF)** | Con periodo activo: elegir PDF → `POST /periodos/{id}/importar-materias/` (campo `archivo`) → mensaje creadas/actualizadas → lista se recarga |
 
 ---
 

@@ -39,33 +39,30 @@ export class DocentesService {
 
   getDocentes(query: DocentesQuery = {}): Observable<DocentesPage> {
     const normalized = this.normalizeQuery(query);
-    const needsClientFilter = Boolean(normalized.search);
+    const term = normalized.search.trim();
+    const needsClientFilter = Boolean(term);
 
     const params: Record<string, string> = {
       page: String(needsClientFilter ? 1 : normalized.page),
       limit: String(needsClientFilter ? 100 : normalized.pageSize),
     };
 
-    const term = normalized.search.trim();
-    if (term && !term.includes(' ')) {
-      params['nombre'] = term;
-    }
-
     const httpParams = new HttpParams({ fromObject: params });
 
     return this.http.get<unknown>(buildApiUrl(`${this.basePath}/`), { params: httpParams }).pipe(
       map((response) => {
         const data = unwrapAgmData<{ count?: number; results?: DocenteApiDto[] }>(response);
-        let items = (Array.isArray(data?.results)
+        const rawList = Array.isArray(data?.results)
           ? data.results
-          : extractAgmListData<DocenteApiDto>(response)
-        ).map((dto) => this.mapDocente(dto));
+          : extractAgmListData<DocenteApiDto>(response);
 
         if (needsClientFilter) {
-          items = this.filterDocentes(items, term);
+          const filtered = this.filterDocentesFromDto(rawList, term);
+          const items = filtered.map((dto) => this.mapDocente(dto));
           return this.paginateLocally(items, normalized.page, normalized.pageSize);
         }
 
+        const items = rawList.map((dto) => this.mapDocente(dto));
         return buildListPage(
           items,
           normalized.page,
@@ -78,6 +75,13 @@ export class DocentesService {
 
   /** Busca docente vinculado al usuario autenticado (MS-1). */
   findDocenteByUsuarioId(usuarioId: number): Observable<DocenteItem | null> {
+    return this.findDocenteApiByUsuarioId(usuarioId).pipe(
+      map((dto) => (dto ? this.mapDocente(dto) : null)),
+    );
+  }
+
+  /** Registro crudo en MS-3 (nombre y apellido por separado). */
+  findDocenteApiByUsuarioId(usuarioId: number): Observable<DocenteApiDto | null> {
     const params = new HttpParams({
       fromObject: { usuario_id: String(usuarioId), page: '1', limit: '10' },
     });
@@ -88,8 +92,7 @@ export class DocentesService {
         const list = Array.isArray(data?.results)
           ? data.results
           : extractAgmListData<DocenteApiDto>(response);
-        const dto = list.find((d) => d.usuario_id === usuarioId) ?? list[0];
-        return dto ? this.mapDocente(dto) : null;
+        return list.find((d) => d.usuario_id === usuarioId) ?? list[0] ?? null;
       }),
     );
   }
@@ -98,6 +101,20 @@ export class DocentesService {
     return this.http
       .delete<unknown>(buildApiUrl(`${this.basePath}/${docenteId}/`))
       .pipe(map(() => undefined));
+  }
+
+  activarDocente(docenteId: number): Observable<DocenteItem> {
+    return this.http
+      .post<unknown>(buildApiUrl(`${this.basePath}/${docenteId}/activar-usuario/`), {})
+      .pipe(
+        map((response) => {
+          const dto = unwrapAgmData<DocenteApiDto>(response);
+          if (!dto) {
+            throw new Error('Respuesta invalida al activar docente');
+          }
+          return this.mapDocente(dto);
+        }),
+      );
   }
 
   importarDocentesPdf(file: File): Observable<ImportarDocentesResultDto> {
@@ -141,13 +158,18 @@ export class DocentesService {
     };
   }
 
-  private filterDocentes(items: DocenteItem[], search: string): DocenteItem[] {
-    const term = search.toLowerCase();
-    return items.filter((docente) => {
-      const haystack = [docente.nombre, docente.correo, docente.ubicacion, docente.estado]
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
+  /** Filtra por coincidencia en cualquier parte del nombre completo, correo o departamento. */
+  private filterDocentesFromDto(items: DocenteApiDto[], search: string): DocenteApiDto[] {
+    const tokens = this.normalizeText(search).split(/\s+/).filter(Boolean);
+    if (!tokens.length) {
+      return items;
+    }
+
+    return items.filter((dto) => {
+      const haystack = this.normalizeText(
+        [dto.nombre, dto.apellido, dto.email, dto.departamento].join(' '),
+      );
+      return tokens.every((token) => haystack.includes(token));
     });
   }
 
@@ -158,8 +180,15 @@ export class DocentesService {
   ): DocentesPage {
     const count = items.length;
     const totalPages = Math.max(1, Math.ceil(count / pageSize));
-    const safePage = Math.min(page, totalPages);
+    const safePage = Math.min(Math.max(1, page), totalPages);
     const start = (safePage - 1) * pageSize;
     return buildListPage(items.slice(start, start + pageSize), safePage, pageSize, count);
+  }
+
+  private normalizeText(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   }
 }

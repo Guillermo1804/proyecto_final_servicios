@@ -7,6 +7,7 @@ export interface PeriodoApiDto {
   fecha_fin: string;
   plan_estudios: string;
   activo: boolean;
+  materias_count?: number;
   fecha_creacion?: string;
   fecha_actualizacion?: string;
 }

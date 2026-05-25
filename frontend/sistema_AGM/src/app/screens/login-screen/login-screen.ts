@@ -47,8 +47,16 @@ export class LoginScreen {
         }
 
         this.auth.storeSession(response.data, this.remember);
-        const role = this.auth.getUserRole();
-        this.router.navigate([this.auth.resolveHomeRoute(role)]);
+        this.auth.refreshCurrentUser().subscribe({
+          next: () => {
+            const role = this.auth.getUserRole();
+            this.router.navigate([this.auth.resolveHomeRoute(role)]);
+          },
+          error: () => {
+            const role = this.auth.getUserRole();
+            this.router.navigate([this.auth.resolveHomeRoute(role)]);
+          },
+        });
       },
       error: (error) => {
         this.loading = false;

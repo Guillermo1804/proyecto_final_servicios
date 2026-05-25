@@ -8,18 +8,21 @@
 
     <section class="hero-card">
 
-      <p>Bienvenido de nuevo,</p>
+      <p>Bienvenido de nuevo, {{ rolLabel }}</p>
 
-      <h2>{{ alumno.nombre }}</h2>
+      <h2>{{ perfilLoading ? 'Cargando…' : alumno.nombre }}</h2>
 
       <div class="hero-meta">
         <span>Matrícula: <strong>{{ alumno.matricula }}</strong></span>
-        <span>Formación: <strong>{{ alumno.tipoFormacion }}</strong></span>
-        <span>Periodo: <strong>{{ alumno.periodoActivo }}</strong></span>
+        <span *ngIf="emailUsuario">Correo: <strong>{{ emailUsuario }}</strong></span>
+        <span *ngIf="alumno.tipoFormacion && alumno.tipoFormacion !== '—'">Carrera: <strong>{{ alumno.tipoFormacion }}</strong></span>
       </div>
 
-      <span>
+      <span *ngIf="materiasHoy.length || evaluaciones.length">
         Tienes {{ materiasHoy.length }} clases programadas para hoy y {{ evaluaciones.length }} evaluaciones próximas.
+      </span>
+      <span *ngIf="!materiasHoy.length && !evaluaciones.length">
+        Sesión activa con MS-1. Horario y evaluaciones se cargan en siguientes integraciones.
       </span>
 
       <div class="hero-bg"></div>

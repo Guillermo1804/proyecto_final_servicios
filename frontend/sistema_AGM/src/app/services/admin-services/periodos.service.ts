@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 
 import { PeriodoApiDto } from '../../models/periodos-api.model';
 import {
@@ -24,6 +24,7 @@ export interface PeriodoItem {
   fechaFin: string;
   activo: boolean;
   planEstudios: string;
+  materiasCount: number;
 }
 
 export interface PeriodoFormValue {
@@ -92,6 +93,7 @@ export class PeriodosService {
         const dto = unwrapAgmData<PeriodoApiDto>(response);
         return dto ? this.mapPeriodo(dto) : null;
       }),
+      catchError(() => of(null)),
     );
   }
 
@@ -184,6 +186,7 @@ export class PeriodosService {
       fechaFin: String(dto.fecha_fin ?? '').slice(0, 10),
       activo: Boolean(dto.activo),
       planEstudios: String(dto.plan_estudios ?? ''),
+      materiasCount: Number(dto.materias_count ?? 0),
     };
   }
 

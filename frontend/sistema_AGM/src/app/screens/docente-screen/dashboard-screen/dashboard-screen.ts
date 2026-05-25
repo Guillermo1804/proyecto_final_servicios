@@ -1,9 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bottom-navbar-docente';
-import { BottomNavbarAdmin } from "../../../partials/bottom-navbar-admin/bottom-navbar-admin";
-import { TopbarAdmin } from "../../../partials/topbar-admin/topbar-admin";
-import { DashboardDocenteService, DashboardClaseItem, DashboardNotificacionItem, DashboardPendienteItem, DashboardResumenMateriaItem } from '../../../services/docente-services/dashboard-docente.service';
+import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
+import { AuthService } from '../../../services/auth.service';
+import {
+  DashboardDocenteService,
+  DashboardClaseItem,
+  DashboardNotificacionItem,
+  DashboardPendienteItem,
+  DashboardResumenMateriaItem,
+} from '../../../services/docente-services/dashboard-docente.service';
 
 @Component({
   selector: 'app-dashboard-docente-screen',
@@ -12,7 +18,12 @@ import { DashboardDocenteService, DashboardClaseItem, DashboardNotificacionItem,
   templateUrl: './dashboard-screen.html',
   styleUrl: './dashboard-screen.scss'
 })
-export class DashboardScreen {
+export class DashboardScreen implements OnInit {
+  private readonly auth = inject(AuthService);
+
+  nombreUsuario = '';
+  rolLabel = '';
+  fechaHoy = '';
 
   clasesHoy: DashboardClaseItem[] = [];
   pendientes: DashboardPendienteItem[] = [];
@@ -24,7 +35,20 @@ export class DashboardScreen {
   porcentajeAsistenciaDelDia = 0;
   ultimaActualizacion = '';
 
-  constructor(private readonly dashboardService: DashboardDocenteService) {
+  constructor(private readonly dashboardService: DashboardDocenteService) {}
+
+  ngOnInit(): void {
+    this.fechaHoy = this.auth.formatTodayLong();
+    this.auth.refreshCurrentUser().subscribe({
+      next: (user) => {
+        this.nombreUsuario = user?.nombre?.trim() || this.auth.getGreetingName();
+        this.rolLabel = this.auth.getRoleLabel(user?.rol);
+      },
+      error: () => {
+        this.nombreUsuario = this.auth.getGreetingName();
+        this.rolLabel = this.auth.getRoleLabel();
+      },
+    });
     this.cargarDashboard();
   }
 

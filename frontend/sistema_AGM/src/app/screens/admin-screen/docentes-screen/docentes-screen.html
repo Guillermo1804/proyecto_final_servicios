@@ -26,7 +26,7 @@
         <input
           #searchInput
           type="text"
-          placeholder="Buscar por nombre, correo o ubicación"
+          placeholder="Buscar por nombre, apellido o correo..."
           (input)="onSearch(searchInput.value)"
         >
       </div>
@@ -77,13 +77,20 @@
         </div>
 
         <div class="table-cell action-cell" data-label="Estado">
-          <span
-            class="status-toggle"
-            [ngClass]="docente.estado === 'Activo' ? 'activo' : 'inactivo'"
-            [title]="docente.estado === 'Inactivo' ? 'Usuario MS-1 pendiente' : 'Vinculado a MS-1'"
+          <button
+            *ngIf="docente.estado === 'Inactivo'; else estadoActivo"
+            type="button"
+            class="status-toggle inactivo clickable"
+            title="Crear o vincular usuario en MS-1"
+            (click)="activarDocente(docente)"
           >
-            {{ docente.estado }}
-          </span>
+            Activar
+          </button>
+          <ng-template #estadoActivo>
+            <span class="status-toggle activo" title="Vinculado a MS-1">
+              Activo
+            </span>
+          </ng-template>
         </div>
 
       </div>

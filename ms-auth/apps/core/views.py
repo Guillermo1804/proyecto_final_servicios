@@ -422,6 +422,7 @@ def usuarios(request):
         rol=serializer.validated_data['rol'],
         password=password,
         activo=True,
+        link_existing=is_internal_api_key_valid(request),
     )
     if error:
         return Response({

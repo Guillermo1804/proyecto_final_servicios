@@ -8,15 +8,40 @@
       <h2>Gestión de Asignaturas</h2>
 
       <p>
-        Administre el catálogo académico institucional y cursos
-        <span *ngIf="periodoActivoNombre"> — periodo activo: <strong>{{ periodoActivoNombre }}</strong></span>
+        Administre el catálogo académico. Elija el periodo en el selector (no solo el activo).
       </p>
     </section>
 
-    <button class="create-btn">
-      <i class="bi bi-plus-lg"></i>
-      Importar Materias
-    </button>
+    <section class="filters-card periodo-select-row">
+      <label>
+        <span>Periodo</span>
+        <select
+          [(ngModel)]="periodoSeleccionadoId"
+          (ngModelChange)="onPeriodoChange()"
+        >
+          <option [ngValue]="null" disabled>Selecciona periodo</option>
+          <option *ngFor="let p of periodosOpciones" [ngValue]="p.id">
+            {{ p.nombre }}{{ p.activo ? ' (activo)' : '' }} — {{ p.materiasCount }} materia(s)
+          </option>
+        </select>
+      </label>
+    </section>
+
+    <label class="create-btn" [class.disabled]="isImporting || !periodoSeleccionadoId">
+      <i class="bi bi-file-earmark-pdf"></i>
+      {{ isImporting ? 'Importando…' : 'Importar Materias (PDF)' }}
+      <input
+        type="file"
+        accept=".pdf,application/pdf"
+        hidden
+        [disabled]="isImporting || !periodoSeleccionadoId"
+        (change)="onImportarMaterias($event)"
+      />
+    </label>
+
+    <p class="import-hint" *ngIf="periodoSeleccionadoNombre">
+      Mostrando materias de: <strong>{{ periodoSeleccionadoNombre }}</strong>
+    </p>
 
     <section class="filters-card">
 
@@ -26,24 +51,14 @@
         <input
           #searchInput
           type="text"
-          placeholder="Buscar por NRC, clave, materia, docente o salón..."
+          placeholder="Buscar por NRC o nombre de materia..."
           (input)="onSearch(searchInput.value)"
         >
       </div>
 
-      <!-- <select>
-        <option>Todas las Carreras</option>
-        <option>ITI</option>
-        <option>ICC</option>
-        <option>CCO</option>
-      </select> -->
-
-      <!-- <button class="filter-btn">
-        <i class="bi bi-filter"></i>
-        Filtrar
-      </button> -->
-
     </section>
+
+    <p class="error-state" *ngIf="errorMessage">{{ errorMessage }}</p>
 
     <section class="table-card">
 
@@ -56,6 +71,7 @@
         <span>DÍAS</span>
         <span>HORA</span>
         <span>SALÓN</span>
+        <span>ELIMINAR</span>
       </div>
 
       <div
@@ -109,13 +125,22 @@
           {{ materia.salon }}
         </span>
 
+        <button
+          type="button"
+          class="icon-action delete"
+          [attr.data-label]="'Eliminar'"
+          (click)="eliminarMateria(materia)"
+        >
+          <i class="bi bi-trash3"></i>
+        </button>
+
       </div>
 
       <div
         class="empty-state"
         *ngIf="!isLoading && materias.length === 0"
       >
-        No se encontraron materias con los filtros actuales.
+        No hay materias en el periodo activo. Usa <strong>Importar Materias (PDF)</strong> para cargar el catalogo.
       </div>
 
       <div

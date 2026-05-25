@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 
 import { environment } from '../../environments/environment';
@@ -30,6 +30,13 @@ const USER_EMAIL_KEY = 'agm_user_email';
 export class AuthService {
   private readonly apiBase =
     environment.apiBaseUrl || environment.url_api || 'http://127.0.0.1:8080';
+
+  private readonly currentUserSubject = new BehaviorSubject<Partial<AgmUser> | null>(
+    this.getStoredUser(),
+  );
+
+  /** Usuario actual (sesión + último GET /auth/me). */
+  readonly currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(
     private http: HttpClient,
@@ -107,17 +114,58 @@ export class AuthService {
 
     const user = loginData.user;
     if (user) {
-      storage.setItem(USER_ID_KEY, String(user.id));
-      storage.setItem(USER_ROLE_KEY, user.rol);
-      storage.setItem(USER_NAME_KEY, user.nombre);
-      storage.setItem(USER_EMAIL_KEY, user.email);
-      other.removeItem(USER_ID_KEY);
-      other.removeItem(USER_ROLE_KEY);
-      other.removeItem(USER_NAME_KEY);
-      other.removeItem(USER_EMAIL_KEY);
+      this.persistUserProfile(user, storage, other);
+      this.currentUserSubject.next(user);
     }
 
     return true;
+  }
+
+  /** Sincroniza perfil con MS-1 (GET /auth/me). */
+  refreshCurrentUser(): Observable<Partial<AgmUser> | null> {
+    if (!this.isAuthenticated()) {
+      this.currentUserSubject.next(null);
+      return of(null);
+    }
+
+    const cached = this.getStoredUser();
+    if (cached) {
+      this.currentUserSubject.next(cached);
+    }
+
+    return this.getMe().pipe(
+      map((response) => {
+        const user = response?.data;
+        if (user) {
+          this.updateStoredUser(user);
+          this.currentUserSubject.next(user);
+          return user;
+        }
+        return this.currentUserSubject.value;
+      }),
+      catchError(() => of(this.currentUserSubject.value)),
+    );
+  }
+
+  getRoleLabel(role?: string | null): string {
+    const normalized = this.normalizeRole(role ?? this.getUserRole());
+    if (normalized === 'admin') return 'Administrador';
+    if (normalized === 'docente') return 'Docente';
+    if (normalized === 'alumno') return 'Alumno';
+    return 'Usuario';
+  }
+
+  formatTodayLong(): string {
+    return new Date().toLocaleDateString('es-MX', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+  }
+
+  getGreetingName(): string {
+    const user = this.currentUserSubject.value ?? this.getStoredUser();
+    return user?.nombre?.trim() || user?.email?.split('@')[0] || 'Usuario';
   }
 
   applyRefreshedAccess(access: string): void {
@@ -165,6 +213,7 @@ export class AuthService {
       sessionStorage.removeItem(key);
       localStorage.removeItem(key);
     }
+    this.currentUserSubject.next(null);
   }
 
   isAuthenticated(): boolean {
@@ -239,5 +288,33 @@ export class AuthService {
   private normalizeRole(role: string | null | undefined): string | null {
     if (!role) return null;
     return String(role).trim().toLowerCase();
+  }
+
+  private updateStoredUser(user: AgmUser): void {
+    const storage = this.getActiveStorage();
+    const other = storage === localStorage ? sessionStorage : localStorage;
+    this.persistUserProfile(user, storage, other);
+  }
+
+  private persistUserProfile(
+    user: AgmUser,
+    storage: Storage,
+    other: Storage,
+  ): void {
+    storage.setItem(USER_ID_KEY, String(user.id));
+    storage.setItem(USER_ROLE_KEY, user.rol);
+    storage.setItem(USER_NAME_KEY, user.nombre);
+    storage.setItem(USER_EMAIL_KEY, user.email);
+    other.removeItem(USER_ID_KEY);
+    other.removeItem(USER_ROLE_KEY);
+    other.removeItem(USER_NAME_KEY);
+    other.removeItem(USER_EMAIL_KEY);
+  }
+
+  private getActiveStorage(): Storage {
+    if (sessionStorage.getItem(ACCESS_TOKEN_KEY)) {
+      return sessionStorage;
+    }
+    return localStorage;
   }
 }

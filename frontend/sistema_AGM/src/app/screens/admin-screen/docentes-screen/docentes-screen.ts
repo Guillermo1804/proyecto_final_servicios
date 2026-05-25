@@ -82,6 +82,32 @@ export class DocentesScreen implements OnInit {
     input.value = '';
   }
 
+  activarDocente(docente: DocenteItem): void {
+    if (docente.estado === 'Activo') {
+      return;
+    }
+
+    const confirmado = confirm(
+      `¿Activar acceso de ${docente.nombre}?\n\nSe creara o vinculara su usuario en MS-1 con el correo ${docente.correo}.`,
+    );
+    if (!confirmado) {
+      return;
+    }
+
+    this.docentesService.activarDocente(docente.id).subscribe({
+      next: () => {
+        alert(
+          `Docente activado. Puede iniciar sesion con ${docente.correo} ` +
+            'y contraseña inicial = parte del correo antes de @.',
+        );
+        this.loadDocentes();
+      },
+      error: (err) => {
+        alert(DocentesService.extractError(err, 'No se pudo activar el docente.'));
+      },
+    });
+  }
+
   eliminarDocente(docente: DocenteItem): void {
     const confirmado = confirm(`¿Eliminar al docente ${docente.nombre}?`);
     if (!confirmado) {

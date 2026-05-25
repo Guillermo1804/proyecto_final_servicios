@@ -7,7 +7,16 @@ docker compose up -d rabbitmq db-auth ms-auth ms-auth-event-consumer ms-auth-out
   db-periodos ms-periodos db-alumnos ms-alumnos ms-alumnos-outbox-worker nginx
 ```
 
-**Importante:** sin `ms-auth-event-consumer` los docentes quedan sin usuario en MS-1 y el login falla. Levanta el consumer **antes** de importar el PDF (o reinicia la cola si reimportas).
+**Importante:** con `USE_EVENT_BUS=true`, MS-3 **no usa gRPC** hacia Auth. El boton **Activar** llama a MS-1 por HTTP interno.
+
+En `ms-alumnos/.env` y `ms-auth/.env` la misma clave:
+
+```env
+INTERNAL_API_KEY=cambiar-en-produccion
+MS_AUTH_HTTP_URL=http://ms-auth:8001
+```
+
+Sin `ms-auth-event-consumer` el import por eventos puede tardar; **Activar** en admin es la via directa.
 
 Frontend:
 
@@ -25,12 +34,13 @@ Login segun rol a probar (admin / docente / alumno con datos en BD).
 | # | Prueba | Esperado |
 |---|--------|----------|
 | 1 | Listar docentes | `GET /docentes/?page=&limit=` datos reales |
-| 2 | Buscar | Filtro por nombre o busqueda local |
+| 2 | Buscar | `?buscar=` coincide en nombre, apellido, correo o departamento (ej. Mendes, Ruiz, Yael) |
 | 3 | Importar PDF | Boton "Importar Docentes (PDF)" → `POST /docentes/importar/` |
 | 4 | Eliminar | `DELETE /docentes/{id}/` con confirmacion |
-| 5 | Estado | Activo = tiene `usuario_id` en MS-1; Inactivo = pendiente |
+| 5 | Estado | Activo = tiene `usuario_id` en MS-1; Inactivo = sin vinculo |
+| 6 | Activar | Clic en **Activar** (Inactivo) → `POST /docentes/{id}/activar-usuario/` crea o vincula usuario MS-1 |
 
-**Nota:** No hay toggle de estado en API; solo lectura del vinculo con MS-1.
+**Nota:** Tras activar, login docente con su correo; contraseña inicial = parte antes de `@`.
 
 **Login tras import (docentes/alumnos nuevos):** contraseña inicial = parte del correo **antes de `@`** (ej. `maria.garcia@correo.buap.mx` → `maria.garcia`). Espera a que el consumer de MS-1 cree el usuario (`usuario_id` en lista = Activo) y prueba en `/login` con ese email y contraseña.
 
@@ -41,7 +51,9 @@ Login segun rol a probar (admin / docente / alumno con datos en BD).
 | # | Prueba | Esperado |
 |---|--------|----------|
 | 1 | Login docente | Usuario con registro en `docentes` (`usuario_id` = id MS-1) |
-| 2 | Lista materias | `GET /docentes/?usuario_id=` + `GET /materias/?docente_nombre=` (MS-2) |
+| 2 | Lista materias | Periodo activo (MS-2) + `GET /materias/?periodo_id=` + filtro por nombre del docente (MS-3) |
+| 3 | Periodo en pantalla | Muestra el periodo **activo** (ej. Otono), no texto fijo |
+| 4 | Sin materias | Mensaje claro si no hay match de nombre con el PDF |
 
 ---
 
@@ -86,6 +98,7 @@ Login con usuario **alumno** que tenga registro en tabla `alumnos` e inscripcion
 | Listar docentes | GET | `/docentes/` |
 | Importar docentes PDF | POST | `/docentes/importar/` |
 | Eliminar docente | DELETE | `/docentes/{id}/` |
+| Activar docente (MS-1) | POST | `/docentes/{id}/activar-usuario/` |
 | Alumnos por materia | GET | `/alumnos/por-materia/?materia_id=` |
 | Mis materias (alumno) | GET | `/alumnos/me/materias/` |
 | Preview import | POST | `/alumnos/importar/preview/` |
@@ -99,6 +112,7 @@ Login con usuario **alumno** que tenga registro en tabla `alumnos` e inscripcion
 |---------|----------|
 | 401 | Iniciar sesion; token en sessionStorage |
 | Docente sin materias | Crear docente con `usuario_id` y materias en MS-2 con su nombre |
+| Activar 400 gRPC deshabilitado | Rebuild `ms-alumnos` + `INTERNAL_API_KEY` en `.env` de MS-3 = MS-1 |
 | Alumno sin horario | Inscripciones activas en MS-3 + login alumno |
 | 403 en import | Solo **admin** puede importar alumnos (preview/confirmar) |
 

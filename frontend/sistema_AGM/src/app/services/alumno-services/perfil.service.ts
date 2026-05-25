@@ -58,13 +58,14 @@ export class PerfilService {
               carrera: '',
             });
           }),
-          catchError(() =>
-            of({
-              nombre: 'Alumno',
-              matricula: '—',
+          catchError(() => {
+            const stored = this.auth.getStoredUser();
+            return of({
+              nombre: stored?.nombre?.trim() || 'Usuario',
+              matricula: stored?.email || '—',
               carrera: '',
-            } as Perfil),
-          ),
+            } as Perfil);
+          }),
           shareReplay(1),
         );
       }

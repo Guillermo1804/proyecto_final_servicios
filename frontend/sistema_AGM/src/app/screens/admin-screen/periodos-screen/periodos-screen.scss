@@ -383,7 +383,7 @@
 .table-head,
 .table-row {
   display: grid;
-  grid-template-columns: minmax(0,1.5fr) minmax(0,.9fr) minmax(0,1fr) minmax(0,.7fr) minmax(0,.7fr);
+  grid-template-columns: minmax(0,1.5fr) minmax(0,.9fr) minmax(0,.7fr) minmax(0,1fr) minmax(0,.7fr) minmax(0,.7fr);
   min-width: 0;
   align-items: center;
 }
@@ -476,6 +476,15 @@
   &.inactivo {
     background: #f3f4f6;
     color: #374151;
+  }
+}
+
+.materias-count {
+  font-weight: 800;
+  color: #64748b;
+
+  &.has-materias {
+    color: #b45309;
   }
 }
 

@@ -4,6 +4,7 @@ import tempfile
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -12,6 +13,7 @@ from apps.core.models import Alumno, Docente, InscripcionMateria
 from apps.core.serializers import AlumnoSerializer, DocenteSerializer, InscripcionMateriaSerializer
 from apps.core.services.alumno_import import process_alumno_import_batch
 from apps.core.services.docente_import import process_docente_import_rows
+from apps.core.services.docente_provision import provision_docente_usuario
 from apps.core.services.materia_context import resolve_materia_context
 from apps.core.event_bus.publishers import publish_alumno_withdrawn
 from utils.auth import jwt_required
@@ -57,12 +59,30 @@ class DocenteViewSet(viewsets.ModelViewSet):
         if usuario_id:
             queryset = queryset.filter(usuario_id=usuario_id)
 
+        buscar = (params.get("buscar") or "").strip()
+        if buscar:
+            for token in buscar.split():
+                queryset = queryset.filter(
+                    Q(nombre__icontains=token)
+                    | Q(apellido__icontains=token)
+                    | Q(email__icontains=token)
+                    | Q(departamento__icontains=token)
+                )
+
         return queryset
 
     @jwt_required()
     def list(self, request, *args, **kwargs):
         params = request.query_params
-        allowed_params = {"page", "limit", "nombre", "apellido", "departamento", "usuario_id"}
+        allowed_params = {
+            "page",
+            "limit",
+            "nombre",
+            "apellido",
+            "departamento",
+            "usuario_id",
+            "buscar",
+        }
         unrecognized = set(params.keys()) - allowed_params
         if unrecognized:
             return error_response(
@@ -161,6 +181,28 @@ class DocenteViewSet(viewsets.ModelViewSet):
                 "Revise detalle_errores."
             )
         return success_response(summary, message=msg)
+
+    @jwt_required(roles=["admin"])
+    @action(detail=True, methods=["post"], url_path="activar-usuario")
+    def activar_usuario(self, request, pk=None):
+        """Crea o vincula usuario MS-1 para un docente Inactivo (sin usuario_id)."""
+        docente = self.get_object()
+        if docente.usuario_id:
+            serializer = DocenteSerializer(docente)
+            return success_response(
+                serializer.data,
+                message="El docente ya tiene usuario activo en MS-1.",
+            )
+
+        docente, err = provision_docente_usuario(docente)
+        if err:
+            return error_response(err, status=400)
+
+        serializer = DocenteSerializer(docente)
+        return success_response(
+            serializer.data,
+            message="Usuario de docente activado. Puede iniciar sesion con su correo.",
+        )
 
 
 class AlumnoViewSet(viewsets.ModelViewSet):

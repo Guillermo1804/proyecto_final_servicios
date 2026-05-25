@@ -143,6 +143,42 @@ class DocenteCRUDTests(TestCase):
         # Docente 1, Docente 10, Docente 11, Docente 12, Docente 13, Docente 14
         self.assertGreaterEqual(body["data"]["count"], 6)
 
+    def test_buscar_por_apellido_o_nombre_parcial(self):
+        """?buscar= debe coincidir en nombre, apellido, correo o departamento."""
+        Docente.objects.create(
+            usuario_id=4242,
+            nombre="Yael",
+            apellido="Mendes Sánchez Ruiz",
+            email="yael.mendes@fcc.buap.mx",
+            departamento="Computación",
+        )
+
+        for term in ("Mendes", "Ruiz", "Yael", "mendes", "fcc.buap"):
+            with self.subTest(term=term):
+                response = self.client.get(f"/api/docentes/?buscar={term}")
+                self.assertEqual(response.status_code, 200)
+                emails = [r["email"] for r in response.json()["data"]["results"]]
+                self.assertIn("yael.mendes@fcc.buap.mx", emails)
+
+        response = self.client.get("/api/docentes/?buscar=Yael Mendes")
+        self.assertEqual(response.status_code, 200)
+        emails = [r["email"] for r in response.json()["data"]["results"]]
+        self.assertIn("yael.mendes@fcc.buap.mx", emails)
+
+    @patch("apps.core.services.docente_provision.create_user_in_auth", return_value=(7777, None))
+    def test_activar_docente_vincula_usuario(self, _mock_create):
+        docente = Docente.objects.create(
+            usuario_id=None,
+            nombre="Ana",
+            apellido="Lopez",
+            email="ana.lopez@fcc.buap.mx",
+            departamento="IA",
+        )
+        response = self.client.post(f"/api/docentes/{docente.id}/activar-usuario/")
+        self.assertEqual(response.status_code, 200)
+        docente.refresh_from_db()
+        self.assertEqual(docente.usuario_id, 7777)
+
     def test_crear_docente_retorna_201(self):
         """POST /api/docentes/ con datos válidos crea el registro."""
         data = {
