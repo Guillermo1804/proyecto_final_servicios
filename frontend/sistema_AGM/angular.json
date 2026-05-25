@@ -59,12 +59,20 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
               "buildTarget": "sistema_AGM:build:production"
             },
             "development": {
-              "buildTarget": "sistema_AGM:build:development"
+              "buildTarget": "sistema_AGM:build:development",
+              "proxyConfig": "proxy.conf.json"
+            },
+            "ms1": {
+              "buildTarget": "sistema_AGM:build:development",
+              "proxyConfig": "proxy.conf.ms1.json"
             }
           },
           "defaultConfiguration": "development"

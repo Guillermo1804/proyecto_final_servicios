@@ -1,46 +1,55 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { FacadeService } from './facade.service';
-import { catchError, switchMap } from 'rxjs/operators';
-import { throwError } from 'rxjs';
 import { Router } from '@angular/router';
+import { catchError, switchMap, throwError } from 'rxjs';
 
-const AUTH_EXCLUDED_PATTERNS = ['/auth/login', '/auth/logout', '/auth/refresh', '/token'];
+import { AuthService } from './auth.service';
+
+const AUTH_EXCLUDED_PATTERNS = [
+  '/auth/login',
+  '/auth/logout',
+  '/auth/refresh-token',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+];
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
-  const facadeService = inject(FacadeService);
+  const auth = inject(AuthService);
   const router = inject(Router);
 
   if (AUTH_EXCLUDED_PATTERNS.some((pattern) => request.url.includes(pattern))) {
     return next(request);
   }
 
-  const token = facadeService.getAccessToken();
-
+  const token = auth.getAccessToken();
   const authReq = token
     ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : request;
 
   return next(authReq).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (err.status === 401) {
-        return facadeService.refreshToken().pipe(
-          switchMap((resp: any) => {
-            const newToken = facadeService.getAccessToken();
-            const retried = newToken
-              ? request.clone({ setHeaders: { Authorization: `Bearer ${newToken}` } })
-              : request;
-            return next(retried);
-          }),
-          catchError(() => {
-            facadeService.clearSession();
-            try { router.navigate(['/login']); } catch {}
-            return throwError(() => err);
-          })
-        );
+      if (err.status !== 401) {
+        return throwError(() => err);
       }
 
-      return throwError(() => err);
-    })
+      return auth.refreshTokenAndStore().pipe(
+        switchMap((newAccess) => {
+          if (!newAccess) {
+            auth.clearSession();
+            router.navigate(['/login']);
+            return throwError(() => err);
+          }
+          const retried = request.clone({
+            setHeaders: { Authorization: `Bearer ${newAccess}` },
+          });
+          return next(retried);
+        }),
+        catchError(() => {
+          auth.clearSession();
+          router.navigate(['/login']);
+          return throwError(() => err);
+        }),
+      );
+    }),
   );
 };
