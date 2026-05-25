@@ -108,12 +108,11 @@ export class PeriodosScreen implements OnInit {
     request.subscribe({
       next: () => {
         this.cancelarFormulario();
-        this.loadPeriodos();
-        this.loadPeriodoActivo();
+        this.afterMutation();
       },
-      error: () => {
-        alert('No se pudo guardar el periodo.');
-      }
+      error: (err) => {
+        alert(PeriodosService.extractError(err, 'No se pudo guardar el periodo.'));
+      },
     });
   }
 
@@ -142,23 +141,26 @@ export class PeriodosScreen implements OnInit {
     }
 
     this.periodosService.deletePeriodo(periodoId).subscribe({
-      next: () => {
-        this.afterMutation();
+      next: () => this.afterMutation(),
+      error: (err) => {
+        alert(PeriodosService.extractError(err, 'No se pudo eliminar el periodo.'));
       },
-      error: () => {
-        this.afterMutation();
-      }
     });
   }
 
   cambiarEstado(periodo: PeriodoItem): void {
-    const request = periodo.activo
-      ? this.periodosService.desactivarPeriodo(periodo.id)
-      : this.periodosService.activarPeriodo(periodo.id);
+    if (periodo.activo) {
+      alert(
+        'Para desactivar este periodo, active otro periodo desde la lista. El backend solo permite un periodo activo.',
+      );
+      return;
+    }
 
-    request.subscribe({
+    this.periodosService.activarPeriodo(periodo.id).subscribe({
       next: () => this.afterMutation(),
-      error: () => this.afterMutation()
+      error: (err) => {
+        alert(PeriodosService.extractError(err, 'No se pudo activar el periodo.'));
+      },
     });
   }
 
@@ -202,12 +204,15 @@ export class PeriodosScreen implements OnInit {
         this.currentPage = response.page;
         this.pageSize = response.pageSize;
       },
-      error: () => {
-        this.errorMessage = 'No se pudo cargar el catálogo de periodos.';
+      error: (err) => {
+        this.errorMessage = PeriodosService.extractError(
+          err,
+          'No se pudo cargar el catalogo de periodos.',
+        );
         this.periodos = [];
         this.totalItems = 0;
         this.totalPages = 1;
-      }
+      },
     });
   }
 

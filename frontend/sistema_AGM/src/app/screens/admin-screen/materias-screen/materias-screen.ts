@@ -1,9 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, of, switchMap } from 'rxjs';
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 import { BottomNavbarAdmin } from '../../../partials/bottom-navbar-admin/bottom-navbar-admin';
 import { MateriaItem, MateriasService } from '../../../services/admin-services/materias.service';
+import {
+  PeriodosService,
+} from '../../../services/admin-services/periodos.service';
+import { AgmListPage } from '../../../services/tools/agm-api.helpers';
 
 @Component({
   selector: 'app-materias-screen',
@@ -22,8 +26,10 @@ export class MateriasScreen implements OnInit {
   totalPages = 1;
   isLoading = false;
   errorMessage = '';
+  periodoActivoNombre = '';
 
   private readonly materiasService = inject(MateriasService);
+  private readonly periodosService = inject(PeriodosService);
 
   ngOnInit(): void {
     this.loadMaterias();
@@ -69,27 +75,54 @@ export class MateriasScreen implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.materiasService.getMaterias({
-      search: this.searchTerm,
-      page: this.currentPage,
-      pageSize: this.pageSize
-    }).pipe(finalize(() => {
-      this.isLoading = false;
-    })).subscribe({
-      next: (response) => {
-        this.materias = response.results;
-        this.totalItems = response.count;
-        this.totalPages = response.totalPages;
-        this.currentPage = response.page;
-        this.pageSize = response.pageSize;
-      },
-      error: () => {
-        this.errorMessage = 'No se pudo cargar el catálogo de materias.';
-        this.materias = [];
-        this.totalItems = 0;
-        this.totalPages = 1;
-      }
-    });
+    this.periodosService
+      .getPeriodoActivo()
+      .pipe(
+        switchMap((periodoActivo) => {
+          if (!periodoActivo) {
+            this.periodoActivoNombre = '';
+            this.errorMessage =
+              'No hay periodo activo. Cree o active un periodo en Administracion > Periodos.';
+            return of({
+              results: [],
+              count: 0,
+              page: 1,
+              pageSize: this.pageSize,
+              totalPages: 1,
+            } as AgmListPage<MateriaItem>);
+          }
+
+          this.periodoActivoNombre = periodoActivo.nombre;
+          this.errorMessage = '';
+          return this.materiasService.getMaterias({
+            search: this.searchTerm,
+            page: this.currentPage,
+            pageSize: this.pageSize,
+            periodoId: periodoActivo.id,
+          });
+        }),
+        finalize(() => {
+          this.isLoading = false;
+        }),
+      )
+      .subscribe({
+        next: (response) => {
+          this.materias = response.results;
+          this.totalItems = response.count;
+          this.totalPages = response.totalPages;
+          this.currentPage = response.page;
+          this.pageSize = response.pageSize;
+        },
+        error: (err) => {
+          this.errorMessage = PeriodosService.extractError(
+            err,
+            'No se pudo cargar el catalogo de materias.',
+          );
+          this.materias = [];
+          this.totalItems = 0;
+          this.totalPages = 1;
+        },
+      });
   }
 
 }
