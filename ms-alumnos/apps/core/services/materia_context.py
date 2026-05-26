@@ -30,10 +30,10 @@ def resolve_materia_context(
         return base
 
     docente_id = int(detail.get("docente_id") or 0)
-    docente_email = fallback_docente_email or ""
+    docente_email = (fallback_docente_email or "").strip()
     if docente_id:
         docente = Docente.objects.filter(usuario_id=docente_id).first()
-        if docente:
+        if docente and docente.email:
             docente_email = docente.email
 
     return {

@@ -316,7 +316,9 @@ export class ImportarAlumnosScreen implements OnInit {
           const creados = result.creados ?? 0;
           const actualizados = result.actualizados ?? 0;
           const inscritos = result.inscritos ?? 0;
-          this.successMessage = `Importacion completada: ${creados} creado(s), ${actualizados} actualizado(s), ${inscritos} inscripcion(es).`;
+          this.successMessage =
+            `Importacion completada: ${creados} creado(s), ${actualizados} actualizado(s), ` +
+            `${inscritos} inscripcion(es). Los alumnos nuevos reciben su clave de acceso por correo (MS-6).`;
           if (inscritos > 0 || creados > 0 || actualizados > 0) {
             setTimeout(() => {
               void this.router.navigate(this.volverUrl());

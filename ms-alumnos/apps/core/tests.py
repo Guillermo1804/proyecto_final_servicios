@@ -491,6 +491,63 @@ class AlumnoBajaMateriaTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["message"], "baja ya procesada")
 
+    @override_settings(USE_EVENT_BUS=True)
+    @patch("django.db.transaction.on_commit", side_effect=lambda func: func())
+    @patch(
+        "apps.core.views.resolve_materia_context",
+        return_value={
+            "materia_id": 5,
+            "periodo_id": 3,
+            "docente_email": "doc@buap.mx",
+            "docente_id": 99,
+            "docente_nombre": "Doc",
+            "materia_nombre": "Bajas",
+            "nrc": "500",
+        },
+    )
+    def test_baja_materia_como_alumno_autenticado(self, _mock_ctx, _mock_on_commit):
+        """El rol alumno puede darse de baja en su propia inscripción."""
+        from utils.jwt_local import AuthenticatedUser
+
+        self.mock_validate.return_value = AuthenticatedUser(
+            user_id=10,
+            email="luis@b.com",
+            rol="alumno",
+            nombre="Luis Baja",
+        )
+        payload = {"materia_id": 5}
+        response = self.client.post(
+            f"/api/alumnos/{self.alumno.id}/baja-materia/",
+            payload,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200, response.json())
+        self.assertTrue(response.json()["success"])
+
+    def test_baja_materia_alumno_no_puede_baja_ajeno(self):
+        from utils.jwt_local import AuthenticatedUser
+
+        otro = Alumno.objects.create(
+            usuario_id=11,
+            matricula="2020556",
+            nombre="Otro",
+            apellido="Alumno",
+            email="otro@b.com",
+        )
+        self.mock_validate.return_value = AuthenticatedUser(
+            user_id=10,
+            email="luis@b.com",
+            rol="alumno",
+            nombre="Luis Baja",
+        )
+        response = self.client.post(
+            f"/api/alumnos/{otro.id}/baja-materia/",
+            {"materia_id": 5},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("propias", response.json()["message"].lower())
+
 
 class AlumnoImportMs1ProvisionTests(TestCase):
     """Importacion de alumnos intenta activar MS-1 de forma sincrona."""

@@ -69,7 +69,7 @@ Dashboards ya no muestran nombres inventados (ej. "Dr. Silva"); la fecha del doc
 
 1. `/forgot-password` — ingresar email
 2. Mensaje generico de exito (aunque el correo no exista)
-3. Requiere MS-6 + worker si quieres correo real
+3. Requiere MS-6 + workers (ver `PRUEBAS_MS6_NOTIFICACIONES.md`) si quieres correo real
 
 ### 6. Refresh token (opcional tecnico)
 

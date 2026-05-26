@@ -586,14 +586,16 @@ onExcelSeleccionado(event: Event): void {
   });
 }
 cerrarMateria(): void {
-  const confirmar = confirm('¿Cerrar la materia? Se publicara el cierre de calificaciones (MS-4).');
+  const confirmar = confirm(
+    '¿Cerrar la materia? Se publicaran las calificaciones (MS-4) y se avisara por correo a los alumnos inscritos (MS-6).',
+  );
   if (!confirmar || !this.materiaId) {
     return;
   }
 
   this.detalleMateriaService.cerrarMateriaCalificaciones(this.materiaId).subscribe({
     next: () => {
-      alert('Materia cerrada en MS-4.');
+      alert('Materia cerrada. Los alumnos recibiran un correo de aviso en breve (MS-6).');
       this.materiasService.updateMateriaEstado(this.codigoMateria, 'Terminado').subscribe({
         next: () => undefined,
         error: () => undefined,

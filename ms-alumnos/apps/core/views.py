@@ -24,7 +24,6 @@ from utils.auth import jwt_required
 from utils.notificaciones_client import send_baja_notif
 from utils.pagination import AGMPagination
 from utils.pdf_docentes_parser import parse_pdf_docentes
-from utils.periodos_client import get_materia_docente_id
 from utils.periodos_ms2_client import get_materia_detail
 from utils.responses import error_response, success_response
 
@@ -536,10 +535,18 @@ class AlumnoViewSet(viewsets.ModelViewSet):
             message="Acceso del alumno desactivado en MS-1.",
         )
 
-    @jwt_required(roles=["admin"])
+    @jwt_required(roles=["alumno", "admin"])
     @action(detail=True, methods=["post"], url_path="baja-materia")
     def baja_materia(self, request, pk=None):
         alumno = self.get_object()
+        if getattr(request, "user_rol", "") == "alumno":
+            alumno_autenticado = resolve_alumno_for_request(request, link_usuario=False)
+            if not alumno_autenticado or alumno_autenticado.id != alumno.id:
+                return error_response(
+                    "Solo puedes darte de baja en tus propias materias.",
+                    status=403,
+                )
+
         materia_id = request.data.get("materia_id")
 
         if not materia_id:
@@ -570,9 +577,7 @@ class AlumnoViewSet(viewsets.ModelViewSet):
                 inscripcion.save()
 
                 materia_ctx = resolve_materia_context(int(materia_id))
-                docente_id = materia_ctx.get("docente_id") or get_materia_docente_id(
-                    int(materia_id)
-                ) or 0
+                docente_id = int(materia_ctx.get("docente_id") or 0)
 
                 if _use_event_bus():
                     publish_alumno_withdrawn(

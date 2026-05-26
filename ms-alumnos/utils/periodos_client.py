@@ -23,10 +23,21 @@ def _grpc_timeout() -> float:
 
 
 def get_materia_docente_id(materia_id: int) -> int | None:
-    block_business_grpc('periodos_client.py.get_materia_docente_id')
-    """Obtiene usuario_id del docente titular desde MS-2."""
+    """Obtiene usuario_id del docente titular (proyección local o gRPC legacy)."""
+    from django.conf import settings
+
     if materia_id <= 0:
         return None
+
+    if getattr(settings, 'USE_EVENT_BUS', False):
+        from utils.periodos_ms2_client import get_materia_detail
+
+        detail = get_materia_detail(materia_id)
+        if detail and detail.get('docente_id'):
+            return int(detail['docente_id'])
+        return None
+
+    block_business_grpc('periodos_client.py.get_materia_docente_id')
     try:
         with grpc.insecure_channel(_periodos_target()) as channel:
             stub = periodos_pb2_grpc.PeriodosServiceStub(channel)
