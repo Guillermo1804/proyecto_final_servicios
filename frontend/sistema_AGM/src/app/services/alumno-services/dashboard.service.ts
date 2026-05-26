@@ -5,6 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { ActividadApiDto } from '../../models/calificaciones-api.model';
 import { InscripcionMateriaApiDto } from '../../models/alumnos-api.model';
 import { AlumnosService } from './alumnos.service';
+import { horarioIncluyeDia } from './horario-dias.util';
 import { PeriodosService } from '../admin-services/periodos.service';
 import { CalificacionesService } from '../docente-services/calificaciones.service';
 
@@ -206,28 +207,7 @@ export class DashboardService {
   }
 
   private inscripcionEsHoy(item: InscripcionMateriaApiDto, diaHoy: string): boolean {
-    const horario = String(item.horario ?? '').toUpperCase();
-    if (!horario.trim()) {
-      return diaHoy === 'LUN';
-    }
-
-    const tokens = horario
-      .replace(/[\/\s,]+/g, ' ')
-      .split(' ')
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    const mapa: Record<string, string[]> = {
-      LUN: ['LUN', 'L', 'LU', 'LUNES'],
-      MAR: ['MAR', 'MA', 'M', 'MARTES'],
-      'MIÉ': ['MIÉ', 'MIE', 'MI', 'X', 'MIERCOLES', 'MIÉRCOLES'],
-      JUE: ['JUE', 'J', 'JU', 'JUEVES'],
-      VIE: ['VIE', 'V', 'VI', 'VIERNES'],
-      SÁB: ['SÁB', 'SAB', 'SA', 'SABADO', 'SÁBADO'],
-      DOM: ['DOM', 'D', 'DO', 'DOMINGO'],
-    };
-
-    const validos = mapa[diaHoy] ?? [];
-    return tokens.some((token) => validos.includes(token));
+    const horario = String(item.horario ?? '');
+    return horarioIncluyeDia(horario, diaHoy);
   }
 }

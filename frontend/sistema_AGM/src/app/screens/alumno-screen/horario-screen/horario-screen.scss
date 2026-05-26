@@ -115,6 +115,10 @@
   display: grid;
   grid-template-columns: 60px 1fr;
   gap: 1rem;
+
+  &.no-hour {
+    grid-template-columns: 1fr;
+  }
 }
 
 .hour {

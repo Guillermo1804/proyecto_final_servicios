@@ -79,6 +79,25 @@ class InscripcionMateria(models.Model):
         return f"{self.alumno.matricula} en {self.nombre_materia} ({self.nrc})"
 
 
+class MateriaProjection(models.Model):
+    """Read model de materias MS-2 (eventos materia.*.v1)."""
+
+    materia_id = models.IntegerField(primary_key=True)
+    periodo_id = models.IntegerField(db_index=True, default=0)
+    periodo_nombre = models.CharField(max_length=128, blank=True, default="")
+    nrc = models.CharField(max_length=32, default="")
+    nombre = models.CharField(max_length=255, default="")
+    seccion = models.CharField(max_length=32, blank=True, default="")
+    clave = models.CharField(max_length=32, blank=True, default="")
+    horario = models.CharField(max_length=255, blank=True, default="")
+    docente_id = models.IntegerField(null=True, blank=True, db_index=True)
+    docente_nombre = models.CharField(max_length=255, blank=True, default="")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "materia_projection"
+
+
 class PendingUserCreation(models.Model):
     """Seguimiento de credenciales solicitadas a MS-1 via bus."""
 
@@ -150,3 +169,13 @@ class EventOutbox(models.Model):
                 name="idx_outbox_status_created",
             ),
         ]
+
+
+class EventInbox(models.Model):
+    event_id = models.UUIDField(primary_key=True, editable=False)
+    event_name = models.CharField(max_length=128, db_index=True)
+    handler = models.CharField(max_length=64)
+    processed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "event_inbox"

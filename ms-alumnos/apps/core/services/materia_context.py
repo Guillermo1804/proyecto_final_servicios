@@ -43,5 +43,6 @@ def resolve_materia_context(
         "docente_nombre": detail.get("docente_nombre") or "",
         "materia_nombre": detail.get("nombre") or "",
         "nrc": detail.get("nrc") or "",
+        "horario": detail.get("horario") or "",
         "docente_id": docente_id,
     }

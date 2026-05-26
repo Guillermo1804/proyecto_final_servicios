@@ -41,6 +41,7 @@ def _upsert_inscripcion(alumno: Alumno, materia_ctx: dict) -> bool:
         "nrc": materia_ctx.get("nrc") or "",
         "nombre_materia": materia_ctx.get("materia_nombre") or "",
         "docente_nombre": materia_ctx.get("docente_nombre") or "",
+        "horario": materia_ctx.get("horario") or "",
         "activa": True,
         "fecha_baja": None,
     }

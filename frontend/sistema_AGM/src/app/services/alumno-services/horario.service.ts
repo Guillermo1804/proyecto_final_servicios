@@ -3,6 +3,7 @@ import { Observable, map } from 'rxjs';
 
 import { InscripcionMateriaApiDto } from '../../models/alumnos-api.model';
 import { AlumnosService } from './alumnos.service';
+import { DIAS_SEMANA_LAB, extractHoraParaDia, parseDiasDesdeHorario } from './horario-dias.util';
 
 export interface HorarioDia {
   dia: string;
@@ -27,15 +28,8 @@ export interface HorarioResumen {
   profesores: number;
 }
 
-const DIAS_SEMANA = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE'] as const;
-
-const MAPA_DIAS: Record<string, string[]> = {
-  LUN: ['LUN', 'L', 'LU', 'LUNES'],
-  MAR: ['MAR', 'MA', 'M', 'MARTES'],
-  'MIÉ': ['MIÉ', 'MIE', 'MI', 'X', 'MIERCOLES', 'MIÉRCOLES'],
-  JUE: ['JUE', 'J', 'JU', 'JUEVES'],
-  VIE: ['VIE', 'V', 'VI', 'VIERNES'],
-};
+const DIAS_SEMANA = DIAS_SEMANA_LAB;
+const COLORES_MATERIA = ['azul', 'naranja', 'morado', 'gris'] as const;
 
 @Injectable({ providedIn: 'root' })
 export class HorarioService {
@@ -90,59 +84,44 @@ export class HorarioService {
     const horarioTexto = String(item.horario ?? detail?.['horario'] ?? '').trim();
     const materia = String(item.nombre_materia ?? detail?.['nombre'] ?? 'Materia');
     const docente = String(item.docente_nombre ?? detail?.['docente_nombre'] ?? '');
-    const aula = String(detail?.['salon'] ?? detail?.['aula'] ?? '—');
+    const aula = String(detail?.['salon'] ?? detail?.['aula'] ?? '').trim();
     const dias = this.parseDias(horarioTexto);
+    const color = this.colorParaMateria(item);
 
     if (!dias.length) {
       return [
         {
-          hora: this.extractHora(horarioTexto),
+          hora: extractHoraParaDia(horarioTexto, 'LUN'),
           materia,
           docente,
           aula,
           horario: horarioTexto || 'Sin horario',
-          color: 'azul',
+          color,
           icono: 'bi-clock',
           dia: 'LUN',
         },
       ];
     }
 
-    return dias.map((dia, index) => ({
-      hora: this.extractHora(horarioTexto),
+    return dias.map((dia) => ({
+      hora: extractHoraParaDia(horarioTexto, dia),
       materia,
       docente,
       aula,
       horario: horarioTexto,
-      color: index % 2 === 0 ? 'azul' : 'naranja',
+      color,
       icono: 'bi-clock',
       dia,
     }));
   }
 
-  private parseDias(horario: string): string[] {
-    if (!horario) {
-      return [];
-    }
-    const tokens = horario
-      .toUpperCase()
-      .replace(/[\/\s,]+/g, ' ')
-      .split(' ')
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    const encontrados: string[] = [];
-    for (const dia of DIAS_SEMANA) {
-      const aliases = MAPA_DIAS[dia] ?? [];
-      if (tokens.some((token) => aliases.includes(token))) {
-        encontrados.push(dia);
-      }
-    }
-    return encontrados;
+  private colorParaMateria(item: InscripcionMateriaApiDto): string {
+    const id = Number(item.materia_id ?? 0);
+    const key = id > 0 ? id : String(item.nrc ?? item.nombre_materia ?? '').length;
+    return COLORES_MATERIA[Math.abs(key) % COLORES_MATERIA.length];
   }
 
-  private extractHora(horario: string): string {
-    const match = horario.match(/\d{1,2}:\d{2}/);
-    return match ? match[0] : '—';
+  private parseDias(horario: string): string[] {
+    return parseDiasDesdeHorario(horario);
   }
 }
