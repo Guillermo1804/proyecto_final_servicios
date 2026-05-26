@@ -2,7 +2,7 @@ import grpc
 
 from grpc_clients.channel import get_channel, grpc_timeout
 from grpc_clients.errors import map_rpc_error
-from proto_generated import auth_pb2, auth_pb2_grpc
+from proto_generated import agm_common_pb2, auth_pb2, auth_pb2_grpc
 
 """DEPRECATED (Fase 9): cliente gRPC de negocio. Bloqueado con USE_EVENT_BUS=true."""
 from agm_events.grpc_legacy import block_business_grpc
@@ -27,10 +27,16 @@ def validate_token(token: str) -> auth_pb2.ValidateTokenResponse:
     """
     normalized = (token or '').replace('Bearer ', '').strip()
     if not normalized:
-        return auth_pb2.ValidateTokenResponse(valid=False)
+        return auth_pb2.ValidateTokenResponse(
+            result=agm_common_pb2.TokenValidationResult(valid=False),
+        )
     try:
         return get_auth_stub().ValidateToken(
-            auth_pb2.ValidateTokenRequest(token=normalized),
+            auth_pb2.ValidateTokenRequest(
+                credential=agm_common_pb2.AccessTokenCredential(
+                    access_token=normalized,
+                ),
+            ),
             timeout=grpc_timeout(),
         )
     except grpc.RpcError as exc:

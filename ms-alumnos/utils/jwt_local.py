@@ -110,6 +110,16 @@ def validate_access_token(token: str) -> AuthenticatedUser:
         logger.warning("jwt_validation_failed", extra={"error": str(exc)})
         raise ValueError("Token inválido") from exc
 
+    jti = claims.get("jti")
+    if jti:
+        try:
+            from agm_events.jwt_revocation import is_jti_revoked
+
+            if is_jti_revoked(str(jti)):
+                raise ValueError("Token revocado")
+        except ImportError:
+            pass
+
     user_id = claims.get("user_id") or claims.get("sub")
     if user_id is None:
         raise ValueError("Token sin user_id")

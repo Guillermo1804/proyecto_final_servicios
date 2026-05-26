@@ -103,7 +103,14 @@ def handle_qr_session_created(envelope: EventEnvelope) -> None:
     _consume(envelope, 'qr_session_created', proj.handle_qr_session_created)
 
 
+def handle_token_revoked(envelope: EventEnvelope) -> None:
+    from agm_events.token_revoked import handle_token_revoked as _apply
+
+    _apply(envelope)
+
+
 HANDLERS = {
+    'token.revoked.v1': handle_token_revoked,
     'periodo.created.v1': handle_periodo_created,
     'periodo.updated.v1': handle_periodo_updated,
     'periodo.activated.v1': handle_periodo_activated,

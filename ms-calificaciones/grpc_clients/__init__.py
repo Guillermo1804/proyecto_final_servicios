@@ -2,7 +2,15 @@ import grpc
 from decouple import config
 from grpc import StatusCode
 
-from proto_generated import alumnos_pb2_grpc, alumnos_pb2, auth_pb2_grpc, auth_pb2, periodos_pb2_grpc, periodos_pb2
+from proto_generated import (
+    agm_common_pb2,
+    alumnos_pb2,
+    alumnos_pb2_grpc,
+    auth_pb2,
+    auth_pb2_grpc,
+    periodos_pb2,
+    periodos_pb2_grpc,
+)
 
 """DEPRECATED (Fase 9): cliente gRPC de negocio. Bloqueado con USE_EVENT_BUS=true."""
 from agm_events.grpc_legacy import block_business_grpc
@@ -65,7 +73,9 @@ def get_alumno_by_id(alumno_id):
 def validate_token(token):
     block_business_grpc('__init__.py.validate_token')
     stub = auth_pb2_grpc.AuthServiceStub(auth_channel())
-    req = auth_pb2.ValidateTokenRequest(token=token)
+    req = auth_pb2.ValidateTokenRequest(
+        credential=agm_common_pb2.AccessTokenCredential(access_token=token),
+    )
     try:
         return stub.ValidateToken(req, timeout=TIMEOUT)
     except grpc.RpcError as e:

@@ -448,6 +448,7 @@ class AlumnoBajaMateriaTests(TestCase):
         self.patcher.stop()
 
     @override_settings(USE_EVENT_BUS=True)
+    @patch("django.db.transaction.on_commit", side_effect=lambda func: func())
     @patch(
         "apps.core.views.resolve_materia_context",
         return_value={
@@ -460,7 +461,7 @@ class AlumnoBajaMateriaTests(TestCase):
             "nrc": "500",
         },
     )
-    def test_baja_materia_exitosa_event_bus(self, _mock_ctx):
+    def test_baja_materia_exitosa_event_bus(self, _mock_ctx, _mock_on_commit):
         """Baja publica alumno.withdrawn.v1 sin depender de MS-6."""
         payload = {"materia_id": 5}
 
@@ -666,7 +667,8 @@ class NotificacionesClientEnvTests(TestCase):
         },
         clear=False,
     )
-    def test_target_from_env(self):
+    @patch('utils.notificaciones_client.block_business_grpc')
+    def test_target_from_env(self, _mock_block):
         from utils.notificaciones_client import _notificaciones_target
 
         self.assertEqual(_notificaciones_target(), 'ms-notificaciones:50056')
@@ -797,11 +799,24 @@ class AlumnoMeMateriasTests(TestCase):
     def tearDown(self):
         self.patcher_auth.stop()
 
-    @patch("utils.periodos_ms2_client.get_periodos_stub")
-    def test_get_my_materias_enriquecido(self, mock_get_periodos_stub):
+    @patch("apps.core.views.get_materia_detail")
+    def test_get_my_materias_enriquecido(self, mock_get_materia_detail):
         """Alumno autenticado obtiene sus materias activas enriquecidas con MS-2."""
         self.client.credentials(HTTP_AUTHORIZATION="Bearer token_alumno")
-        
+
+        mock_get_materia_detail.return_value = {
+            "id": 123,
+            "nrc": "11111",
+            "nombre": "Matematicas Basicas",
+            "seccion": "001",
+            "clave": "MAT101",
+            "docente_nombre": "Docente Uno",
+            "docente_id": 888,
+            "horario": "L-M 08:00",
+            "periodo_id": 2026,
+            "periodo_nombre": "Primavera 2026",
+        }
+
         # 1. Crear el Alumno en la BD
         alumno = Alumno.objects.create(
             usuario_id=50,
@@ -824,23 +839,7 @@ class AlumnoMeMateriasTests(TestCase):
             activa=True
         )
 
-        # 3. Mockear gRPC PeriodosService stub
-        mock_periodos_stub = MagicMock()
-        mock_periodos_stub.GetMateriaById.return_value = periodos_pb2.MateriaInfo(
-            id=123,
-            nrc="11111",
-            nombre="Matematicas Basicas",
-            seccion="001",
-            clave="MAT101",
-            docente_nombre="Docente Uno",
-            docente_id=888,
-            horario="L-M 08:00",
-            periodo_id=2026,
-            periodo_nombre="Primavera 2026"
-        )
-        mock_get_periodos_stub.return_value = mock_periodos_stub
-
-        # 4. Hacer la peticion GET
+        # 3. Hacer la peticion GET
         response = self.client.get("/api/alumnos/me/materias/")
         self.assertEqual(response.status_code, 200)
         

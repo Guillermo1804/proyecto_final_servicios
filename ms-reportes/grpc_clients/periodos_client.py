@@ -46,7 +46,7 @@ def get_periodo_activo() -> periodos_pb2.PeriodoInfo:
     block_business_grpc('periodos_client.py.get_periodo_activo')
     try:
         return get_periodos_stub().GetPeriodoActivo(
-            periodos_pb2.Empty(),
+            periodos_pb2.GetPeriodoActivoRequest(),
             timeout=grpc_timeout(),
         )
     except grpc.RpcError as exc:

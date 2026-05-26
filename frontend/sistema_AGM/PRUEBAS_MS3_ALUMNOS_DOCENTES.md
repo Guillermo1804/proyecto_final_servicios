@@ -68,7 +68,7 @@ Login segun rol a probar (admin / docente / alumno con datos en BD).
 | 5 | Desactivar alumno | `POST /alumnos/{id}/desactivar-usuario/` — `activo=false` en MS-1 y `usuario_id` null en MS-3 |
 | 6 | Reactivar (respaldo) | `POST /alumnos/{id}/activar-usuario/` si quedo sin usuario tras caida de MS-1 |
 
-Evaluacion / actividades / calificaciones siguen en UI local (MS-4 en siguiente integracion).
+Evaluacion / actividades / calificaciones en detalle materia: MS-4 (ver `PRUEBAS_MS4_CALIFICACIONES.md`).
 
 ---
 

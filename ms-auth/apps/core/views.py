@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken, TokenError
 
 from django.conf import settings
 
@@ -319,12 +319,33 @@ def logout(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     try:
+        from agm_events.jwt_revocation import revoke_jti
+
         refresh = RefreshToken(serializer.validated_data['refresh'])
-        jti = refresh.get('jti')
+        refresh_jti = refresh.get('jti')
         user_id = refresh.get('user_id') or getattr(request.user, 'id', None)
         refresh.blacklist()
-        if jti and user_id:
-            enqueue_token_revoked(user_id=int(user_id), jti=str(jti))
+
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        access_jti = None
+        if auth_header.startswith('Bearer '):
+            try:
+                access_jti = AccessToken(auth_header[7:].strip()).get('jti')
+            except TokenError:
+                pass
+
+        if refresh_jti:
+            revoke_jti(str(refresh_jti))
+            if user_id:
+                enqueue_token_revoked(
+                    user_id=int(user_id), jti=str(refresh_jti), token_type='refresh'
+                )
+        if access_jti:
+            revoke_jti(str(access_jti))
+            if user_id:
+                enqueue_token_revoked(
+                    user_id=int(user_id), jti=str(access_jti), token_type='access'
+                )
     except TokenError:
         return Response({
             'success': False,

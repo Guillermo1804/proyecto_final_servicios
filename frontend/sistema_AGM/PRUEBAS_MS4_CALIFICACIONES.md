@@ -82,4 +82,4 @@ Ruta ejemplo: `/docente/materias/14502`
 - `src/app/screens/docente-screen/detalle-materia-screen/*`
 - `proxy.conf.json` (prefijo `/concentrado`)
 
-**Fuera de alcance MS-4 en esta integración:** pantalla alumno `/alumno/notas` (sigue mock local).
+**Alumno `/alumno/notas`:** `GET /alumnos/me/materias/` + `GET /concentrado/{materia_id}` (MS-3 + MS-4).

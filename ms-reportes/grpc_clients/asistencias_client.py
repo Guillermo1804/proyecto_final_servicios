@@ -22,12 +22,10 @@ _FALLBACK_CODES = frozenset(
 
 
 def use_mock_data() -> bool:
-    block_business_grpc('asistencias_client.py.use_mock_data')
     return env_bool('USE_MOCK_DATA', default=False)
 
 
 def _should_fallback_to_mock(exc: grpc.RpcError) -> bool:
-    block_business_grpc('asistencias_client.py._should_fallback_to_mock')
     return exc.code() in _FALLBACK_CODES
 
 

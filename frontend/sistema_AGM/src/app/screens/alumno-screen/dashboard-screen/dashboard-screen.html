@@ -153,8 +153,8 @@
 
       </div>
 
-      <p class="table-empty" *ngIf="!evaluaciones.length">
-        Sin evaluaciones proximas registradas (MS-4).
+      <p class="table-empty" *ngIf="!materiasLoading && !evaluaciones.length">
+        Sin actividades con fecha futura en tus materias (MS-4 /actividades).
       </p>
 
     </section>

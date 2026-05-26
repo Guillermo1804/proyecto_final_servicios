@@ -22,17 +22,14 @@ _FALLBACK_CODES = frozenset(
 
 
 def use_mock_data() -> bool:
-    block_business_grpc('calificaciones_client.py.use_mock_data')
     return env_bool('USE_MOCK_DATA', default=False)
 
 
 def _should_fallback_to_mock(exc: grpc.RpcError) -> bool:
-    block_business_grpc('calificaciones_client.py._should_fallback_to_mock')
     return exc.code() in _FALLBACK_CODES
 
 
 def _mock_estadisticas_materia(materia_id: int) -> calificaciones_pb2.EstadisticasMateriaResponse:
-    block_business_grpc('calificaciones_client.py._mock_estadisticas_materia')
     concentrado = mock_concentrado(materia_id)
     aprobados = sum(1 for a in concentrado.alumnos if a.promedio_redondeado >= 6)
     reprobados = len(concentrado.alumnos) - aprobados

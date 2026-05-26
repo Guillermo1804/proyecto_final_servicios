@@ -27,11 +27,8 @@ if _version_not_supported:
 
 class AuthServiceStub(object):
     """=============================================
-    MS-1: Auth & Users — Servicio gRPC
-    Puerto: 50051
+    MS-1: Auth & Users — EXPOSICIÓN gRPC (puerto 50051)
     =============================================
-    Este servicio es consumido por TODOS los demás MS
-    para validar tokens JWT y verificar roles.
 
     """
 
@@ -42,22 +39,22 @@ class AuthServiceStub(object):
             channel: A grpc.Channel.
         """
         self.ValidateToken = channel.unary_unary(
-                '/auth.AuthService/ValidateToken',
+                '/agm.auth.AuthService/ValidateToken',
                 request_serializer=auth__pb2.ValidateTokenRequest.SerializeToString,
                 response_deserializer=auth__pb2.ValidateTokenResponse.FromString,
                 _registered_method=True)
         self.GetUserById = channel.unary_unary(
-                '/auth.AuthService/GetUserById',
+                '/agm.auth.AuthService/GetUserById',
                 request_serializer=auth__pb2.GetUserByIdRequest.SerializeToString,
                 response_deserializer=auth__pb2.UserProfile.FromString,
                 _registered_method=True)
         self.CheckRole = channel.unary_unary(
-                '/auth.AuthService/CheckRole',
+                '/agm.auth.AuthService/CheckRole',
                 request_serializer=auth__pb2.CheckRoleRequest.SerializeToString,
                 response_deserializer=auth__pb2.CheckRoleResponse.FromString,
                 _registered_method=True)
         self.CreateUser = channel.unary_unary(
-                '/auth.AuthService/CreateUser',
+                '/agm.auth.AuthService/CreateUser',
                 request_serializer=auth__pb2.CreateUserRequest.SerializeToString,
                 response_deserializer=auth__pb2.CreateUserResponse.FromString,
                 _registered_method=True)
@@ -65,38 +62,31 @@ class AuthServiceStub(object):
 
 class AuthServiceServicer(object):
     """=============================================
-    MS-1: Auth & Users — Servicio gRPC
-    Puerto: 50051
+    MS-1: Auth & Users — EXPOSICIÓN gRPC (puerto 50051)
     =============================================
-    Este servicio es consumido por TODOS los demás MS
-    para validar tokens JWT y verificar roles.
 
     """
 
     def ValidateToken(self, request, context):
-        """Valida un JWT y retorna los claims del usuario
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetUserById(self, request, context):
-        """Obtiene el perfil de un usuario por su ID
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def CheckRole(self, request, context):
-        """Verifica si un usuario tiene un rol específico
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def CreateUser(self, request, context):
-        """Crea un nuevo usuario (usado por MS-3 al importar docentes/alumnos)
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -126,19 +116,16 @@ def add_AuthServiceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'auth.AuthService', rpc_method_handlers)
+            'agm.auth.AuthService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('auth.AuthService', rpc_method_handlers)
+    server.add_registered_method_handlers('agm.auth.AuthService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class AuthService(object):
     """=============================================
-    MS-1: Auth & Users — Servicio gRPC
-    Puerto: 50051
+    MS-1: Auth & Users — EXPOSICIÓN gRPC (puerto 50051)
     =============================================
-    Este servicio es consumido por TODOS los demás MS
-    para validar tokens JWT y verificar roles.
 
     """
 
@@ -156,7 +143,7 @@ class AuthService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/auth.AuthService/ValidateToken',
+            '/agm.auth.AuthService/ValidateToken',
             auth__pb2.ValidateTokenRequest.SerializeToString,
             auth__pb2.ValidateTokenResponse.FromString,
             options,
@@ -183,7 +170,7 @@ class AuthService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/auth.AuthService/GetUserById',
+            '/agm.auth.AuthService/GetUserById',
             auth__pb2.GetUserByIdRequest.SerializeToString,
             auth__pb2.UserProfile.FromString,
             options,
@@ -210,7 +197,7 @@ class AuthService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/auth.AuthService/CheckRole',
+            '/agm.auth.AuthService/CheckRole',
             auth__pb2.CheckRoleRequest.SerializeToString,
             auth__pb2.CheckRoleResponse.FromString,
             options,
@@ -237,7 +224,7 @@ class AuthService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/auth.AuthService/CreateUser',
+            '/agm.auth.AuthService/CreateUser',
             auth__pb2.CreateUserRequest.SerializeToString,
             auth__pb2.CreateUserResponse.FromString,
             options,

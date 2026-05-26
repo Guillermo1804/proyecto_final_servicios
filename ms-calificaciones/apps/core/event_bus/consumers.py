@@ -80,7 +80,14 @@ def handle_alumno_withdrawn(envelope: EventEnvelope) -> None:
     _consume(envelope, 'alumno_withdrawn', proj.handle_alumno_withdrawn)
 
 
+def handle_token_revoked(envelope: EventEnvelope) -> None:
+    from agm_events.token_revoked import handle_token_revoked as _apply
+
+    _apply(envelope)
+
+
 HANDLERS = {
+    'token.revoked.v1': handle_token_revoked,
     'user.created.v1': handle_user_created,
     'user.updated.v1': handle_user_updated,
     'periodo.created.v1': handle_periodo_created,

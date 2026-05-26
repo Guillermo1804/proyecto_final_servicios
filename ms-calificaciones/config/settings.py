@@ -45,6 +45,16 @@ LOGGING = {
     },
 }
 
+# Respuestas 4xx esperadas en tests no deben aparecer como WARNING en consola.
+if 'test' in sys.argv:
+    LOGGING['loggers'] = {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    }
+
 sys.path.insert(0, os.path.join(BASE_DIR, 'proto_generated'))
 
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me')

@@ -5,12 +5,18 @@ from __future__ import annotations
 from apps.core.models import Materia, Periodo
 
 
+def _iso_date(value) -> str:
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return str(value)
+
+
 def periodo_payload(periodo: Periodo) -> dict:
     return {
         "periodo_id": periodo.id,
         "nombre": periodo.nombre,
-        "fecha_inicio": periodo.fecha_inicio.isoformat(),
-        "fecha_fin": periodo.fecha_fin.isoformat(),
+        "fecha_inicio": _iso_date(periodo.fecha_inicio),
+        "fecha_fin": _iso_date(periodo.fecha_fin),
         "plan_estudios": periodo.plan_estudios,
         "activo": periodo.activo,
     }

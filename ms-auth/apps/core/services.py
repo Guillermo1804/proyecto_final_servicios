@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.crypto import constant_time_compare
@@ -9,7 +10,9 @@ VALID_ROLES = {'admin', 'docente', 'alumno'}
 
 
 def is_internal_api_key_valid(request):
-    expected_key = config('INTERNAL_API_KEY', default='').strip()
+    expected_key = str(
+        getattr(settings, 'INTERNAL_API_KEY', None) or config('INTERNAL_API_KEY', default='')
+    ).strip()
     provided_key = request.headers.get('X-Internal-Api-Key', '').strip()
     if not expected_key:
         return False

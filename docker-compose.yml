@@ -8,7 +8,8 @@
 #   Outbox workers (5): ms-auth-outbox-worker, ms-periodos-outbox-worker,
 #        ms-alumnos-outbox-worker, ms-calificaciones-worker-outbox,
 #        ms-asistencias-worker-outbox
-#   Consumer workers (4): ms-auth-event-consumer, ms-calificaciones-worker-consumer,
+#   Consumer workers (7): ms-auth-event-consumer, ms-periodos-worker-consumer,
+#        ms-alumnos-worker-consumer, ms-calificaciones-worker-consumer,
 #        ms-asistencias-worker-consumer, ms-notificaciones-worker-consumer,
 #        ms-reportes-worker-consumer
 #
@@ -333,6 +334,26 @@ services:
     networks:
       - agm-network
 
+  ms-periodos-worker-consumer:
+    build:
+      context: .
+      dockerfile: ms-periodos/Dockerfile
+    container_name: agm-ms-periodos-consumer
+    env_file: ./ms-periodos/.env
+    environment:
+      AGM_RUN_MODE: event-consumer
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-periodos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-periodos:
+        condition: service_healthy
+    networks:
+      - agm-network
+
   ms-alumnos:
     build:
       context: .
@@ -370,6 +391,26 @@ services:
     env_file: ./ms-alumnos/.env
     environment:
       AGM_RUN_MODE: outbox-worker
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-alumnos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-alumnos:
+        condition: service_healthy
+    networks:
+      - agm-network
+
+  ms-alumnos-worker-consumer:
+    build:
+      context: .
+      dockerfile: ms-alumnos/Dockerfile
+    container_name: agm-ms-alumnos-consumer
+    env_file: ./ms-alumnos/.env
+    environment:
+      AGM_RUN_MODE: event-consumer
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
     depends_on:

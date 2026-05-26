@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package asistencias;
+package agm.asistencias;
 
 option java_multiple_files = true;
 option java_package = "com.agm.asistencias";
 
 // =============================================
-// MS-5: Asistencias QR — Servicio gRPC
+// MS-5: Asistencias QR — EXPOSICIÓN gRPC
 // Puerto: 50055
 // =============================================
 // Consumido por MS-7 para generar reportes de asistencia.

@@ -40,7 +40,7 @@ Los productores publican con **routing key** = `event_name`.
 | `user.updated.v1` | 1 | `user` | **MS-1** | **MS-4**, MS-6 | `user.updated.v1.schema.json` |
 | `user.deactivated.v1` | 1 | `user` | **MS-1** | MS-4, MS-5, MS-6 (futuro) | `user.deactivated.v1.schema.json` |
 | `user.role_changed.v1` | 1 | `user` | **MS-1** | MS-4, MS-5 (futuro) | `user.role_changed.v1.schema.json` |
-| `token.revoked.v1` | 1 | `token` | **MS-1** | MS-2…MS-7 (futuro, cache) | `token.revoked.v1.schema.json` |
+| `token.revoked.v1` | 1 | `token` | **MS-1** | MS-2…MS-7 (cache JTI vía `run_event_consumer`) | `token.revoked.v1.schema.json` |
 | `user.create_requested.v1` | 1 | `user` | **MS-3** | **MS-1** | `user.create_requested.v1.schema.json` |
 | `alumno.imported.v1` | 1 | `alumno` | **MS-3** | MS-4, **MS-5**, MS-6, **MS-7** | `alumno.imported.v1.schema.json` |
 | `alumno.updated.v1` | 1 | `alumno` | **MS-3** | MS-4, **MS-5**, MS-6, **MS-7** | `alumno.updated.v1.schema.json` |

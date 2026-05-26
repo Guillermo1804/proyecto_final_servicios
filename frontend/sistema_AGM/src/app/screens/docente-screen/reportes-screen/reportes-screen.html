@@ -4,6 +4,9 @@
 
   <main class="content">
 
+<p *ngIf="isLoading" class="load-hint">Cargando reportes desde MS-2, MS-3 y MS-4…</p>
+<p *ngIf="loadError" class="load-error">{{ loadError }}</p>
+
 <section class="filters-card">
 
   <div class="filter-field">
@@ -29,30 +32,30 @@
 
 </section>
 
-    <section class="metrics-grid">
+    <section class="metrics-grid" *ngIf="!isLoading">
 
       <article class="metric-card azul">
         <p>Promedio General</p>
-        <h3>8.42</h3>
-        <span class="positivo">↗ +0.3 vs periodo anterior</span>
+        <h3>{{ resumen.promedioGeneral }}</h3>
+        <span class="positivo">Desde concentrado MS-4</span>
       </article>
 
       <article class="metric-card azul">
         <p>Índice de Aprobación</p>
-        <h3>91.5%</h3>
-        <span class="positivo">↗ 542 alumnos aprobados</span>
+        <h3>{{ resumen.indiceAprobacion }}%</h3>
+        <span class="positivo">{{ resumen.alumnosAprobados }} alumnos aprobados</span>
       </article>
 
       <article class="metric-card rojo">
-        <p>Índice de Deserción</p>
-        <h3>2.4%</h3>
-        <span class="negativo">⚠ 12 alumnos en riesgo</span>
+        <p>Alumnos en riesgo</p>
+        <h3>{{ resumen.alumnosEnRiesgo }}</h3>
+        <span class="negativo">Promedio &lt; 6 en concentrado</span>
       </article>
 
       <article class="metric-card oscuro">
         <p>Materias Activas</p>
-        <h3>4</h3>
-        <span>○ 148 horas lectivas totales</span>
+        <h3>{{ resumen.materiasActivas }}</h3>
+        <span>Periodo activo (MS-2)</span>
       </article>
 
     </section>
@@ -68,46 +71,26 @@
         </div>
       </div>
 
-      <div class="chart-bars">
-        <div>
-          <span style="height: 64%"></span>
-          <span style="height: 64%"></span>
-          <p>IA I</p>
-        </div>
-
-        <div>
-          <span style="height: 45%"></span>
-          <span style="height: 45%"></span>
-          <p>Estructuras</p>
-        </div>
-
-        <div>
-          <span style="height: 78%"></span>
-          <span style="height: 78%"></span>
-          <p>Sistemas Op.</p>
-        </div>
-
-        <div>
-          <span style="height: 56%"></span>
-          <span style="height: 56%"></span>
-          <p>Redes</p>
+      <div class="chart-bars" *ngIf="chartMaterias.length">
+        <div *ngFor="let bar of chartMaterias">
+          <span [style.height.%]="bar.promedioPct"></span>
+          <span [style.height.%]="bar.aprobacionPct"></span>
+          <p>{{ bar.nombre }}</p>
         </div>
       </div>
 
-      <div class="insight-card">
+      <p *ngIf="!chartMaterias.length && !isLoading" class="table-empty">
+        Sin datos de concentrado para graficar.
+      </p>
+
+      <div class="insight-card" *ngIf="insightObservacion">
         <strong>Observación Clave</strong>
-        <p>
-          Inteligencia Artificial I presenta el mayor índice de aprobación (94%)
-          pero un promedio de calificaciones conservador (7.8).
-        </p>
+        <p>{{ insightObservacion }}</p>
       </div>
 
-      <div class="insight-card">
+      <div class="insight-card" *ngIf="insightAccion">
         <strong>Acción Sugerida</strong>
-        <p>
-          Revisar criterios de evaluación en Estructuras de Datos, el promedio
-          descendió 0.5 puntos este mes.
-        </p>
+        <p>{{ insightAccion }}</p>
       </div>
 
     </section>
@@ -190,6 +173,10 @@
 
       <div class="comparison-list">
 
+        <p *ngIf="!materiasComparadas.length" class="table-empty">
+          No hay materias repetidas en varios periodos con datos cargados.
+        </p>
+
         <article
           class="comparison-item"
           *ngFor="let item of materiasComparadas"
@@ -241,7 +228,8 @@
 
       <label>Seleccione Materia</label>
       <select>
-        <option>Inteligencia Artificial I - Secc. A</option>
+        <option *ngIf="!materiasOpciones.length" disabled>Sin materias en periodo activo</option>
+        <option *ngFor="let m of materiasOpciones" [value]="m.id">{{ m.label }}</option>
       </select>
 
       <label>Formato de Archivo</label>
@@ -297,6 +285,10 @@
           <span>{{ item.materia }}</span>
           <span>{{ item.fecha }}</span>
         </div>
+
+        <p *ngIf="!historial.length" class="table-empty">
+          Sin historial de exportaciones (requiere MS-7). Use «Imprimir lista» en cada materia (MS-4).
+        </p>
 
       </div>
 

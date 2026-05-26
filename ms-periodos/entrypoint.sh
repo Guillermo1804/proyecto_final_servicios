@@ -19,6 +19,11 @@ echo "MySQL listo!"
 echo "Aplicando migraciones..."
 python manage.py migrate --noinput
 
+if [ "${AGM_RUN_MODE}" = "event-consumer" ]; then
+  echo "Iniciando consumidor de eventos MS-2..."
+  exec python manage.py run_event_consumer
+fi
+
 if [ "${AGM_RUN_MODE}" = "outbox-worker" ]; then
   echo "Iniciando relay outbox MS-2 → RabbitMQ..."
   exec python manage.py run_event_outbox

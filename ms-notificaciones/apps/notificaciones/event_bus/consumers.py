@@ -173,7 +173,14 @@ def handle_materia_calificaciones_cerradas(envelope: EventEnvelope) -> None:
     handle_materia_closed(envelope)
 
 
+def handle_token_revoked(envelope: EventEnvelope) -> None:
+    from agm_events.token_revoked import handle_token_revoked as _apply
+
+    _apply(envelope)
+
+
 HANDLERS = {
+    'token.revoked.v1': handle_token_revoked,
     'alumno.imported.v1': handle_alumno_imported,
     'alumno.withdrawn.v1': handle_alumno_withdrawn,
     'materia.closed.v1': handle_materia_closed,

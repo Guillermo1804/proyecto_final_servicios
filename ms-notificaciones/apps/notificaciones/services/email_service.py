@@ -248,7 +248,7 @@ class EmailService:
         }
 
     def send_reset_password(
-        self, email: str, token: str, reset_url: str
+        self, email: str, reset_url: str, nombre: str = ''
     ) -> Dict[str, Any]:
         if not email or not reset_url:
             return self._fail(
@@ -262,6 +262,7 @@ class EmailService:
         context = {
             'reset_url': reset_url,
             'frontend_url': self.frontend_url,
+            'nombre': nombre,
         }
         try:
             html = self.templates.render_reset_password(context)

@@ -38,11 +38,12 @@ def _authorize_admin_jwt(request):
         from grpc_clients.auth_client import validate_token
 
         response = validate_token(token)
-        if not response.valid or response.rol != 'admin':
+        result = response.result
+        if not result.valid or result.user.rol != 'admin':
             return None
-        request.user_id = response.user_id
-        request.user_rol = response.rol
-        request.user_email = response.email
+        request.user_id = result.user.user_id
+        request.user_rol = result.user.rol
+        request.user_email = result.user.email
         return True
     except Exception:
         return None

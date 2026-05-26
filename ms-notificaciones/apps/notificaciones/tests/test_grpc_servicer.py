@@ -8,7 +8,9 @@ from django.test import TestCase, override_settings
 from apps.notificaciones.services.data_provider import PlaceholderDataProvider
 from apps.notificaciones.services.email_service import EmailService
 from grpc_server.servicer import NotificacionesServicer
-from proto_generated import notificaciones_pb2, notificaciones_pb2_grpc
+from proto_generated import agm_common_pb2
+import notificaciones_pb2
+import notificaciones_pb2_grpc
 
 
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
@@ -80,9 +82,10 @@ class NotificacionesGrpcServicerTests(TestCase):
     def test_send_reset_password_ok(self):
         response = self.stub.SendResetPassword(
             notificaciones_pb2.SendResetPasswordRequest(
-                email='user@test.local',
-                token='abc',
-                reset_url='http://localhost:4200/reset?token=abc',
+                delivery=agm_common_pb2.PasswordResetDelivery(
+                    email='user@test.local',
+                    reset_url='http://localhost:4200/reset?token=abc',
+                ),
             )
         )
         self.assertTrue(response.success)

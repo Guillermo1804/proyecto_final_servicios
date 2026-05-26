@@ -24,7 +24,7 @@ class PeriodoCRUDTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
-        self.patcher = patch("utils.jwt_local.validate_access_token")
+        self.patcher = patch("utils.auth.validate_access_token")
         self.mock_validate = self.patcher.start()
         self.mock_validate.return_value = _admin_user()
 
@@ -219,7 +219,7 @@ class MateriaCRUDTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
-        self.patcher = patch("utils.jwt_local.validate_access_token")
+        self.patcher = patch("utils.auth.validate_access_token")
         self.mock_validate = self.patcher.start()
         self.mock_validate.return_value = _admin_user()
 
@@ -330,7 +330,7 @@ class PeriodosGRPCTests(TestCase):
 
     def test_grpc_get_periodo_activo(self):
         """GetPeriodoActivo debe retornar los datos del periodo con activo=True."""
-        request = periodos_pb2.Empty()
+        request = periodos_pb2.GetPeriodoActivoRequest()
         context = MagicMock()
         response = self.servicer.GetPeriodoActivo(request, context)
         

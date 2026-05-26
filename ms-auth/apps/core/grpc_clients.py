@@ -30,6 +30,7 @@ def send_reset_password_notification(email, token, reset_url, timeout_seconds=5)
         stacklevel=2,
     )
     try:
+        import agm_common_pb2
         import notificaciones_pb2
         import notificaciones_pb2_grpc
     except ImportError:
@@ -46,9 +47,10 @@ def send_reset_password_notification(email, token, reset_url, timeout_seconds=5)
             stub = notificaciones_pb2_grpc.NotificacionesServiceStub(channel)
             response = stub.SendResetPassword(
                 notificaciones_pb2.SendResetPasswordRequest(
-                    email=email,
-                    token=token,
-                    reset_url=reset_url,
+                    delivery=agm_common_pb2.PasswordResetDelivery(
+                        email=email,
+                        reset_url=reset_url,
+                    ),
                 ),
                 timeout=timeout,
             )

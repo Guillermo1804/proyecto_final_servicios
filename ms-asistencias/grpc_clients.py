@@ -14,7 +14,13 @@ import grpc
 from decouple import config
 from grpc import StatusCode
 
-from proto_generated import alumnos_pb2_grpc, alumnos_pb2, auth_pb2_grpc, auth_pb2
+from proto_generated import (
+    agm_common_pb2,
+    alumnos_pb2,
+    alumnos_pb2_grpc,
+    auth_pb2,
+    auth_pb2_grpc,
+)
 
 # ===== MS-1 Auth Configuration =====
 AUTH_HOST = config('MS_AUTH_GRPC_HOST', default='ms-auth')
@@ -63,13 +69,16 @@ def validate_token(token: str) -> dict:
     Raises grpc.RpcError if invalid.
     """
     stub = auth_pb2_grpc.AuthServiceStub(auth_channel())
-    req = auth_pb2.ValidateTokenRequest(token=token)
+    req = auth_pb2.ValidateTokenRequest(
+        credential=agm_common_pb2.AccessTokenCredential(access_token=token),
+    )
     try:
         response = stub.ValidateToken(req, timeout=TIMEOUT)
+        user = response.result.user
         return {
-            'user_id': response.user_id,
-            'role': response.role,
-            'email': response.email,
+            'user_id': user.user_id,
+            'role': user.rol,
+            'email': user.email,
         }
     except grpc.RpcError as e:
         raise

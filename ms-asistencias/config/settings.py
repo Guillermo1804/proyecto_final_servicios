@@ -1,10 +1,15 @@
 """Django settings for MS-5 Asistencias QR."""
 
+import os
+import sys
 from pathlib import Path
+
 from decouple import config
+
 from config.agm_env import env_bool, cors_allowed_origins_list, mysql_database_settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, os.path.join(BASE_DIR, "proto_generated"))
 
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me')
 DEBUG = config('DEBUG', default=True, cast=bool)

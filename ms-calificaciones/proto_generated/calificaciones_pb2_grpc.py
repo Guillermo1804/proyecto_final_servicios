@@ -27,7 +27,7 @@ if _version_not_supported:
 
 class CalificacionesServiceStub(object):
     """=============================================
-    MS-4: Calificaciones & Ponderaciones — Servicio gRPC
+    MS-4: Calificaciones & Ponderaciones — EXPOSICIÓN gRPC
     Puerto: 50054
     =============================================
     Consumido por MS-7 para generar reportes y estadísticas.
@@ -41,17 +41,17 @@ class CalificacionesServiceStub(object):
             channel: A grpc.Channel.
         """
         self.GetConcentrado = channel.unary_unary(
-                '/calificaciones.CalificacionesService/GetConcentrado',
+                '/agm.calificaciones.CalificacionesService/GetConcentrado',
                 request_serializer=calificaciones__pb2.GetConcentradoRequest.SerializeToString,
                 response_deserializer=calificaciones__pb2.ConcentradoResponse.FromString,
                 _registered_method=True)
         self.GetPromedioAlumno = channel.unary_unary(
-                '/calificaciones.CalificacionesService/GetPromedioAlumno',
+                '/agm.calificaciones.CalificacionesService/GetPromedioAlumno',
                 request_serializer=calificaciones__pb2.GetPromedioAlumnoRequest.SerializeToString,
                 response_deserializer=calificaciones__pb2.PromedioResponse.FromString,
                 _registered_method=True)
         self.GetEstadisticasMateria = channel.unary_unary(
-                '/calificaciones.CalificacionesService/GetEstadisticasMateria',
+                '/agm.calificaciones.CalificacionesService/GetEstadisticasMateria',
                 request_serializer=calificaciones__pb2.GetEstadisticasMateriaRequest.SerializeToString,
                 response_deserializer=calificaciones__pb2.EstadisticasMateriaResponse.FromString,
                 _registered_method=True)
@@ -59,7 +59,7 @@ class CalificacionesServiceStub(object):
 
 class CalificacionesServiceServicer(object):
     """=============================================
-    MS-4: Calificaciones & Ponderaciones — Servicio gRPC
+    MS-4: Calificaciones & Ponderaciones — EXPOSICIÓN gRPC
     Puerto: 50054
     =============================================
     Consumido por MS-7 para generar reportes y estadísticas.
@@ -107,15 +107,15 @@ def add_CalificacionesServiceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'calificaciones.CalificacionesService', rpc_method_handlers)
+            'agm.calificaciones.CalificacionesService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('calificaciones.CalificacionesService', rpc_method_handlers)
+    server.add_registered_method_handlers('agm.calificaciones.CalificacionesService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class CalificacionesService(object):
     """=============================================
-    MS-4: Calificaciones & Ponderaciones — Servicio gRPC
+    MS-4: Calificaciones & Ponderaciones — EXPOSICIÓN gRPC
     Puerto: 50054
     =============================================
     Consumido por MS-7 para generar reportes y estadísticas.
@@ -136,7 +136,7 @@ class CalificacionesService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/calificaciones.CalificacionesService/GetConcentrado',
+            '/agm.calificaciones.CalificacionesService/GetConcentrado',
             calificaciones__pb2.GetConcentradoRequest.SerializeToString,
             calificaciones__pb2.ConcentradoResponse.FromString,
             options,
@@ -163,7 +163,7 @@ class CalificacionesService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/calificaciones.CalificacionesService/GetPromedioAlumno',
+            '/agm.calificaciones.CalificacionesService/GetPromedioAlumno',
             calificaciones__pb2.GetPromedioAlumnoRequest.SerializeToString,
             calificaciones__pb2.PromedioResponse.FromString,
             options,
@@ -190,7 +190,7 @@ class CalificacionesService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/calificaciones.CalificacionesService/GetEstadisticasMateria',
+            '/agm.calificaciones.CalificacionesService/GetEstadisticasMateria',
             calificaciones__pb2.GetEstadisticasMateriaRequest.SerializeToString,
             calificaciones__pb2.EstadisticasMateriaResponse.FromString,
             options,

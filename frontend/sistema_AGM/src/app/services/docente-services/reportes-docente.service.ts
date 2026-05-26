@@ -1,4 +1,13 @@
 import { Injectable } from '@angular/core';
+import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+import { ConcentradoMateriaDto } from '../../models/calificaciones-api.model';
+import { MateriaDocenteItem } from './materias-docente.service';
+import { AlumnosService } from '../alumno-services/alumnos.service';
+import { PeriodosService } from '../admin-services/periodos.service';
+import { CalificacionesService } from './calificaciones.service';
+import { MateriasDocenteService } from './materias-docente.service';
 
 export interface ReporteExportacionItem {
   documento: string;
@@ -38,112 +47,299 @@ export interface ReportePeriodoEscolarItem {
   activo: boolean;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+export interface ReporteMateriaOpcionItem {
+  id: number;
+  label: string;
+}
+
+export interface ReportesDocenteResumen {
+  promedioGeneral: number;
+  indiceAprobacion: number;
+  alumnosAprobados: number;
+  alumnosEnRiesgo: number;
+  materiasActivas: number;
+}
+
+export interface ReportesDocenteData {
+  periodosEscolares: ReportePeriodoEscolarItem[];
+  historial: ReporteExportacionItem[];
+  historialAcademico: ReporteAcademicoPeriodoItem[];
+  materiasComparadas: ReporteComparativaItem[];
+  materiasOpciones: ReporteMateriaOpcionItem[];
+  resumen: ReportesDocenteResumen;
+  insightObservacion: string;
+  insightAccion: string;
+}
+
+@Injectable({ providedIn: 'root' })
 export class ReportesDocenteService {
+  constructor(
+    private periodos: PeriodosService,
+    private materiasDocente: MateriasDocenteService,
+    private calificaciones: CalificacionesService,
+    private alumnos: AlumnosService,
+  ) {}
 
-  private readonly periodosEscolares: ReportePeriodoEscolarItem[] = [
-    { nombre: 'Primavera 2024', activo: true },
-    { nombre: 'Verano 2024', activo: false },
-    { nombre: 'Otoño 2023', activo: false }
-  ];
+  loadReportes(): Observable<ReportesDocenteData> {
+    return forkJoin({
+      periodosPage: this.periodos.getPeriodos({ page: 1, pageSize: 50 }),
+      materiasLoad: this.materiasDocente.loadMateriasDocente(),
+    }).pipe(
+      switchMap(({ periodosPage, materiasLoad }) => {
+        const periodosEscolares: ReportePeriodoEscolarItem[] = periodosPage.results.map((p) => ({
+          nombre: p.nombre,
+          activo: p.activo,
+        }));
 
-  private readonly historial: ReporteExportacionItem[] = [
-    {
-      documento: 'Acta Final - IA_1_A',
-      materia: 'Inteligencia Artificial I',
-      fecha: '12 May 2024, 09:45'
-    },
-    {
-      documento: 'Listado de Asistencia',
-      materia: 'Sistemas Operativos',
-      fecha: '10 May 2024, 14:20'
-    },
-    {
-      documento: 'Reporte Parcial',
-      materia: 'Estructuras de Datos',
-      fecha: '08 May 2024, 11:30'
-    }
-  ];
+        const materias = materiasLoad.materias;
+        if (!materias.length) {
+          return of(this.buildEmpty(periodosEscolares, materiasLoad.periodoActivoNombre));
+        }
 
-  private readonly historialAcademico: ReporteAcademicoPeriodoItem[] = [
-    {
-      periodo: 'Primavera 2024',
-      activo: true,
-      resumen: 'Periodo actual con 4 materias impartidas y desempeño estable.',
-      materias: [
-        { nombre: 'Inteligencia Artificial I', grupo: 'IA_1_A', alumnos: 42, promedio: 8.1, aprobacion: 94 },
-        { nombre: 'Estructuras de Datos', grupo: 'ED_2_B', alumnos: 38, promedio: 7.4, aprobacion: 86 },
-        { nombre: 'Sistemas Operativos', grupo: 'SO_3_A', alumnos: 40, promedio: 8.6, aprobacion: 97 },
-        { nombre: 'Redes de Computadoras', grupo: 'RED_1_A', alumnos: 35, promedio: 8.0, aprobacion: 92 }
-      ]
-    },
-    {
-      periodo: 'Verano 2024',
-      activo: false,
-      resumen: 'Periodo concluido. Se conserva como referencia comparativa.',
-      materias: [
-        { nombre: 'Inteligencia Artificial I', grupo: 'IA_1_A', alumnos: 40, promedio: 7.8, aprobacion: 89 },
-        { nombre: 'Estructuras de Datos', grupo: 'ED_2_B', alumnos: 36, promedio: 7.9, aprobacion: 91 },
-        { nombre: 'Bases de Datos', grupo: 'BD_2_A', alumnos: 41, promedio: 8.3, aprobacion: 95 }
-      ]
-    },
-    {
-      periodo: 'Otoño 2023',
-      activo: false,
-      resumen: 'Sin actividad registrada en la mayoría de las materias seleccionadas.',
-      materias: [
-        { nombre: 'Inteligencia Artificial I', grupo: 'IA_1_A', alumnos: 0, promedio: 0, aprobacion: 0 },
-        { nombre: 'Estructuras de Datos', grupo: 'ED_2_B', alumnos: 0, promedio: 0, aprobacion: 0 }
-      ]
-    }
-  ];
+        const stats$ = materias.map((materia) =>
+          forkJoin({
+            concentrado: this.calificaciones.getConcentrado(materia.id).pipe(
+              catchError(() => of(null as ConcentradoMateriaDto | null)),
+            ),
+            inscripciones: this.alumnos
+              .getAlumnosPorMateria(materia.id, 1, 1)
+              .pipe(catchError(() => of({ count: 0, results: [] }))),
+          }).pipe(
+            map(({ concentrado, inscripciones }) =>
+              this.mapMateriaStats(materia, concentrado, Number(inscripciones.count ?? 0)),
+            ),
+          ),
+        );
 
-  private readonly materiasComparadas: ReporteComparativaItem[] = [
-    {
-      nombre: 'Inteligencia Artificial I',
-      repeticiones: 3,
-      promedioActual: 8.1,
-      promedioAnterior: 7.8,
-      variacionPromedio: '+0.3',
-      aprobacionActual: 94,
-      aprobacionAnterior: 89,
-      variacionAprobacion: '+5',
-      periodos: ['Otoño 2023', 'Verano 2024', 'Primavera 2024']
-    },
-    {
-      nombre: 'Estructuras de Datos',
-      repeticiones: 3,
-      promedioActual: 7.4,
-      promedioAnterior: 7.9,
-      variacionPromedio: '-0.5',
-      aprobacionActual: 86,
-      aprobacionAnterior: 91,
-      variacionAprobacion: '-5',
-      periodos: ['Otoño 2023', 'Verano 2024', 'Primavera 2024']
-    }
-  ];
+        return forkJoin(stats$).pipe(
+          map((materiasStats) => {
+            const periodoActivoNombre =
+              materiasLoad.periodoActivoNombre ||
+              periodosPage.results.find((p) => p.activo)?.nombre ||
+              'Periodo activo';
 
-  getHistorial(): ReporteExportacionItem[] {
-    return this.historial.map((item) => ({ ...item }));
+            const historialAcademico: ReporteAcademicoPeriodoItem[] = [
+              {
+                periodo: periodoActivoNombre,
+                activo: true,
+                resumen: this.buildResumenPeriodo(materiasStats),
+                materias: materiasStats,
+              },
+              ...periodosPage.results
+                .filter((p) => !p.activo)
+                .map((p) => ({
+                  periodo: p.nombre,
+                  activo: false,
+                  resumen: 'Sin materias cargadas para este periodo en la vista del docente.',
+                  materias: [] as ReporteAcademicoMateriaItem[],
+                })),
+            ];
+
+            const materiasComparadas = this.buildComparativas(historialAcademico);
+            const resumen = this.buildResumen(materiasStats);
+            const insights = this.buildInsights(materiasStats);
+
+            return {
+              periodosEscolares,
+              historial: [],
+              historialAcademico,
+              materiasComparadas,
+              materiasOpciones: materias.map((m) => ({
+                id: m.id,
+                label: `${m.materia} · NRC ${m.nrc}`,
+              })),
+              resumen,
+              insightObservacion: insights.observacion,
+              insightAccion: insights.accion,
+            };
+          }),
+        );
+      }),
+      catchError(() =>
+        of({
+          periodosEscolares: [],
+          historial: [],
+          historialAcademico: [],
+          materiasComparadas: [],
+          materiasOpciones: [],
+          resumen: {
+            promedioGeneral: 0,
+            indiceAprobacion: 0,
+            alumnosAprobados: 0,
+            alumnosEnRiesgo: 0,
+            materiasActivas: 0,
+          },
+          insightObservacion: 'No se pudieron cargar los datos del reporte.',
+          insightAccion: 'Verifica que MS-2, MS-3 y MS-4 estén activos.',
+        }),
+      ),
+    );
   }
 
-  getPeriodosEscolares(): ReportePeriodoEscolarItem[] {
-    return this.periodosEscolares.map((periodo) => ({ ...periodo }));
+  private buildEmpty(
+    periodosEscolares: ReportePeriodoEscolarItem[],
+    periodoNombre: string | null,
+  ): ReportesDocenteData {
+    return {
+      periodosEscolares,
+      historial: [],
+      historialAcademico: periodoNombre
+        ? [
+            {
+              periodo: periodoNombre,
+              activo: true,
+              resumen: 'No hay materias asignadas en el periodo activo.',
+              materias: [],
+            },
+          ]
+        : [],
+      materiasComparadas: [],
+      materiasOpciones: [],
+      resumen: {
+        promedioGeneral: 0,
+        indiceAprobacion: 0,
+        alumnosAprobados: 0,
+        alumnosEnRiesgo: 0,
+        materiasActivas: 0,
+      },
+      insightObservacion: 'Sin materias para analizar.',
+      insightAccion: 'Importa tu programacion de materias o revisa el periodo activo.',
+    };
   }
 
-  getHistorialAcademico(): ReporteAcademicoPeriodoItem[] {
-    return this.historialAcademico.map((periodo) => ({
-      ...periodo,
-      materias: periodo.materias.map((materia) => ({ ...materia }))
-    }));
+  private mapMateriaStats(
+    materia: MateriaDocenteItem,
+    concentrado: ConcentradoMateriaDto | null,
+    alumnosInscritos: number,
+  ): ReporteAcademicoMateriaItem {
+    const rows = concentrado?.alumnos ?? [];
+    const conNota = rows.filter((r) => Number(r.promedio_redondeado) > 0);
+    const promedio =
+      conNota.length > 0
+        ? Math.round(
+            (conNota.reduce((s, r) => s + Number(r.promedio_redondeado), 0) / conNota.length) * 10,
+          ) / 10
+        : 0;
+    const aprobados = rows.filter((r) => Number(r.promedio_redondeado) >= 6).length;
+    const total = rows.length || alumnosInscritos;
+    const aprobacion = total > 0 ? Math.round((aprobados / total) * 100) : 0;
+
+    return {
+      nombre: materia.materia,
+      grupo: materia.seccion || materia.clave || materia.nrc,
+      alumnos: total || alumnosInscritos,
+      promedio,
+      aprobacion,
+    };
   }
 
-  getMateriasComparadas(): ReporteComparativaItem[] {
-    return this.materiasComparadas.map((item) => ({
-      ...item,
-      periodos: [...item.periodos]
-    }));
+  private buildResumenPeriodo(materias: ReporteAcademicoMateriaItem[]): string {
+    if (!materias.length) {
+      return 'Sin materias en el periodo activo.';
+    }
+    const promedio =
+      Math.round((materias.reduce((s, m) => s + m.promedio, 0) / materias.length) * 10) / 10;
+    return `${materias.length} materia(s) con promedio grupal ${promedio}.`;
+  }
+
+  private buildResumen(materias: ReporteAcademicoMateriaItem[]): ReportesDocenteResumen {
+    const materiasActivas = materias.length;
+    const promedioGeneral =
+      materiasActivas > 0
+        ? Math.round((materias.reduce((s, m) => s + m.promedio, 0) / materiasActivas) * 100) / 100
+        : 0;
+    const totalAlumnos = materias.reduce((s, m) => s + m.alumnos, 0);
+    const aprobacionPonderada =
+      totalAlumnos > 0
+        ? materias.reduce((s, m) => s + (m.aprobacion / 100) * m.alumnos, 0) / totalAlumnos
+        : 0;
+    const indiceAprobacion = Math.round(aprobacionPonderada * 1000) / 10;
+    const alumnosAprobados = materias.reduce(
+      (s, m) => s + Math.round((m.aprobacion / 100) * m.alumnos),
+      0,
+    );
+    const alumnosEnRiesgo = materias.reduce(
+      (s, m) => s + Math.max(0, m.alumnos - Math.round((m.aprobacion / 100) * m.alumnos)),
+      0,
+    );
+
+    return {
+      promedioGeneral,
+      indiceAprobacion,
+      alumnosAprobados,
+      alumnosEnRiesgo,
+      materiasActivas,
+    };
+  }
+
+  private buildComparativas(
+    historial: ReporteAcademicoPeriodoItem[],
+  ): ReporteComparativaItem[] {
+    const porNombre = new Map<string, Array<{ periodo: string; stats: ReporteAcademicoMateriaItem }>>();
+
+    for (const periodo of historial) {
+      for (const materia of periodo.materias) {
+        const key = materia.nombre.trim().toLowerCase();
+        if (!key) continue;
+        const list = porNombre.get(key) ?? [];
+        list.push({ periodo: periodo.periodo, stats: materia });
+        porNombre.set(key, list);
+      }
+    }
+
+    const comparativas: ReporteComparativaItem[] = [];
+    for (const [, entries] of porNombre) {
+      if (entries.length < 2) continue;
+      const ordenados = [...entries].sort((a, b) => a.periodo.localeCompare(b.periodo));
+      const anterior = ordenados[ordenados.length - 2].stats;
+      const actual = ordenados[ordenados.length - 1].stats;
+      const variacionPromedio = actual.promedio - anterior.promedio;
+      const variacionAprobacion = actual.aprobacion - anterior.aprobacion;
+
+      comparativas.push({
+        nombre: actual.nombre,
+        repeticiones: entries.length,
+        promedioActual: actual.promedio,
+        promedioAnterior: anterior.promedio,
+        variacionPromedio: this.formatVariacion(variacionPromedio),
+        aprobacionActual: actual.aprobacion,
+        aprobacionAnterior: anterior.aprobacion,
+        variacionAprobacion: this.formatVariacion(variacionAprobacion, true),
+        periodos: ordenados.map((e) => e.periodo),
+      });
+    }
+
+    return comparativas;
+  }
+
+  private buildInsights(materias: ReporteAcademicoMateriaItem[]): {
+    observacion: string;
+    accion: string;
+  } {
+    if (!materias.length) {
+      return {
+        observacion: 'Sin datos de concentrado para el periodo activo.',
+        accion: 'Captura calificaciones en cada materia para generar estadísticas.',
+      };
+    }
+
+    const mejorAprobacion = [...materias].sort((a, b) => b.aprobacion - a.aprobacion)[0];
+    const menorPromedio = [...materias].sort((a, b) => a.promedio - b.promedio)[0];
+
+    return {
+      observacion: `${mejorAprobacion.nombre} tiene el mayor índice de aprobación (${mejorAprobacion.aprobacion}%) con promedio ${mejorAprobacion.promedio}.`,
+      accion:
+        menorPromedio.promedio < 7
+          ? `Revisa criterios de evaluación en ${menorPromedio.nombre} (promedio ${menorPromedio.promedio}).`
+          : 'El desempeño grupal se mantiene dentro de rangos esperados.',
+    };
+  }
+
+  private formatVariacion(valor: number, puntos = false): string {
+    const signo = valor > 0 ? '+' : '';
+    if (puntos) {
+      return `${signo}${Math.round(valor)}`;
+    }
+    return `${signo}${Math.round(valor * 10) / 10}`;
   }
 }

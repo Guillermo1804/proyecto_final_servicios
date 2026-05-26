@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0eperiodos.proto\x12\x08periodos\"\x07\n\x05\x45mpty\"+\n\x15GetMateriaByIdRequest\x12\x12\n\nmateria_id\x18\x01 \x01(\x05\"\xbf\x01\n\x0bMateriaInfo\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0b\n\x03nrc\x18\x02 \x01(\t\x12\x0e\n\x06nombre\x18\x03 \x01(\t\x12\x0f\n\x07seccion\x18\x04 \x01(\t\x12\r\n\x05\x63lave\x18\x05 \x01(\t\x12\x16\n\x0e\x64ocente_nombre\x18\x06 \x01(\t\x12\x12\n\ndocente_id\x18\x07 \x01(\x05\x12\x0f\n\x07horario\x18\x08 \x01(\t\x12\x12\n\nperiodo_id\x18\t \x01(\x05\x12\x16\n\x0eperiodo_nombre\x18\n \x01(\t\"1\n\x1bGetMateriasByDocenteRequest\x12\x12\n\ndocente_id\x18\x01 \x01(\x05\"?\n\x14MateriasListResponse\x12\'\n\x08materias\x18\x01 \x03(\x0b\x32\x15.periodos.MateriaInfo\"y\n\x0bPeriodoInfo\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0e\n\x06nombre\x18\x02 \x01(\t\x12\x14\n\x0c\x66\x65\x63ha_inicio\x18\x03 \x01(\t\x12\x11\n\tfecha_fin\x18\x04 \x01(\t\x12\x15\n\rplan_estudios\x18\x05 \x01(\t\x12\x0e\n\x06\x61\x63tivo\x18\x06 \x01(\x08\x32\xf6\x01\n\x0fPeriodosService\x12H\n\x0eGetMateriaById\x12\x1f.periodos.GetMateriaByIdRequest\x1a\x15.periodos.MateriaInfo\x12]\n\x14GetMateriasByDocente\x12%.periodos.GetMateriasByDocenteRequest\x1a\x1e.periodos.MateriasListResponse\x12:\n\x10GetPeriodoActivo\x12\x0f.periodos.Empty\x1a\x15.periodos.PeriodoInfoB\x14\n\x10\x63om.agm.periodosP\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0eperiodos.proto\x12\x0c\x61gm.periodos\"+\n\x15GetMateriaByIdRequest\x12\x12\n\nmateria_id\x18\x01 \x01(\x05\"\xbf\x01\n\x0bMateriaInfo\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0b\n\x03nrc\x18\x02 \x01(\t\x12\x0e\n\x06nombre\x18\x03 \x01(\t\x12\x0f\n\x07seccion\x18\x04 \x01(\t\x12\r\n\x05\x63lave\x18\x05 \x01(\t\x12\x16\n\x0e\x64ocente_nombre\x18\x06 \x01(\t\x12\x12\n\ndocente_id\x18\x07 \x01(\x05\x12\x0f\n\x07horario\x18\x08 \x01(\t\x12\x12\n\nperiodo_id\x18\t \x01(\x05\x12\x16\n\x0eperiodo_nombre\x18\n \x01(\t\"1\n\x1bGetMateriasByDocenteRequest\x12\x12\n\ndocente_id\x18\x01 \x01(\x05\"C\n\x14MateriasListResponse\x12+\n\x08materias\x18\x01 \x03(\x0b\x32\x19.agm.periodos.MateriaInfo\"\x19\n\x17GetPeriodoActivoRequest\"y\n\x0bPeriodoInfo\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0e\n\x06nombre\x18\x02 \x01(\t\x12\x14\n\x0c\x66\x65\x63ha_inicio\x18\x03 \x01(\t\x12\x11\n\tfecha_fin\x18\x04 \x01(\t\x12\x15\n\rplan_estudios\x18\x05 \x01(\t\x12\x0e\n\x06\x61\x63tivo\x18\x06 \x01(\x08\x32\xa0\x02\n\x0fPeriodosService\x12P\n\x0eGetMateriaById\x12#.agm.periodos.GetMateriaByIdRequest\x1a\x19.agm.periodos.MateriaInfo\x12\x65\n\x14GetMateriasByDocente\x12).agm.periodos.GetMateriasByDocenteRequest\x1a\".agm.periodos.MateriasListResponse\x12T\n\x10GetPeriodoActivo\x12%.agm.periodos.GetPeriodoActivoRequest\x1a\x19.agm.periodos.PeriodoInfoB\x14\n\x10\x63om.agm.periodosP\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,18 +32,18 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'periodos_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\020com.agm.periodosP\001'
-  _globals['_EMPTY']._serialized_start=28
-  _globals['_EMPTY']._serialized_end=35
-  _globals['_GETMATERIABYIDREQUEST']._serialized_start=37
-  _globals['_GETMATERIABYIDREQUEST']._serialized_end=80
-  _globals['_MATERIAINFO']._serialized_start=83
-  _globals['_MATERIAINFO']._serialized_end=274
-  _globals['_GETMATERIASBYDOCENTEREQUEST']._serialized_start=276
-  _globals['_GETMATERIASBYDOCENTEREQUEST']._serialized_end=325
-  _globals['_MATERIASLISTRESPONSE']._serialized_start=327
-  _globals['_MATERIASLISTRESPONSE']._serialized_end=390
-  _globals['_PERIODOINFO']._serialized_start=392
-  _globals['_PERIODOINFO']._serialized_end=513
-  _globals['_PERIODOSSERVICE']._serialized_start=516
-  _globals['_PERIODOSSERVICE']._serialized_end=762
+  _globals['_GETMATERIABYIDREQUEST']._serialized_start=32
+  _globals['_GETMATERIABYIDREQUEST']._serialized_end=75
+  _globals['_MATERIAINFO']._serialized_start=78
+  _globals['_MATERIAINFO']._serialized_end=269
+  _globals['_GETMATERIASBYDOCENTEREQUEST']._serialized_start=271
+  _globals['_GETMATERIASBYDOCENTEREQUEST']._serialized_end=320
+  _globals['_MATERIASLISTRESPONSE']._serialized_start=322
+  _globals['_MATERIASLISTRESPONSE']._serialized_end=389
+  _globals['_GETPERIODOACTIVOREQUEST']._serialized_start=391
+  _globals['_GETPERIODOACTIVOREQUEST']._serialized_end=416
+  _globals['_PERIODOINFO']._serialized_start=418
+  _globals['_PERIODOINFO']._serialized_end=539
+  _globals['_PERIODOSSERVICE']._serialized_start=542
+  _globals['_PERIODOSSERVICE']._serialized_end=830
 # @@protoc_insertion_point(module_scope)

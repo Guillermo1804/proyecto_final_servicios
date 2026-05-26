@@ -30,8 +30,9 @@ class MapRpcErrorTests(SimpleTestCase):
 
 
 class GrpcDataProviderTests(SimpleTestCase):
+    @patch('agm_events.grpc_legacy.block_business_grpc')
     @patch('apps.notificaciones.services.data_provider.alumnos_client.get_alumno_by_id')
-    def test_grpc_provider_maps_alumno(self, mock_get):
+    def test_grpc_provider_maps_alumno(self, mock_get, _mock_block):
         from proto_generated import alumnos_pb2
         from apps.notificaciones.services.data_provider import GrpcDataProvider
 

@@ -19,5 +19,5 @@ class CierreMateriaSerializer(serializers.Serializer):
 
 class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    token = serializers.CharField(max_length=512)
     reset_url = serializers.URLField()
+    nombre = serializers.CharField(max_length=255, required=False, allow_blank=True)

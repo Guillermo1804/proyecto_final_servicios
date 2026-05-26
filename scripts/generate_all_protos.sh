@@ -2,25 +2,19 @@
 set -e
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${HERE}/.." && pwd)"
 
-MS_DIRS=(
-  "${REPO_ROOT}/ms-auth"
-  "${REPO_ROOT}/ms-alumnos"
-  "${REPO_ROOT}/ms-asistencias"
-  "${REPO_ROOT}/ms-calificaciones"
-  "${REPO_ROOT}/ms-notificaciones"
-  "${REPO_ROOT}/ms-periodos"
-  "${REPO_ROOT}/ms-reportes"
+MS_NAMES=(
+  ms-auth
+  ms-periodos
+  ms-alumnos
+  ms-calificaciones
+  ms-asistencias
+  ms-notificaciones
+  ms-reportes
 )
 
-for ms in "${MS_DIRS[@]}"; do
-  if [ -f "${ms}/generate_proto.sh" ]; then
-    echo "Generando stubs en ${ms}..."
-    (cd "${ms}" && bash ./generate_proto.sh)
-  else
-    echo "Aviso: no existe generate_proto.sh en ${ms}, se omite"
-  fi
+for ms in "${MS_NAMES[@]}"; do
+  bash "${HERE}/generate_ms_proto.sh" "${ms}"
 done
 
-echo "Generación completada."
+echo "Generacion completada (ver proto/README.md y scripts/proto_manifest.sh)."
