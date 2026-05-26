@@ -1,30 +1,41 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
+
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 import { BottomNavbarAlumno } from '../../../partials/bottom-navbar-alumno/bottom-navbar-alumno';
+import { InscripcionMateriaApiDto } from '../../../models/alumnos-api.model';
+import { AlumnosService } from '../../../services/alumno-services/alumnos.service';
+import { StatsAlumnoMateriaResponse } from '../../../models/asistencias-api.model';
+import { AsistenciasService } from '../../../services/asistencias.service';
 import { QrAsistenciaService, QrAsistenciaSnapshot } from '../../../services/alumno-services/qr-asistencia.service';
 import { PerfilService } from '../../../services/alumno-services/perfil.service';
 
 @Component({
   selector: 'app-perfil-screen',
   standalone: true,
-  imports: [
-    CommonModule,
-    TopbarAdmin,
-    BottomNavbarAlumno
-  ],
+  imports: [CommonModule, FormsModule, TopbarAdmin, BottomNavbarAlumno],
   templateUrl: './perfil-screen.html',
-  styleUrl: './perfil-screen.scss'
+  styleUrl: './perfil-screen.scss',
 })
 export class PerfilScreen implements OnInit, OnDestroy {
-
   nombre = '';
   matricula: string | null = null;
+  alumnoId: number | null = null;
+  materiasInscritas: InscripcionMateriaApiDto[] = [];
+  materiaQrId: number | null = null;
+
   readonly qrRefreshSeconds = 5;
   private readonly qrAsistenciaService = inject(QrAsistenciaService);
   private readonly perfilService = inject(PerfilService);
+  private readonly alumnosService = inject(AlumnosService);
+  private readonly asistenciasService = inject(AsistenciasService);
 
   qrActivo = false;
+  asistenciaStats: StatsAlumnoMateriaResponse | null = null;
+  asistenciaCargando = false;
+  asistenciaError: string | null = null;
   qrSnapshot: QrAsistenciaSnapshot | null = null;
   qrCountdown = this.qrRefreshSeconds;
   qrLoading = false;
@@ -35,19 +46,70 @@ export class PerfilScreen implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.qrActivo = false;
+    this.cargarPerfilYmaterias();
+  }
+
+  ngOnDestroy(): void {
+    this.detenerTemporizadores();
+  }
+
+  private cargarPerfilYmaterias(): void {
     this.perfilService.getProfile().subscribe({
       next: (p) => {
         this.nombre = p.nombre || '';
         this.matricula = p.matricula || null;
       },
-      error: () => {
-        // keep defaults; component can fallback to token-less state
-      }
+    });
+
+    this.alumnosService.getMe().subscribe({
+      next: (alumno) => {
+        this.alumnoId = alumno.id;
+        void this.cargarResumenAsistencia();
+      },
+    });
+
+    this.alumnosService.getMeMaterias(1, 100).subscribe({
+      next: (page) => {
+        this.materiasInscritas = page.results.filter((item) => item.activa !== false);
+        if (!this.materiaQrId && this.materiasInscritas.length === 1) {
+          this.materiaQrId = Number(this.materiasInscritas[0].materia_id);
+        }
+        void this.cargarResumenAsistencia();
+      },
     });
   }
 
-  ngOnDestroy(): void {
-    this.detenerTemporizadores();
+  onMateriaQrChange(materiaId: number | null): void {
+    this.materiaQrId = materiaId;
+    void this.cargarResumenAsistencia();
+  }
+
+  async cargarResumenAsistencia(): Promise<void> {
+    if (!this.materiaQrId || !this.alumnoId) {
+      this.asistenciaStats = null;
+      this.asistenciaError = null;
+      return;
+    }
+
+    this.asistenciaCargando = true;
+    this.asistenciaError = null;
+    try {
+      this.asistenciaStats = await firstValueFrom(
+        this.asistenciasService.statsAlumnoMateria(this.alumnoId, this.materiaQrId),
+      );
+    } catch (err: unknown) {
+      this.asistenciaStats = null;
+      this.asistenciaError =
+        err instanceof Error ? err.message : 'No se pudo cargar tu resumen de asistencia.';
+    } finally {
+      this.asistenciaCargando = false;
+    }
+  }
+
+  get materiaQrSeleccionada(): InscripcionMateriaApiDto | null {
+    return (
+      this.materiasInscritas.find((item) => Number(item.materia_id) === this.materiaQrId) ?? null
+    );
   }
 
   private iniciarTemporizadores(): void {
@@ -82,19 +144,23 @@ export class PerfilScreen implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.materiaQrId || !this.alumnoId) {
+      this.qrError = 'Selecciona una materia y asegúrate de tener perfil de alumno cargado.';
+      return;
+    }
+
     this.qrLoading = true;
     this.qrError = null;
 
     try {
-      if (!this.matricula) {
-        throw new Error('Matrícula no disponible');
-      }
-
-      this.qrSnapshot = await this.qrAsistenciaService.generarQrPersonal(this.matricula);
+      this.qrSnapshot = await this.qrAsistenciaService.generarQrDesdeBackend(
+        this.materiaQrId,
+        this.alumnoId,
+      );
       this.qrCountdown = this.qrRefreshSeconds;
-    } catch (err: any) {
-      console.error('Error generando QR:', err);
-      this.qrError = 'No se pudo generar el QR de asistencia.' + (err?.message ? ' ' + err.message : '');
+    } catch (err: unknown) {
+      const mensaje = err instanceof Error ? err.message : 'Error desconocido';
+      this.qrError = `No se pudo generar el QR. ${mensaje}`;
     } finally {
       this.qrLoading = false;
     }
@@ -105,24 +171,22 @@ export class PerfilScreen implements OnInit, OnDestroy {
       return;
     }
 
-    // Si no tenemos matrícula, intentar obtener el perfil antes de activar
-    if (!this.matricula) {
-      this.qrError = 'Matrícula no disponible. Intentando obtener perfil...';
-      this.perfilService.getProfile(true).subscribe({
-        next: (p) => {
-          this.nombre = p.nombre || '';
-          this.matricula = p.matricula || null;
-          this.qrError = null;
-          if (this.matricula) {
-            this.startQr();
-          } else {
-            this.qrError = 'Matrícula ausente en el perfil.';
-          }
-        },
-        error: () => {
-          this.qrError = 'No se pudo obtener el perfil. Comprueba la conexión.';
-        }
-      });
+    if (!this.materiaQrId) {
+      this.qrError = 'Selecciona la materia para la que pasarás lista.';
+      return;
+    }
+
+    if (!this.alumnoId) {
+      this.qrError = 'Cargando datos del alumno...';
+      void firstValueFrom(this.alumnosService.getMe())
+        .then((alumno) => {
+          this.alumnoId = alumno.id;
+          void this.cargarResumenAsistencia();
+          this.startQr();
+        })
+        .catch(() => {
+          this.qrError = 'No se pudo obtener tu perfil de alumno (MS-3).';
+        });
       return;
     }
 

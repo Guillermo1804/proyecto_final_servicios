@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, of, switchMap } from 'rxjs';
+import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { AlumnosService } from '../alumno-services/alumnos.service';
+import { AsistenciasService } from '../asistencias.service';
 import { CalificacionesService } from './calificaciones.service';
 import { MateriasDocenteService } from './materias-docente.service';
+import { AlumnoConcentradoDto } from '../../models/calificaciones-api.model';
 
 export interface RendimientoEstudianteItem {
   iniciales: string;
@@ -23,6 +25,7 @@ export class RendimientoDocenteService {
     private materiasDocente: MateriasDocenteService,
     private calificaciones: CalificacionesService,
     private alumnos: AlumnosService,
+    private asistencias: AsistenciasService,
   ) {}
 
   loadEstudiantesRiesgoPorNrc(nrc: string): Observable<RendimientoEstudianteItem[]> {
@@ -32,38 +35,69 @@ export class RendimientoDocenteService {
           return of([]);
         }
         return this.calificaciones.getConcentrado(materia.id).pipe(
-          map((concentrado) => {
-            const rows = concentrado?.alumnos ?? [];
-            return rows
-              .filter((row) => (Number(row.promedio_redondeado) || 0) < this.umbralRiesgo)
-              .map((row) => ({
-                iniciales: AlumnosService.inicialesDesdeNombre(row.nombre),
-                nombre: row.nombre,
-                matricula: row.matricula,
-                promedio: Number(row.promedio_redondeado) || 0,
-                asistencia: '—',
-              }))
-              .sort((a, b) => a.promedio - b.promedio);
+          switchMap((concentrado) => {
+            const rows = (concentrado?.alumnos ?? []).filter(
+              (row) => (Number(row.promedio_redondeado) || 0) < this.umbralRiesgo,
+            );
+            return this.enriquecerConAsistencia(rows, materia.id);
           }),
           catchError(() =>
             this.alumnos.getAlumnosPorMateria(materia.id, 1, 100).pipe(
-              map((page) =>
-                page.results.map((inscripcion) => {
-                  const nombre = AlumnosService.mapAlumnoNombre(inscripcion.alumno);
-                  return {
-                    iniciales: AlumnosService.inicialesDesdeNombre(nombre),
-                    nombre,
-                    matricula: inscripcion.alumno.matricula,
-                    promedio: 0,
-                    asistencia: '—',
-                  };
-                }),
-              ),
+              switchMap((page) => {
+                const rows: AlumnoConcentradoDto[] = page.results.map((inscripcion) => ({
+                  alumno_id: inscripcion.alumno.id,
+                  nombre: AlumnosService.mapAlumnoNombre(inscripcion.alumno),
+                  matricula: inscripcion.alumno.matricula,
+                  calificaciones: [],
+                  promedio_real: 0,
+                  promedio_redondeado: 0,
+                }));
+                return this.enriquecerConAsistencia(
+                  rows.filter((row) => row.promedio_redondeado < this.umbralRiesgo),
+                  materia.id,
+                );
+              }),
             ),
           ),
         );
       }),
     );
+  }
+
+  private enriquecerConAsistencia(
+    rows: AlumnoConcentradoDto[],
+    materiaId: number,
+  ): Observable<RendimientoEstudianteItem[]> {
+    if (!rows.length) {
+      return of([]);
+    }
+
+    return forkJoin(
+      rows.map((row) =>
+        this.asistencias.statsAlumnoMateria(row.alumno_id, materiaId).pipe(
+          map((stats) => this.mapEstudianteRiesgo(row, stats)),
+          catchError(() => of(this.mapEstudianteRiesgo(row, null))),
+        ),
+      ),
+    ).pipe(map((items) => items.sort((a, b) => a.promedio - b.promedio)));
+  }
+
+  private mapEstudianteRiesgo(
+    row: AlumnoConcentradoDto,
+    stats: { porcentaje_asistencia: number; total_registros: number } | null,
+  ): RendimientoEstudianteItem {
+    let asistencia = 'Sin registros';
+    if (stats && stats.total_registros > 0) {
+      asistencia = `${Math.round(stats.porcentaje_asistencia)}%`;
+    }
+
+    return {
+      iniciales: AlumnosService.inicialesDesdeNombre(row.nombre),
+      nombre: row.nombre,
+      matricula: row.matricula,
+      promedio: Number(row.promedio_redondeado) || 0,
+      asistencia,
+    };
   }
 
   getTotalPages(totalItems: number, pageSize: number): number {

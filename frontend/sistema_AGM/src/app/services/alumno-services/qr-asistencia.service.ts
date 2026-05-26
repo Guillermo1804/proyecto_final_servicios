@@ -1,104 +1,47 @@
 import { Injectable } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import * as QRCode from 'qrcode';
 
-export interface QrAsistenciaPayload {
-  matricula: string;
-  sessionId: string;
-  issuedAt: string;
-  kind: 'asistencia-qr';
-}
+import { AsistenciasService } from '../asistencias.service';
 
 export interface QrAsistenciaSnapshot {
-  matricula: string;
-  sessionId: string;
+  materiaId: number;
+  alumnoId: number;
+  sesionId: number;
+  encodedPayload: string;
+  expiresIn: number;
   issuedAt: string;
   expiresAt: string;
   qrDataUrl: string;
-  token: string;
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class QrAsistenciaService {
+  constructor(private readonly asistencias: AsistenciasService) {}
 
-  private readonly refreshSeconds = 5;
-  private sessionKeyPromise: Promise<CryptoKey> | null = null;
-
-  getRefreshSeconds(): number {
-    return this.refreshSeconds;
-  }
-
-  async generarQrPersonal(matricula: string): Promise<QrAsistenciaSnapshot> {
+  async generarQrDesdeBackend(materiaId: number, alumnoId: number): Promise<QrAsistenciaSnapshot> {
     const issuedAt = new Date();
-    const sessionId = this.generarSessionId();
-    const payload: QrAsistenciaPayload = {
-      matricula,
-      sessionId,
-      issuedAt: issuedAt.toISOString(),
-      kind: 'asistencia-qr'
-    };
+    const token = await firstValueFrom(this.asistencias.generarQrToken(materiaId, alumnoId));
 
-    const token = await this.cifrarPayload(payload);
-    const qrDataUrl = await QRCode.toDataURL(token, {
+    const qrDataUrl = await QRCode.toDataURL(token.encoded_payload, {
       width: 260,
       margin: 1,
-      errorCorrectionLevel: 'M'
+      errorCorrectionLevel: 'M',
     });
+
+    const ttl = token.expires_in > 0 ? token.expires_in : 30;
 
     return {
-      matricula,
-      sessionId,
-      issuedAt: payload.issuedAt,
-      expiresAt: new Date(issuedAt.getTime() + this.refreshSeconds * 1000).toISOString(),
+      materiaId,
+      alumnoId,
+      sesionId: token.sesion_id,
+      encodedPayload: token.encoded_payload,
+      expiresIn: ttl,
+      issuedAt: issuedAt.toISOString(),
+      expiresAt: new Date(issuedAt.getTime() + ttl * 1000).toISOString(),
       qrDataUrl,
-      token
     };
-  }
-
-  private generarSessionId(): string {
-    if (typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-
-    return `ses-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  }
-
-  private async cifrarPayload(payload: QrAsistenciaPayload): Promise<string> {
-    const key = await this.getSessionKey();
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const encoded = new TextEncoder().encode(JSON.stringify(payload));
-    const encrypted = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      encoded
-    );
-
-    return `AGMQR.${this.toBase64(iv)}.${this.toBase64(new Uint8Array(encrypted))}`;
-  }
-
-  private async getSessionKey(): Promise<CryptoKey> {
-    if (!this.sessionKeyPromise) {
-      const keyBytes = crypto.getRandomValues(new Uint8Array(32));
-      this.sessionKeyPromise = crypto.subtle.importKey(
-        'raw',
-        keyBytes,
-        'AES-GCM',
-        false,
-        ['encrypt']
-      );
-    }
-
-    return this.sessionKeyPromise;
-  }
-
-  private toBase64(bytes: Uint8Array): string {
-    let binary = '';
-
-    bytes.forEach((byte) => {
-      binary += String.fromCharCode(byte);
-    });
-
-    return btoa(binary);
   }
 }

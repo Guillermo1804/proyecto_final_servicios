@@ -80,6 +80,19 @@ class RegistroAsistenciaSerializer(serializers.ModelSerializer):
         ]
 
 
+class SesionHistorialItemSerializer(serializers.Serializer):
+    """Resumen de una sesión para el historial docente."""
+
+    sesion_id = serializers.IntegerField()
+    fecha_inicio = serializers.DateTimeField()
+    fecha_fin_teorica = serializers.DateTimeField()
+    estado = serializers.CharField()
+    activa = serializers.BooleanField()
+    total_registros = serializers.IntegerField()
+    presentes = serializers.IntegerField()
+    retardos = serializers.IntegerField()
+
+
 class RegistroAsistenciaListSerializer(serializers.ModelSerializer):
     """Simplified serializer for listing attendance records."""
     

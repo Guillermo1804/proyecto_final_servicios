@@ -135,7 +135,33 @@ Alertas sugeridas (produccion):
 
 ---
 
-## 7. Smoke test
+## 7. Reconciliación de proyecciones (red de seguridad)
+
+Cuando el bus es la vía normal pero hubo **reset de BD**, **consumer caído** o **handler faltante**, las proyecciones locales (MS-3/4/5) pueden quedar desfasadas respecto a MS-2/MS-3.
+
+**No sustituye el bus**; alinea read models con upsert idempotente desde las BD fuente.
+
+```bash
+# Linux / macOS
+./scripts/reconcile-projections.sh
+
+# Windows
+./scripts/reconcile-projections.ps1
+```
+
+Por servicio:
+
+```bash
+docker compose exec ms-alumnos python manage.py reconcile_projections
+docker compose exec ms-calificaciones python manage.py reconcile_projections
+docker compose exec ms-asistencias python manage.py reconcile_projections
+```
+
+Detalle: `docs/CONSISTENCIA_PROYECCIONES.md` y `contracts/events/consumer_bindings.json` (tests de cobertura de handlers).
+
+---
+
+## 8. Smoke test
 
 ```bash
 docker compose up -d rabbitmq
@@ -146,7 +172,7 @@ Publica `health.ping.v1` y valida consumo + inbox.
 
 ---
 
-## 8. Contactos y escalamiento
+## 9. Contactos y escalamiento
 
 1. Revisar logs del worker consumidor (`docker compose logs -f ms-reportes-worker-consumer`).
 2. Consultar `contracts/events/CATALOG.md` para schema esperado.

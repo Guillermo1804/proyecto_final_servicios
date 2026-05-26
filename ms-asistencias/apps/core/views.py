@@ -6,7 +6,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.db.models import Q, Count
+from datetime import timedelta
 
 from apps.core.models import SesionAsistencia, RegistroAsistencia
 from apps.core.serializers import (
@@ -14,6 +15,7 @@ from apps.core.serializers import (
     IniciarSesionSerializer,
     RegistroAsistenciaSerializer,
     RegistroAsistenciaListSerializer,
+    SesionHistorialItemSerializer,
     EstadisticasAsistenciaSerializer,
     GenerarQRSerializer,
     QRTokenResponseSerializer,
@@ -241,6 +243,120 @@ class SesionAsistenciaViewSet(viewsets.ModelViewSet):
                 },
                 status=status.HTTP_200_OK
             )
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def pendiente(self, request):
+        """
+        GET /sesiones/pendiente?materia_id=1
+
+        Latest session for today that can still be confirmed (activa or cerrada).
+        """
+        materia_id = request.query_params.get('materia_id')
+
+        if not materia_id:
+            return Response(
+                {'error': 'materia_id es requerido'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            materia_id = int(materia_id)
+        except ValueError:
+            return Response(
+                {'error': 'materia_id debe ser un número'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        sesion = SesionAsistenciaService.obtener_sesion_pendiente_confirmacion(materia_id)
+        if not sesion:
+            return Response(
+                {
+                    'activa': False,
+                    'sesion': None,
+                    'message': f'No hay lista pendiente de confirmar para materia {materia_id}',
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        serializer = SesionAsistenciaSerializer(sesion)
+        return Response(
+            {
+                'activa': sesion.activa,
+                'sesion': serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def historial(self, request):
+        """
+        GET /sesiones/historial?materia_id=1&dias=30&limit=30
+
+        Lista sesiones recientes de pase de lista (con conteos) para recuperar descargas.
+        """
+        from django.utils import timezone
+
+        materia_id = request.query_params.get('materia_id')
+        if not materia_id:
+            return Response(
+                {'error': 'materia_id es requerido'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            materia_id = int(materia_id)
+            dias = min(max(int(request.query_params.get('dias', 30)), 1), 180)
+            limit = min(max(int(request.query_params.get('limit', 30)), 1), 100)
+        except ValueError:
+            return Response(
+                {'error': 'Parámetros numéricos inválidos'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        desde = timezone.now() - timedelta(days=dias)
+        sesiones = (
+            SesionAsistencia.objects.filter(
+                materia_id=materia_id,
+                fecha_inicio__gte=desde,
+            )
+            .annotate(
+                total_registros=Count('registros', distinct=True),
+                presentes=Count(
+                    'registros',
+                    filter=Q(registros__estado='presente'),
+                    distinct=True,
+                ),
+                retardos=Count(
+                    'registros',
+                    filter=Q(registros__estado='retardo'),
+                    distinct=True,
+                ),
+            )
+            .order_by('-fecha_inicio')[:limit]
+        )
+
+        payload = [
+            {
+                'sesion_id': s.id,
+                'fecha_inicio': s.fecha_inicio,
+                'fecha_fin_teorica': s.fecha_fin_teorica,
+                'estado': s.estado,
+                'activa': s.activa,
+                'total_registros': s.total_registros,
+                'presentes': s.presentes,
+                'retardos': s.retardos,
+            }
+            for s in sesiones
+        ]
+        serializer = SesionHistorialItemSerializer(payload, many=True)
+        return Response(
+            {
+                'materia_id': materia_id,
+                'dias': dias,
+                'sesiones': serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
     
     @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
     def stats(self, request, pk=None):

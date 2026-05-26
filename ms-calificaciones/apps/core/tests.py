@@ -608,3 +608,16 @@ class CerrarMateriaTests(TestCase):
         self.assertTrue(EstadoMateria.objects.get(materia_id=11).cerrada)
         self.assertFalse(response.json()['data']['evento_publicado'])
         mock_publish.assert_called_once()
+
+
+class ConsumerBindingsTests(TestCase):
+    def test_ms_calificaciones_handlers_cover_catalog(self):
+        from agm_events.consumer_bindings import missing_handlers
+        from apps.core.event_bus.consumers import HANDLERS
+
+        missing = missing_handlers('ms-calificaciones', HANDLERS)
+        self.assertEqual(
+            missing,
+            [],
+            f'Faltan handlers en MS-4: {missing}. Ver contracts/events/consumer_bindings.json',
+        )

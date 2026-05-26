@@ -31,6 +31,11 @@ Los productores publican con **routing key** = `event_name`.
 - Mensajes: fallos tras `EVENT_CONSUME_MAX_RETRIES` o errores de esquema no recuperables
 - Operacion: reproceso manual documentado en runbook (Fase 9)
 
+## Bindings de consumidores (tests)
+
+`consumer_bindings.json` lista los `event_name` que cada MS debe registrar en `HANDLERS`.
+Los tests de MS-4 y MS-5 fallan si falta alguno (evita drift como `periodo.activated.v1` sin handler).
+
 ## Eventos registrados
 
 | event_name | version | aggregate_type | Productor | Consumidores | Schema payload |

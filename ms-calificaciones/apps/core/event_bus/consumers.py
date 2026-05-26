@@ -48,6 +48,10 @@ def handle_periodo_updated(envelope: EventEnvelope) -> None:
     _consume(envelope, 'periodo_updated', lambda p: proj.apply_periodo(p))
 
 
+def handle_periodo_activated(envelope: EventEnvelope) -> None:
+    _consume(envelope, 'periodo_activated', lambda p: proj.apply_periodo(p, activo=True))
+
+
 def handle_periodo_closed(envelope: EventEnvelope) -> None:
     _consume(envelope, 'periodo_closed', lambda p: proj.apply_periodo(p, activo=False))
 
@@ -92,6 +96,7 @@ HANDLERS = {
     'user.updated.v1': handle_user_updated,
     'periodo.created.v1': handle_periodo_created,
     'periodo.updated.v1': handle_periodo_updated,
+    'periodo.activated.v1': handle_periodo_activated,
     'periodo.closed.v1': handle_periodo_closed,
     'materia.created.v1': handle_materia_created,
     'materia.updated.v1': handle_materia_updated,

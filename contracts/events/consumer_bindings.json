@@ -1,0 +1,60 @@
+{
+  "$schema": "./consumer_bindings.schema.json",
+  "description": "Eventos que cada MS debe consumir (HANDLERS). Fuente de verdad para tests de cobertura del bus.",
+  "ms-alumnos": [
+    "token.revoked.v1",
+    "materia.created.v1",
+    "materia.updated.v1",
+    "materia.assigned_teacher.v1"
+  ],
+  "ms-calificaciones": [
+    "token.revoked.v1",
+    "user.created.v1",
+    "user.updated.v1",
+    "periodo.created.v1",
+    "periodo.updated.v1",
+    "periodo.activated.v1",
+    "periodo.closed.v1",
+    "materia.created.v1",
+    "materia.updated.v1",
+    "materia.assigned_teacher.v1",
+    "materia.closed.v1",
+    "alumno.imported.v1",
+    "alumno.updated.v1",
+    "alumno.withdrawn.v1"
+  ],
+  "ms-asistencias": [
+    "token.revoked.v1",
+    "periodo.created.v1",
+    "periodo.updated.v1",
+    "periodo.activated.v1",
+    "periodo.closed.v1",
+    "materia.created.v1",
+    "materia.updated.v1",
+    "materia.closed.v1",
+    "alumno.imported.v1",
+    "alumno.updated.v1",
+    "alumno.withdrawn.v1"
+  ],
+  "ms-reportes": [
+    "token.revoked.v1",
+    "periodo.created.v1",
+    "periodo.updated.v1",
+    "periodo.activated.v1",
+    "periodo.closed.v1",
+    "materia.created.v1",
+    "materia.updated.v1",
+    "materia.assigned_teacher.v1",
+    "materia.closed.v1",
+    "alumno.imported.v1",
+    "alumno.updated.v1",
+    "alumno.withdrawn.v1",
+    "actividad.created.v1",
+    "calificacion.updated.v1",
+    "concentrado.calculado.v1",
+    "materia.calificaciones_cerradas.v1",
+    "asistencia.registered.v1",
+    "asistencia.rejected.v1",
+    "qr.session.created.v1"
+  ]
+}
