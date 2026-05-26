@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import unicodedata
 from decimal import Decimal
 
 import MySQLdb
@@ -24,6 +25,29 @@ from apps.reportes.models import (
 from apps.reportes.services.analytics_state import reset_analytics_state, touch_data_as_of
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_docente_text(value: str) -> str:
+    text = unicodedata.normalize('NFD', value or '')
+    text = ''.join(char for char in text if unicodedata.category(char) != 'Mn')
+    return text.lower().strip()
+
+
+def _docente_nombre_matches(en_materia: str, nombre: str, apellido: str) -> bool:
+    """Misma heurística que el frontend (tokens en docente_nombre del PDF)."""
+    en_materia_n = _normalize_docente_text(en_materia)
+    if not en_materia_n:
+        return False
+    tokens = [
+        token
+        for token in _normalize_docente_text(f'{nombre} {apellido}').split()
+        if len(token) >= 2
+    ]
+    if not tokens:
+        return False
+    coincidencias = sum(1 for token in tokens if token in en_materia_n)
+    minimo = len(tokens) if len(tokens) <= 2 else 2
+    return coincidencias >= minimo
 
 
 def _mysql_conn(prefix: str):
@@ -269,9 +293,11 @@ class Command(BaseCommand):
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT a.id, a.matricula, a.nombre, a.email, am.materia_id, a.usuario_id
-                FROM alumnos a
-                JOIN alumno_materia am ON am.alumno_id = a.id
+                SELECT a.id, a.matricula,
+                       TRIM(CONCAT(a.nombre, ' ', a.apellido)),
+                       a.email, am.materia_id, a.usuario_id
+                FROM core_alumno a
+                JOIN core_inscripcionmateria am ON am.alumno_id = a.id
                 WHERE am.activa = 1
                 """
             )
@@ -288,5 +314,31 @@ class Command(BaseCommand):
                 ins += 1
             conn.close()
             self.stdout.write(f'Backfill inscripciones: {ins}')
+            self._resolve_docente_usuario_ids()
         else:
             self.stdout.write('BACKFILL_ALUMNOS_DB_* no configurado')
+
+    def _resolve_docente_usuario_ids(self) -> None:
+        """Asigna docente_id=usuario_id (MS-1) cuando periodos solo trae docente_nombre."""
+        conn = _mysql_conn('BACKFILL_ALUMNOS_DB')
+        if not conn:
+            return
+
+        cur = conn.cursor()
+        cur.execute(
+            'SELECT usuario_id, nombre, apellido FROM core_docente WHERE usuario_id IS NOT NULL'
+        )
+        docentes = cur.fetchall()
+        conn.close()
+
+        linked = 0
+        for materia in ReporteMateriaProjection.objects.filter(docente_id__isnull=True):
+            for usuario_id, nombre, apellido in docentes:
+                if _docente_nombre_matches(materia.docente_nombre, nombre or '', apellido or ''):
+                    ReporteMateriaProjection.objects.filter(materia_id=materia.materia_id).update(
+                        docente_id=usuario_id,
+                    )
+                    linked += 1
+                    break
+
+        self.stdout.write(f'Docente usuario_id vinculados: {linked}')

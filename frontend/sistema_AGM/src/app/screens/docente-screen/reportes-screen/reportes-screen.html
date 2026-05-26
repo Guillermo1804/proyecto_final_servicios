@@ -4,15 +4,17 @@
 
   <main class="content">
 
-<p *ngIf="isLoading" class="load-hint">Cargando reportes desde MS-2, MS-3 y MS-4…</p>
+<p *ngIf="isLoading" class="load-hint">Cargando reportes desde MS-7…</p>
 <p *ngIf="loadError" class="load-error">{{ loadError }}</p>
+<p *ngIf="!isLoading && !loadError" class="load-hint">Fuente: {{ fuenteEtiqueta() }}</p>
 
-<section class="filters-card">
+<section class="filters-card" *ngIf="!isLoading">
 
   <div class="filter-field">
     <label>Periodo Académico</label>
-    <select>
-      <option *ngFor="let periodo of periodosEscolares">
+    <select [(ngModel)]="filtroPeriodo" (ngModelChange)="aplicarFiltros()">
+      <option value="">Todos los periodos</option>
+      <option *ngFor="let periodo of periodosEscolares" [value]="periodo.nombre">
         {{ periodo.nombre }}{{ periodo.activo ? ' (Actual)' : '' }}
       </option>
     </select>
@@ -20,12 +22,13 @@
 
   <div class="filter-field">
     <label>Materia</label>
-    <select>
-      <option>Todas las materias</option>
+    <select [(ngModel)]="filtroMateriaId" (ngModelChange)="aplicarFiltros()">
+      <option [ngValue]="null">Todas las materias</option>
+      <option *ngFor="let m of materiasOpciones" [ngValue]="m.id">{{ m.label }}</option>
     </select>
   </div>
 
-  <button>
+  <button type="button" (click)="aplicarFiltros()">
     <i class="bi bi-filter"></i>
     Aplicar Filtros
   </button>
@@ -37,7 +40,7 @@
       <article class="metric-card azul">
         <p>Promedio General</p>
         <h3>{{ resumen.promedioGeneral }}</h3>
-        <span class="positivo">Desde concentrado MS-4</span>
+        <span class="positivo">Periodo activo (MS-7)</span>
       </article>
 
       <article class="metric-card azul">
@@ -49,13 +52,13 @@
       <article class="metric-card rojo">
         <p>Alumnos en riesgo</p>
         <h3>{{ resumen.alumnosEnRiesgo }}</h3>
-        <span class="negativo">Promedio &lt; 6 en concentrado</span>
+        <span class="negativo">Según proyección MS-7</span>
       </article>
 
       <article class="metric-card oscuro">
         <p>Materias Activas</p>
         <h3>{{ resumen.materiasActivas }}</h3>
-        <span>Periodo activo (MS-2)</span>
+        <span>Periodo activo</span>
       </article>
 
     </section>
@@ -80,7 +83,7 @@
       </div>
 
       <p *ngIf="!chartMaterias.length && !isLoading" class="table-empty">
-        Sin datos de concentrado para graficar.
+        Sin datos de MS-7 para graficar. Ejecute rebuild_report_projections --from-backfill si el periodo ya tiene calificaciones.
       </p>
 
       <div class="insight-card" *ngIf="insightObservacion">
@@ -100,14 +103,14 @@
       <div class="history-header compact">
         <h3>Historial académico</h3>
 
-        <span class="history-helper">Materias impartidas por periodo</span>
+        <span class="history-helper">Materias impartidas por periodo (MS-7)</span>
       </div>
 
       <div class="academic-period-list">
 
         <article
           class="academic-period-card"
-          *ngFor="let periodo of historialAcademico"
+          *ngFor="let periodo of historialAcademicoVista"
           [ngClass]="{ inactive: !periodo.activo }"
         >
 
@@ -219,41 +222,50 @@
 
       <h3>
         <i class="bi bi-file-earmark-text"></i>
-        Exportación de Actas
+        Exportación de reportes (MS-7)
       </h3>
 
       <p>
-        Genere las actas oficiales de calificaciones finales para su entrega administrativa.
+        Descargue actas de calificaciones o reportes de asistencias en PDF o Excel.
       </p>
 
+      <label>Tipo de reporte</label>
+      <select [(ngModel)]="tipoExport">
+        <option value="calificaciones">Calificaciones (acta)</option>
+        <option value="asistencias">Asistencias</option>
+      </select>
+
       <label>Seleccione Materia</label>
-      <select>
+      <select [(ngModel)]="selectedMateriaId">
+        <option [ngValue]="null" disabled>Seleccione materia</option>
         <option *ngIf="!materiasOpciones.length" disabled>Sin materias en periodo activo</option>
-        <option *ngFor="let m of materiasOpciones" [value]="m.id">{{ m.label }}</option>
+        <option *ngFor="let m of materiasOpciones" [ngValue]="m.id">{{ m.label }}</option>
       </select>
 
       <label>Formato de Archivo</label>
 
       <div class="format-row">
-        <button>
+        <button type="button" [disabled]="exportLoading" (click)="exportar('pdf')">
           <i class="bi bi-file-earmark-pdf"></i>
           PDF
         </button>
 
-        <button>
+        <button type="button" [disabled]="exportLoading" (click)="exportar('xlsx')">
           <i class="bi bi-table"></i>
           Excel
         </button>
       </div>
 
-      <button class="generate-btn">
+      <button class="generate-btn" type="button" [disabled]="exportLoading" (click)="exportar(exportFormat)">
         <i class="bi bi-download"></i>
-        Generar Documento Final
+        {{ exportLoading ? 'Generando…' : 'Generar documento' }}
       </button>
+
+      <p *ngIf="exportError" class="load-error">{{ exportError }}</p>
 
       <div class="note">
         <i class="bi bi-link-45deg"></i>
-        Las actas generadas incluyen firma digital docente automática.
+        Los archivos se generan en MS-7 con los datos proyectados del sistema.
       </div>
 
     </section>
@@ -263,10 +275,7 @@
       <div class="history-header">
         <h3>Historial de Exportaciones</h3>
 
-        <a href="#">
-          Ver todo el historial
-          <i class="bi bi-chevron-right"></i>
-        </a>
+        <span class="history-helper">Descargas en esta sesión del navegador</span>
       </div>
 
       <div class="history-table">
@@ -287,7 +296,7 @@
         </div>
 
         <p *ngIf="!historial.length" class="table-empty">
-          Sin historial de exportaciones (requiere MS-7). Use «Imprimir lista» en cada materia (MS-4).
+          Aún no hay exportaciones en esta sesión. Use los botones PDF o Excel arriba.
         </p>
 
       </div>
