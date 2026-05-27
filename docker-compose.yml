@@ -194,40 +194,6 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health/')\""]
     networks:
       - agm-network
-  ms-auth-outbox-worker:
-    build:
-      context: .
-      dockerfile: ms-auth/Dockerfile
-    container_name: agm-ms-auth-outbox
-    environment:
-      AGM_RUN_MODE: outbox-worker
-      USE_EVENT_BUS: "true"
-      EVENT_CONTRACTS_DIR: /contracts/events
-    depends_on:
-      db-auth:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      ms-auth:
-        condition: service_healthy
-    networks:
-      - agm-network
-  ms-auth-event-consumer:
-    build:
-      context: .
-      dockerfile: ms-auth/Dockerfile
-    container_name: agm-ms-auth-consumer
-    environment:
-      AGM_RUN_MODE: event-consumer
-      USE_EVENT_BUS: "true"
-      EVENT_CONTRACTS_DIR: /contracts/events
-    depends_on:
-      db-auth:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - agm-network
 
   ms-periodos:
     build:
@@ -256,42 +222,6 @@ services:
     healthcheck:
       <<: *ms-healthcheck
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/health/')\""]
-    networks:
-      - agm-network
-  ms-periodos-outbox-worker:
-    build:
-      context: .
-      dockerfile: ms-periodos/Dockerfile
-    container_name: agm-ms-periodos-outbox
-    environment:
-      AGM_RUN_MODE: outbox-worker
-      USE_EVENT_BUS: "true"
-      EVENT_CONTRACTS_DIR: /contracts/events
-    depends_on:
-      db-periodos:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      ms-periodos:
-        condition: service_healthy
-    networks:
-      - agm-network
-  ms-periodos-worker-consumer:
-    build:
-      context: .
-      dockerfile: ms-periodos/Dockerfile
-    container_name: agm-ms-periodos-consumer
-    environment:
-      AGM_RUN_MODE: event-consumer
-      USE_EVENT_BUS: "true"
-      EVENT_CONTRACTS_DIR: /contracts/events
-    depends_on:
-      db-periodos:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      ms-periodos:
-        condition: service_healthy
     networks:
       - agm-network
   ms-alumnos:
@@ -326,42 +256,6 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8003/health/')\""]
     networks:
       - agm-network
-  ms-alumnos-outbox-worker:
-    build:
-      context: .
-      dockerfile: ms-alumnos/Dockerfile
-    container_name: agm-ms-alumnos-outbox
-    environment:
-      AGM_RUN_MODE: outbox-worker
-      USE_EVENT_BUS: "true"
-      EVENT_CONTRACTS_DIR: /contracts/events
-    depends_on:
-      db-alumnos:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      ms-alumnos:
-        condition: service_healthy
-    networks:
-      - agm-network
-  ms-alumnos-worker-consumer:
-    build:
-      context: .
-      dockerfile: ms-alumnos/Dockerfile
-    container_name: agm-ms-alumnos-consumer
-    environment:
-      AGM_RUN_MODE: event-consumer
-      USE_EVENT_BUS: "true"
-      EVENT_CONTRACTS_DIR: /contracts/events
-    depends_on:
-      db-alumnos:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      ms-alumnos:
-        condition: service_healthy
-    networks:
-      - agm-network
   ms-calificaciones:
     build:
       context: .
@@ -388,42 +282,6 @@ services:
     healthcheck:
       <<: *ms-healthcheck
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8004/health/')\""]
-    networks:
-      - agm-network
-  ms-calificaciones-worker-outbox:
-    build:
-      context: .
-      dockerfile: ms-calificaciones/Dockerfile
-    container_name: agm-ms-calificaciones-outbox
-    environment:
-      AGM_RUN_MODE: event-outbox
-      USE_EVENT_BUS: "true"
-      EVENT_CONTRACTS_DIR: /contracts/events
-    depends_on:
-      db-calificaciones:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      ms-calificaciones:
-        condition: service_healthy
-    networks:
-      - agm-network
-  ms-calificaciones-worker-consumer:
-    build:
-      context: .
-      dockerfile: ms-calificaciones/Dockerfile
-    container_name: agm-ms-calificaciones-consumer
-    environment:
-      AGM_RUN_MODE: event-consumer
-      USE_EVENT_BUS: "true"
-      EVENT_CONTRACTS_DIR: /contracts/events
-    depends_on:
-      db-calificaciones:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      ms-calificaciones:
-        condition: service_healthy
     networks:
       - agm-network
   ms-asistencias:
@@ -456,42 +314,6 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8005/health/')\""]
     networks:
       - agm-network
-  ms-asistencias-worker-outbox:
-    build:
-      context: .
-      dockerfile: ms-asistencias/Dockerfile
-    container_name: agm-ms-asistencias-outbox
-    environment:
-      AGM_RUN_MODE: event-outbox
-      USE_EVENT_BUS: "true"
-      EVENT_CONTRACTS_DIR: /contracts/events
-    depends_on:
-      db-asistencias:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      ms-asistencias:
-        condition: service_healthy
-    networks:
-      - agm-network
-  ms-asistencias-worker-consumer:
-    build:
-      context: .
-      dockerfile: ms-asistencias/Dockerfile
-    container_name: agm-ms-asistencias-consumer
-    environment:
-      AGM_RUN_MODE: event-consumer
-      USE_EVENT_BUS: "true"
-      EVENT_CONTRACTS_DIR: /contracts/events
-    depends_on:
-      db-asistencias:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      ms-asistencias:
-        condition: service_healthy
-    networks:
-      - agm-network
   ms-notificaciones:
     build:
       context: .
@@ -515,24 +337,6 @@ services:
     healthcheck:
       <<: *ms-healthcheck
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8006/health/')\""]
-    networks:
-      - agm-network
-  ms-notificaciones-worker-consumer:
-    build:
-      context: .
-      dockerfile: ms-notificaciones/Dockerfile
-    container_name: agm-ms-notificaciones-consumer
-    environment:
-      AGM_RUN_MODE: event-consumer
-      USE_EVENT_BUS: "true"
-      EVENT_CONTRACTS_DIR: /contracts/events
-    depends_on:
-      db-notificaciones:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      ms-notificaciones:
-        condition: service_healthy
     networks:
       - agm-network
   ms-reportes:
@@ -568,31 +372,6 @@ services:
     healthcheck:
       <<: *ms-healthcheck
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8007/health/')\""]
-    networks:
-      - agm-network
-  ms-reportes-worker-consumer:
-    build:
-      context: .
-      dockerfile: ms-reportes/Dockerfile
-    container_name: agm-ms-reportes-consumer
-    environment:
-      AGM_RUN_MODE: event-consumer
-      USE_EVENT_BUS: "true"
-      JWT_JWKS_URL: http://ms-auth:8001/.well-known/jwks.json
-      EVENT_CONTRACTS_DIR: /contracts/events
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USER: ${RABBITMQ_USER:-agm_bus}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-agm_bus_dev_change_me}
-      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-agm}
-      EVENT_EXCHANGE: agm.domain
-    depends_on:
-      db-reportes:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      ms-reportes:
-        condition: service_healthy
     networks:
       - agm-network
   nginx:
