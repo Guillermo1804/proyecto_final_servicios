@@ -1,549 +1,2305 @@
 {
-	"info": {
-		"_postman_id": "18f9e0a0-0000-4000-8000-000000000001",
-		"name": "AGM API Collection",
-		"description": "Colección de APIs para el proyecto AGM (Periodos y Alumnos)",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "MS Periodos",
-			"item": [
-				{
-					"name": "Listar Periodos",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_periodos}}/api/periodos/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "periodos", ""]
-						},
-						"description": "Retorna todos los periodos académicos con paginación AGM."
-					}
-				},
-				{
-					"name": "Crear Periodo",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"nombre\": \"Primavera 2026\",\n    \"fecha_inicio\": \"2026-01-05\",\n    \"fecha_fin\": \"2026-05-30\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url_periodos}}/api/periodos/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "periodos", ""]
-						},
-						"description": "Crea un nuevo periodo académico. Solo uno puede estar activo a la vez."
-					}
-				},
-				{
-					"name": "Ver Periodo",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_periodos}}/api/periodos/1/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "periodos", "1", ""]
-						}
-					}
-				},
-				{
-					"name": "Actualizar Periodo",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"nombre\": \"Primavera 2026 (Modificado)\",\n    \"fecha_inicio\": \"2026-01-06\",\n    \"fecha_fin\": \"2026-05-31\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url_periodos}}/api/periodos/1/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "periodos", "1", ""]
-						}
-					}
-				},
-				{
-					"name": "Eliminar Periodo",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_periodos}}/api/periodos/1/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "periodos", "1", ""]
-						}
-					}
-				},
-				{
-					"name": "Activar Periodo",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_periodos}}/api/periodos/1/activar/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "periodos", "1", "activar", ""]
-						},
-						"description": "Activa un periodo y desactiva el anterior atómicamente."
-					}
-				},
-				{
-					"name": "Consultar Periodo Activo",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_periodos}}/api/periodos/activo/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "periodos", "activo", ""]
-						}
-					}
-				},
-				{
-					"name": "Listar Materias",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_periodos}}/api/materias/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "materias", ""]
-						}
-					}
-				},
-				{
-					"name": "Crear Materia",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"nrc\": \"12345\",\n    \"nombre\": \"Programación Avanzada\",\n    \"docente_usuario_id\": 101,\n    \"periodo\": 1\n}"
-						},
-						"url": {
-							"raw": "{{base_url_periodos}}/api/materias/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "materias", ""]
-						}
-					}
-				},
-				{
-					"name": "Ver Materia",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_periodos}}/api/materias/1/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "materias", "1", ""]
-						}
-					}
-				},
-				{
-					"name": "Actualizar Materia",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"nrc\": \"12345\",\n    \"nombre\": \"Programación Avanzada II\",\n    \"docente_usuario_id\": 101,\n    \"periodo\": 1\n}"
-						},
-						"url": {
-							"raw": "{{base_url_periodos}}/api/materias/1/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "materias", "1", ""]
-						}
-					}
-				},
-				{
-					"name": "Eliminar Materia",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_periodos}}/api/materias/1/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "materias", "1", ""]
-						}
-					}
-				},
-				{
-					"name": "Importar Materias",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{ "key": "archivo", "type": "file", "src": [] }
-							]
-						},
-						"url": {
-							"raw": "{{base_url_periodos}}/api/periodos/1/importar-materias/",
-							"host": ["{{base_url_periodos}}"],
-							"path": ["api", "periodos", "1", "importar-materias", ""]
-						},
-						"description": "Importación masiva de materias desde un archivo Excel."
-					}
-				}
-			]
-		},
-		{
-			"name": "MS Alumnos",
-			"item": [
-				{
-					"name": "Listar Docentes",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_alumnos}}/api/docentes/",
-							"host": ["{{base_url_alumnos}}"],
-							"path": ["api", "docentes", ""]
-						}
-					}
-				},
-				{
-					"name": "Crear Docente",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"usuario_id\": 101,\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Perez\",\n    \"email\": \"juan.perez@buap.mx\",\n    \"departamento\": \"Computación\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url_alumnos}}/api/docentes/",
-							"host": ["{{base_url_alumnos}}"],
-							"path": ["api", "docentes", ""]
-						}
-					}
-				},
-				{
-					"name": "Ver Docente",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_alumnos}}/api/docentes/1/",
-							"host": ["{{base_url_alumnos}}"],
-							"path": ["api", "docentes", "1", ""]
-						}
-					}
-				},
-				{
-					"name": "Actualizar Docente",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"usuario_id\": 101,\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Perez Sosa\",\n    \"email\": \"juan.perez@buap.mx\",\n    \"departamento\": \"Computación\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url_alumnos}}/api/docentes/1/",
-							"host": ["{{base_url_alumnos}}"],
-							"path": ["api", "docentes", "1", ""]
-						}
-					}
-				},
-				{
-					"name": "Eliminar Docente",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_alumnos}}/api/docentes/1/",
-							"host": ["{{base_url_alumnos}}"],
-							"path": ["api", "docentes", "1", ""]
-						}
-					}
-				},
-				{
-					"name": "Importar Alumnos (Preview)",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{ "key": "archivo", "type": "file", "src": [] }
-							]
-						},
-						"url": {
-							"raw": "{{base_url_alumnos}}/api/alumnos/importar/preview/",
-							"host": ["{{base_url_alumnos}}"],
-							"path": ["api", "alumnos", "importar", "preview", ""]
-						}
-					}
-				},
-				{
-					"name": "Importar Alumnos (Confirmar)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "[\n    {\n        \"matricula\": \"202012345\",\n        \"nombre\": \"Alumno Test\",\n        \"apellido\": \"Postman\",\n        \"email\": \"test@alumno.buap.mx\",\n        \"carrera\": \"ICC\",\n        \"semestre\": 1\n    }\n]"
-						},
-						"url": {
-							"raw": "{{base_url_alumnos}}/api/alumnos/importar/confirmar/",
-							"host": ["{{base_url_alumnos}}"],
-							"path": ["api", "alumnos", "importar", "confirmar", ""]
-						}
-					}
-				},
-				{
-					"name": "Alumnos por Materia",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_alumnos}}/api/alumnos/por-materia/?materia_id=1",
-							"host": ["{{base_url_alumnos}}"],
-							"path": ["api", "alumnos", "por-materia", ""],
-							"query": [
-								{ "key": "materia_id", "value": "1" }
-							]
-						}
-					}
-				},
-				{
-					"name": "Baja de Materia",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"materia_id\": 1\n}"
-						},
-						"url": {
-							"raw": "{{base_url_alumnos}}/api/alumnos/1/baja-materia/",
-							"host": ["{{base_url_alumnos}}"],
-							"path": ["api", "alumnos", "1", "baja-materia", ""]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "MS-6 Notificaciones",
-			"description": "REST vía gateway (8080) o directo (8006). Requiere X-Internal-Api-Key.",
-			"item": [
-				{
-					"name": "Health MS-6",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url_notificaciones}}/health/",
-							"host": ["{{base_url_notificaciones}}"],
-							"path": ["health", ""]
-						}
-					}
-				},
-				{
-					"name": "Bienvenida",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "X-Internal-Api-Key", "value": "{{internal_api_key}}" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"alumno_id\": 1,\n    \"materia_id\": 10,\n    \"clave_acceso\": \"uuid-clave-temporal-ms1\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url_gateway}}/notificaciones/bienvenida",
-							"host": ["{{base_url_gateway}}"],
-							"path": ["notificaciones", "bienvenida"]
-						}
-					}
-				},
-				{
-					"name": "Baja (notificar docente)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "X-Internal-Api-Key", "value": "{{internal_api_key}}" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"alumno_id\": 1,\n    \"docente_id\": 5,\n    \"materia_id\": 10\n}"
-						},
-						"url": {
-							"raw": "{{base_url_gateway}}/notificaciones/baja",
-							"host": ["{{base_url_gateway}}"],
-							"path": ["notificaciones", "baja"]
-						}
-					}
-				},
-				{
-					"name": "Cierre materia",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "X-Internal-Api-Key", "value": "{{internal_api_key}}" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"materia_id\": 5\n}"
-						},
-						"url": {
-							"raw": "{{base_url_gateway}}/notificaciones/cierre-materia",
-							"host": ["{{base_url_gateway}}"],
-							"path": ["notificaciones", "cierre-materia"]
-						}
-					}
-				},
-				{
-					"name": "Reset password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "X-Internal-Api-Key", "value": "{{internal_api_key}}" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"usuario@buap.mx\",\n    \"token\": \"token-uuid-ejemplo\",\n    \"reset_url\": \"http://localhost:4200/reset-password?token=token-uuid-ejemplo\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url_gateway}}/notificaciones/reset-password",
-							"host": ["{{base_url_gateway}}"],
-							"path": ["notificaciones", "reset-password"]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "MS-7 Reportes y Estadísticas",
-			"description": "REST vía gateway (:8080) o directo (:8007). Requiere **Authorization: Bearer {{jwt_token}}** (MS-1). `internal_api_key` no aplica a MS-7 (solo MS-6). IDs: `materia_id` = PK MS-2; `docente_usuario_id` = usuario_id MS-1; `alumno_id` = PK Alumno MS-3.",
-			"item": [
-				{
-					"name": "Calificaciones — Excel (xlsx)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-						],
-						"url": {
-							"raw": "{{base_url_gateway}}/reportes/calificaciones/{{materia_id}}?formato=xlsx",
-							"host": ["{{base_url_gateway}}"],
-							"path": ["reportes", "calificaciones", "{{materia_id}}"],
-							"query": [{ "key": "formato", "value": "xlsx" }]
-						},
-						"description": "Descarga binaria Excel del concentrado de calificaciones (ISSUE-902). Alias: formato=xls."
-					}
-				},
-				{
-					"name": "Calificaciones — PDF",
-					"request": {
-						"method": "GET",
-						"header": [
-							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-						],
-						"url": {
-							"raw": "{{base_url_gateway}}/reportes/calificaciones/{{materia_id}}?formato=pdf",
-							"host": ["{{base_url_gateway}}"],
-							"path": ["reportes", "calificaciones", "{{materia_id}}"],
-							"query": [{ "key": "formato", "value": "pdf" }]
-						},
-						"description": "Descarga binaria PDF con soporte UTF-8 (ISSUE-903)."
-					}
-				},
-				{
-					"name": "Asistencias — Excel (xlsx)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-						],
-						"url": {
-							"raw": "{{base_url_gateway}}/reportes/asistencias/{{materia_id}}?formato=xlsx",
-							"host": ["{{base_url_gateway}}"],
-							"path": ["reportes", "asistencias", "{{materia_id}}"],
-							"query": [{ "key": "formato", "value": "xlsx" }]
-						},
-						"description": "Concentrado de asistencias en Excel (ISSUE-904)."
-					}
-				},
-				{
-					"name": "Asistencias — PDF",
-					"request": {
-						"method": "GET",
-						"header": [
-							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-						],
-						"url": {
-							"raw": "{{base_url_gateway}}/reportes/asistencias/{{materia_id}}?formato=pdf",
-							"host": ["{{base_url_gateway}}"],
-							"path": ["reportes", "asistencias", "{{materia_id}}"],
-							"query": [{ "key": "formato", "value": "pdf" }]
-						},
-						"description": "Concentrado de asistencias en PDF (ISSUE-904)."
-					}
-				},
-				{
-					"name": "Estadísticas docente (JSON)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-						],
-						"url": {
-							"raw": "{{base_url_gateway}}/estadisticas/docente/{{docente_usuario_id}}?page=1&limit=20",
-							"host": ["{{base_url_gateway}}"],
-							"path": ["estadisticas", "docente", "{{docente_usuario_id}}"],
-							"query": [
-								{ "key": "page", "value": "1" },
-								{ "key": "limit", "value": "20" }
-							]
-						},
-						"description": "Historial comparativo del docente. `:id` = **usuario_id** MS-1 (no PK Docente MS-3). ISSUE-905."
-					}
-				},
-				{
-					"name": "Estadísticas alumno (JSON)",
-					"request": {
-						"method": "GET",
-						"header": [
-							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-						],
-						"url": {
-							"raw": "{{base_url_gateway}}/estadisticas/alumno/{{alumno_id}}",
-							"host": ["{{base_url_gateway}}"],
-							"path": ["estadisticas", "alumno", "{{alumno_id}}"]
-						},
-						"description": "Estadísticas personales del alumno. `:id` = PK Alumno MS-3. ISSUE-906."
-					}
-				}
-			]
-		}
-	]
+  "info": {
+    "_postman_id": "18f9e0a0-0000-4000-8000-000000000001",
+    "name": "AGM API Collection",
+    "description": "Coleccion completa de APIs para AGM — 7 microservicios (MS-1 a MS-7)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "MS-1 Auth & Users",
+      "description": "Puerto 8001. Login, JWT, CRUD usuarios.",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_auth}}/auth/login/",
+              "host": [
+                "{{base_url_auth}}"
+              ],
+              "path": [
+                "auth",
+                "login",
+                ""
+              ]
+            },
+            "description": "Login con email+password, retorna JWT access+refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@agm.buap.mx\",\n  \"password\": \"admin123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_auth}}/auth/refresh-token/",
+              "host": [
+                "{{base_url_auth}}"
+              ],
+              "path": [
+                "auth",
+                "refresh-token",
+                ""
+              ]
+            },
+            "description": "Renovar access token",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_auth}}/auth/me/",
+              "host": [
+                "{{base_url_auth}}"
+              ],
+              "path": [
+                "auth",
+                "me",
+                ""
+              ]
+            },
+            "description": "Perfil del usuario autenticado"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_auth}}/auth/logout/",
+              "host": [
+                "{{base_url_auth}}"
+              ],
+              "path": [
+                "auth",
+                "logout",
+                ""
+              ]
+            },
+            "description": "Blacklist refresh token",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_auth}}/auth/forgot-password/",
+              "host": [
+                "{{base_url_auth}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password",
+                ""
+              ]
+            },
+            "description": "Solicita reset (siempre 200)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"usuario@buap.mx\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_auth}}/auth/reset-password/",
+              "host": [
+                "{{base_url_auth}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password",
+                ""
+              ]
+            },
+            "description": "Valida token y cambia contraseña",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"uuid-token\",\n  \"password\": \"nueva123\",\n  \"password_confirm\": \"nueva123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Listar Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_auth}}/auth/usuarios/?page=1&limit=10",
+              "host": [
+                "{{base_url_auth}}"
+              ],
+              "path": [
+                "auth",
+                "usuarios",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lista usuarios (admin)"
+          }
+        },
+        {
+          "name": "Crear Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_auth}}/auth/usuarios/",
+              "host": [
+                "{{base_url_auth}}"
+              ],
+              "path": [
+                "auth",
+                "usuarios",
+                ""
+              ]
+            },
+            "description": "Crear usuario (admin o API Key)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nuevo@buap.mx\",\n  \"nombre\": \"Nuevo Usuario\",\n  \"rol\": \"docente\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Ver Usuario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_auth}}/auth/usuarios/1/",
+              "host": [
+                "{{base_url_auth}}"
+              ],
+              "path": [
+                "auth",
+                "usuarios",
+                "1",
+                ""
+              ]
+            },
+            "description": "Detalle de un usuario"
+          }
+        },
+        {
+          "name": "Actualizar Usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_auth}}/auth/usuarios/1/",
+              "host": [
+                "{{base_url_auth}}"
+              ],
+              "path": [
+                "auth",
+                "usuarios",
+                "1",
+                ""
+              ]
+            },
+            "description": "Actualizar nombre/rol/activo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Nombre Actualizado\",\n  \"rol\": \"docente\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar Usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_auth}}/auth/usuarios/1/",
+              "host": [
+                "{{base_url_auth}}"
+              ],
+              "path": [
+                "auth",
+                "usuarios",
+                "1",
+                ""
+              ]
+            },
+            "description": "Baja logica (activo=false)"
+          }
+        },
+        {
+          "name": "Admin Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_auth}}/auth/usuarios/1/reset-password/",
+              "host": [
+                "{{base_url_auth}}"
+              ],
+              "path": [
+                "auth",
+                "usuarios",
+                "1",
+                "reset-password",
+                ""
+              ]
+            },
+            "description": "Enviar email reset a un usuario"
+          }
+        }
+      ]
+    },
+    {
+      "name": "MS-2 Periodos & Materias",
+      "description": "Puerto 8002. Periodos, materias, import PDF.",
+      "item": [
+        {
+          "name": "Listar Periodos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/periodos/?page=1&limit=10",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "periodos",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Todos los periodos con paginacion"
+          }
+        },
+        {
+          "name": "Ver Periodo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/periodos/1/",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "periodos",
+                "1",
+                ""
+              ]
+            },
+            "description": "Detalle de un periodo"
+          }
+        },
+        {
+          "name": "Periodo Activo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/periodos/activo/",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "periodos",
+                "activo",
+                ""
+              ]
+            },
+            "description": "Periodo activo actual (publico)"
+          }
+        },
+        {
+          "name": "Crear Periodo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/periodos/",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "periodos",
+                ""
+              ]
+            },
+            "description": "Crear periodo (activo=false)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Primavera 2026\",\n  \"fecha_inicio\": \"2026-02-01\",\n  \"fecha_fin\": \"2026-06-30\",\n  \"plan_estudios\": \"Plan 2021\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Actualizar Periodo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/periodos/1/",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "periodos",
+                "1",
+                ""
+              ]
+            },
+            "description": "Actualizar (parcial)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Primavera 2026 (mod)\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar Periodo",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/periodos/1/",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "periodos",
+                "1",
+                ""
+              ]
+            },
+            "description": "Eliminar (si no tiene materias)"
+          }
+        },
+        {
+          "name": "Activar Periodo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/periodos/1/activar/",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "periodos",
+                "1",
+                "activar",
+                ""
+              ]
+            },
+            "description": "Activa periodo, desactiva otros (atomico)"
+          }
+        },
+        {
+          "name": "Importar Materias PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/periodos/1/importar-materias/",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "periodos",
+                "1",
+                "importar-materias",
+                ""
+              ]
+            },
+            "description": "Upload PDF programacion academica (campo: archivo)",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar Materias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/materias/?periodo_id=1&page=1&limit=10",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "materias",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "periodo_id",
+                  "value": "1"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Materias con filtros"
+          }
+        },
+        {
+          "name": "Ver Materia",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/materias/1/",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "materias",
+                "1",
+                ""
+              ]
+            },
+            "description": "Detalle de una materia"
+          }
+        },
+        {
+          "name": "Crear Materia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/materias/",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "materias",
+                ""
+              ]
+            },
+            "description": "Crear materia manual",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"periodo\": 1,\n  \"nrc\": \"12345\",\n  \"nombre\": \"Servicios Web\",\n  \"seccion\": \"001\",\n  \"clave\": \"COMP-456\",\n  \"docente_nombre\": \"Evelia Perez\",\n  \"horario\": \"L-M 10:00\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Actualizar Materia",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/materias/1/",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "materias",
+                "1",
+                ""
+              ]
+            },
+            "description": "Actualizar materia",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Servicios Web II\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar Materia",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_periodos}}/api/materias/1/",
+              "host": [
+                "{{base_url_periodos}}"
+              ],
+              "path": [
+                "api",
+                "materias",
+                "1",
+                ""
+              ]
+            },
+            "description": "Eliminar materia"
+          }
+        }
+      ]
+    },
+    {
+      "name": "MS-3 Docentes & Alumnos",
+      "description": "Puerto 8003. Docentes, alumnos, inscripciones, bajas.",
+      "item": [
+        {
+          "name": "Listar Docentes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_alumnos}}/api/docentes/?nombre=&departamento=&page=1&limit=10",
+              "host": [
+                "{{base_url_alumnos}}"
+              ],
+              "path": [
+                "api",
+                "docentes",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "nombre",
+                  "value": ""
+                },
+                {
+                  "key": "departamento",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Docentes con filtros"
+          }
+        },
+        {
+          "name": "Ver Docente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_alumnos}}/api/docentes/1/",
+              "host": [
+                "{{base_url_alumnos}}"
+              ],
+              "path": [
+                "api",
+                "docentes",
+                "1",
+                ""
+              ]
+            },
+            "description": "Detalle docente"
+          }
+        },
+        {
+          "name": "Crear Docente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_alumnos}}/api/docentes/",
+              "host": [
+                "{{base_url_alumnos}}"
+              ],
+              "path": [
+                "api",
+                "docentes",
+                ""
+              ]
+            },
+            "description": "Crear docente (requiere usuario_id)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_id\": 101,\n  \"nombre\": \"Juan\",\n  \"apellido\": \"Perez\",\n  \"email\": \"juan@buap.mx\",\n  \"departamento\": \"Computacion\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Actualizar Docente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_alumnos}}/api/docentes/1/",
+              "host": [
+                "{{base_url_alumnos}}"
+              ],
+              "path": [
+                "api",
+                "docentes",
+                "1",
+                ""
+              ]
+            },
+            "description": "Actualizar docente",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apellido\": \"Perez Sosa\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar Docente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_alumnos}}/api/docentes/1/",
+              "host": [
+                "{{base_url_alumnos}}"
+              ],
+              "path": [
+                "api",
+                "docentes",
+                "1",
+                ""
+              ]
+            },
+            "description": "Eliminar docente"
+          }
+        },
+        {
+          "name": "Importar Docentes PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_alumnos}}/api/docentes/importar/",
+              "host": [
+                "{{base_url_alumnos}}"
+              ],
+              "path": [
+                "api",
+                "docentes",
+                "importar",
+                ""
+              ]
+            },
+            "description": "Upload PDF directorio docentes (campo: file)",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Importar Alumnos Preview",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_alumnos}}/api/alumnos/importar/preview/",
+              "host": [
+                "{{base_url_alumnos}}"
+              ],
+              "path": [
+                "api",
+                "alumnos",
+                "importar",
+                "preview",
+                ""
+              ]
+            },
+            "description": "Preview Excel/CSV sin persistir (campo: archivo)",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Importar Alumnos Confirmar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_alumnos}}/api/alumnos/importar/confirmar/",
+              "host": [
+                "{{base_url_alumnos}}"
+              ],
+              "path": [
+                "api",
+                "alumnos",
+                "importar",
+                "confirmar",
+                ""
+              ]
+            },
+            "description": "Confirmar importacion",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alumnos\": [\n    {\n      \"matricula\": \"202012345\",\n      \"nombre\": \"Test\",\n      \"apellido\": \"Alumno\",\n      \"email\": \"test@alumno.buap.mx\",\n      \"carrera\": \"ICC\",\n      \"semestre\": 1,\n      \"materia_id\": 1\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Alumnos por Materia",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_alumnos}}/api/alumnos/por-materia/?materia_id=1",
+              "host": [
+                "{{base_url_alumnos}}"
+              ],
+              "path": [
+                "api",
+                "alumnos",
+                "por-materia",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "materia_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Alumnos activos en una materia"
+          }
+        },
+        {
+          "name": "Baja de Materia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_alumnos}}/api/alumnos/1/baja-materia/",
+              "host": [
+                "{{base_url_alumnos}}"
+              ],
+              "path": [
+                "api",
+                "alumnos",
+                "1",
+                "baja-materia",
+                ""
+              ]
+            },
+            "description": "Baja irreversible",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"materia_id\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Me Materias (Alumno)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_alumnos}}/api/alumnos/me/materias/",
+              "host": [
+                "{{base_url_alumnos}}"
+              ],
+              "path": [
+                "api",
+                "alumnos",
+                "me",
+                "materias",
+                ""
+              ]
+            },
+            "description": "Materias del alumno autenticado, enriquecidas con MS-2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "MS-4 Calificaciones",
+      "description": "Puerto 8004. Ponderaciones, actividades, calificaciones, concentrado.",
+      "item": [
+        {
+          "name": "Ver Ponderaciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/ponderaciones/1/",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "ponderaciones",
+                "1",
+                ""
+              ]
+            },
+            "description": "Ponderaciones de materia_id=1"
+          }
+        },
+        {
+          "name": "Guardar Ponderaciones",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/ponderaciones/1/",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "ponderaciones",
+                "1",
+                ""
+              ]
+            },
+            "description": "Reemplazo atomico (deben sumar 100)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ponderaciones\": [\n    {\n      \"nombre_categoria\": \"Examenes\",\n      \"porcentaje\": 40\n    },\n    {\n      \"nombre_categoria\": \"Tareas\",\n      \"porcentaje\": 30\n    },\n    {\n      \"nombre_categoria\": \"Proyecto\",\n      \"porcentaje\": 30\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Importar Ponderaciones Excel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/ponderaciones/1/importar/",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "ponderaciones",
+                "1",
+                "importar",
+                ""
+              ]
+            },
+            "description": "Import Excel ponderaciones",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar Actividades",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/actividades/?materia=1",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "actividades",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "materia",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Actividades agrupadas por categoria"
+          }
+        },
+        {
+          "name": "Crear Actividad",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/actividades/",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "actividades",
+                ""
+              ]
+            },
+            "description": "Nueva actividad en ponderacion",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ponderacion_id\": 1,\n  \"nombre\": \"Examen Parcial 1\",\n  \"descripcion\": \"Primer parcial\",\n  \"fecha\": \"2026-03-15\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Editar Actividad",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/actividades/1/",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "actividades",
+                "1",
+                ""
+              ]
+            },
+            "description": "Actualizar actividad",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Examen Parcial 1 (mod)\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar Actividad",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/actividades/1/",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "actividades",
+                "1",
+                ""
+              ]
+            },
+            "description": "Solo si no tiene calificaciones"
+          }
+        },
+        {
+          "name": "Crear/Actualizar Calificacion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/calificaciones/",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "calificaciones",
+                ""
+              ]
+            },
+            "description": "Upsert calificacion",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actividad_id\": 1,\n  \"alumno_id\": 10,\n  \"calificacion\": 8.5\n}"
+            }
+          }
+        },
+        {
+          "name": "Editar Calificacion",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/calificaciones/1/",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "calificaciones",
+                "1",
+                ""
+              ]
+            },
+            "description": "Bloqueado si lista impresa",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"calificacion\": 9.0\n}"
+            }
+          }
+        },
+        {
+          "name": "Eliminar Calificacion",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/calificaciones/1/",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "calificaciones",
+                "1",
+                ""
+              ]
+            },
+            "description": "Eliminar calificacion"
+          }
+        },
+        {
+          "name": "Importar Calificaciones Excel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/calificaciones/importar/1/",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "calificaciones",
+                "importar",
+                "1",
+                ""
+              ]
+            },
+            "description": "Import masivo para materia_id=1",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Concentrado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/concentrado/1/",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "concentrado",
+                "1",
+                ""
+              ]
+            },
+            "description": "Concentrado completo con promedios"
+          }
+        },
+        {
+          "name": "Cerrar Materia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_calificaciones}}/api/materias/1/cerrar/",
+              "host": [
+                "{{base_url_calificaciones}}"
+              ],
+              "path": [
+                "api",
+                "materias",
+                "1",
+                "cerrar",
+                ""
+              ]
+            },
+            "description": "Cierre irreversible, publica evento"
+          }
+        }
+      ]
+    },
+    {
+      "name": "MS-5 Asistencias QR",
+      "description": "Puerto 8005. Sesiones QR, registros, estadisticas.",
+      "item": [
+        {
+          "name": "Iniciar Sesion QR",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/sesiones/iniciar/",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "sesiones",
+                "iniciar",
+                ""
+              ]
+            },
+            "description": "Crear sesion de 10 min",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"materia_id\": 5,\n  \"docente_id\": 42\n}"
+            }
+          }
+        },
+        {
+          "name": "Sesion Activa",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/sesiones/activa/?materia_id=5",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "sesiones",
+                "activa",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "materia_id",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Sesion activa de una materia"
+          }
+        },
+        {
+          "name": "Sesion Pendiente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/sesiones/pendiente/?materia_id=5",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "sesiones",
+                "pendiente",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "materia_id",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Sesion pendiente de confirmar"
+          }
+        },
+        {
+          "name": "Cerrar Sesion",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/sesiones/1/cerrar/",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "sesiones",
+                "1",
+                "cerrar",
+                ""
+              ]
+            },
+            "description": "Cerrar sesion activa"
+          }
+        },
+        {
+          "name": "Confirmar Sesion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/sesiones/1/confirmar/",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "sesiones",
+                "1",
+                "confirmar",
+                ""
+              ]
+            },
+            "description": "Confirmar y congelar registros"
+          }
+        },
+        {
+          "name": "Solicitar Nueva Lista",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/sesiones/1/solicitar-nueva/",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "sesiones",
+                "1",
+                "solicitar-nueva",
+                ""
+              ]
+            },
+            "description": "Invalidar sesion, habilitar nueva"
+          }
+        },
+        {
+          "name": "Stats Sesion",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/sesiones/1/stats/",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "sesiones",
+                "1",
+                "stats",
+                ""
+              ]
+            },
+            "description": "Estadisticas en tiempo real"
+          }
+        },
+        {
+          "name": "Stats Materia",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/sesiones/stats_materia/?materia_id=5",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "sesiones",
+                "stats_materia",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "materia_id",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Stats agregadas de materia"
+          }
+        },
+        {
+          "name": "Historial Sesiones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/sesiones/historial/?materia_id=5&dias=30&limit=30",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "sesiones",
+                "historial",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "materia_id",
+                  "value": "5"
+                },
+                {
+                  "key": "dias",
+                  "value": "30"
+                },
+                {
+                  "key": "limit",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "Sesiones recientes con conteos"
+          }
+        },
+        {
+          "name": "Generar QR Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/qr/generate/?materia_id=5&alumno_id=10",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "qr",
+                "generate",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "materia_id",
+                  "value": "5"
+                },
+                {
+                  "key": "alumno_id",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Token QR para registro"
+          }
+        },
+        {
+          "name": "Registrar Asistencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/asistencias/registrar/",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "asistencias",
+                "registrar",
+                ""
+              ]
+            },
+            "description": "Registro desde payload QR",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"encoded_payload\": \"base64-encoded-qr-token\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Registros Hoy",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/registros/por_materia_hoy/?materia_id=5",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "registros",
+                "por_materia_hoy",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "materia_id",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Registros de hoy"
+          }
+        },
+        {
+          "name": "Historial Registros",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/registros/historial/?materia_id=5&page=1&limit=20",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "registros",
+                "historial",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "materia_id",
+                  "value": "5"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Historial paginado"
+          }
+        },
+        {
+          "name": "Registros Alumno Materia",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_asistencias}}/api/registros/alumno_materia/?alumno_id=10&materia_id=5",
+              "host": [
+                "{{base_url_asistencias}}"
+              ],
+              "path": [
+                "api",
+                "registros",
+                "alumno_materia",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "alumno_id",
+                  "value": "10"
+                },
+                {
+                  "key": "materia_id",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Registros de alumno en materia"
+          }
+        }
+      ]
+    },
+    {
+      "name": "MS-6 Notificaciones",
+      "description": "Puerto 8006. Correos transaccionales. Requiere X-Internal-Api-Key.",
+      "item": [
+        {
+          "name": "Health MS-6",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url_notificaciones}}/health/",
+              "host": [
+                "{{base_url_notificaciones}}"
+              ],
+              "path": [
+                "health",
+                ""
+              ]
+            },
+            "description": "Health check"
+          }
+        },
+        {
+          "name": "Bienvenida",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Internal-Api-Key",
+                "value": "{{internal_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_notificaciones}}/api/notificaciones/bienvenida/",
+              "host": [
+                "{{base_url_notificaciones}}"
+              ],
+              "path": [
+                "api",
+                "notificaciones",
+                "bienvenida",
+                ""
+              ]
+            },
+            "description": "Correo bienvenida",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alumno_id\": 1,\n  \"materia_id\": 10,\n  \"clave_acceso\": \"uuid-clave\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Baja",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Internal-Api-Key",
+                "value": "{{internal_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_notificaciones}}/api/notificaciones/baja/",
+              "host": [
+                "{{base_url_notificaciones}}"
+              ],
+              "path": [
+                "api",
+                "notificaciones",
+                "baja",
+                ""
+              ]
+            },
+            "description": "Correo baja a docente",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alumno_id\": 1,\n  \"docente_id\": 5,\n  \"materia_id\": 10\n}"
+            }
+          }
+        },
+        {
+          "name": "Cierre Materia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Internal-Api-Key",
+                "value": "{{internal_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_notificaciones}}/api/notificaciones/cierre-materia/",
+              "host": [
+                "{{base_url_notificaciones}}"
+              ],
+              "path": [
+                "api",
+                "notificaciones",
+                "cierre-materia",
+                ""
+              ]
+            },
+            "description": "Correos cierre masivo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"materia_id\": 5\n}"
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Internal-Api-Key",
+                "value": "{{internal_api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_notificaciones}}/api/notificaciones/reset-password/",
+              "host": [
+                "{{base_url_notificaciones}}"
+              ],
+              "path": [
+                "api",
+                "notificaciones",
+                "reset-password",
+                ""
+              ]
+            },
+            "description": "Correo reset",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@buap.mx\",\n  \"reset_url\": \"http://localhost:4200/reset-password?token=abc\",\n  \"nombre\": \"Usuario\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "MS-7 Reportes & Stats",
+      "description": "Puerto 8007. Reportes PDF/XLSX, estadisticas JSON.",
+      "item": [
+        {
+          "name": "Calificaciones XLSX",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_reportes}}/api/reportes/calificaciones/{{materia_id}}/?formato=xlsx",
+              "host": [
+                "{{base_url_reportes}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "calificaciones",
+                "{{materia_id}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "xlsx"
+                }
+              ]
+            },
+            "description": "Descarga Excel calificaciones"
+          }
+        },
+        {
+          "name": "Calificaciones PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_reportes}}/api/reportes/calificaciones/{{materia_id}}/?formato=pdf",
+              "host": [
+                "{{base_url_reportes}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "calificaciones",
+                "{{materia_id}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "pdf"
+                }
+              ]
+            },
+            "description": "Descarga PDF calificaciones"
+          }
+        },
+        {
+          "name": "Asistencias XLSX",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_reportes}}/api/reportes/asistencias/{{materia_id}}/?formato=xlsx",
+              "host": [
+                "{{base_url_reportes}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "asistencias",
+                "{{materia_id}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "xlsx"
+                }
+              ]
+            },
+            "description": "Descarga Excel asistencias"
+          }
+        },
+        {
+          "name": "Asistencias PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_reportes}}/api/reportes/asistencias/{{materia_id}}/?formato=pdf",
+              "host": [
+                "{{base_url_reportes}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "asistencias",
+                "{{materia_id}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "formato",
+                  "value": "pdf"
+                }
+              ]
+            },
+            "description": "Descarga PDF asistencias"
+          }
+        },
+        {
+          "name": "Estadisticas Docente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_reportes}}/api/estadisticas/docente/{{docente_usuario_id}}/?page=1&limit=20",
+              "host": [
+                "{{base_url_reportes}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "docente",
+                "{{docente_usuario_id}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Historial multi-periodo"
+          }
+        },
+        {
+          "name": "Estadisticas Alumno",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url_reportes}}/api/estadisticas/alumno/{{alumno_id}}/",
+              "host": [
+                "{{base_url_reportes}}"
+              ],
+              "path": [
+                "api",
+                "estadisticas",
+                "alumno",
+                "{{alumno_id}}",
+                ""
+              ]
+            },
+            "description": "Historial academico alumno"
+          }
+        }
+      ]
+    }
+  ]
 }

@@ -1,59 +1,21 @@
 {
-	"id": "18f9e0a0-0000-4000-8000-000000000000",
-	"name": "AGM Local Environment",
+	"id": "agm-env-local",
+	"name": "AGM Local",
 	"values": [
-		{
-			"key": "base_url_periodos",
-			"value": "http://localhost:8002",
-			"enabled": true
-		},
-		{
-			"key": "base_url_alumnos",
-			"value": "http://localhost:8003",
-			"enabled": true
-		},
-		{
-			"key": "base_url_notificaciones",
-			"value": "http://localhost:8006",
-			"enabled": true
-		},
-		{
-			"key": "base_url_gateway",
-			"value": "http://localhost:8080",
-			"enabled": true
-		},
-		{
-			"key": "internal_api_key",
-			"value": "cambiar-clave-interna-segura",
-			"enabled": true
-		},
-		{
-			"key": "jwt_token",
-			"value": "",
-			"enabled": true
-		},
-		{
-			"key": "materia_id",
-			"value": "1",
-			"enabled": true
-		},
-		{
-			"key": "docente_usuario_id",
-			"value": "2",
-			"enabled": true
-		},
-		{
-			"key": "alumno_id",
-			"value": "1",
-			"enabled": true
-		},
-		{
-			"key": "base_url_reportes",
-			"value": "http://localhost:8007",
-			"enabled": true
-		}
+		{ "key": "base_url_auth", "value": "http://localhost:8001", "enabled": true },
+		{ "key": "base_url_periodos", "value": "http://localhost:8002", "enabled": true },
+		{ "key": "base_url_alumnos", "value": "http://localhost:8003", "enabled": true },
+		{ "key": "base_url_calificaciones", "value": "http://localhost:8004", "enabled": true },
+		{ "key": "base_url_asistencias", "value": "http://localhost:8005", "enabled": true },
+		{ "key": "base_url_notificaciones", "value": "http://localhost:8006", "enabled": true },
+		{ "key": "base_url_reportes", "value": "http://localhost:8007", "enabled": true },
+		{ "key": "base_url_gateway", "value": "http://localhost:8080", "enabled": true },
+		{ "key": "jwt_token", "value": "", "enabled": true },
+		{ "key": "refresh_token", "value": "", "enabled": true },
+		{ "key": "internal_api_key", "value": "dev-internal-key", "enabled": true },
+		{ "key": "materia_id", "value": "1", "enabled": true },
+		{ "key": "alumno_id", "value": "1", "enabled": true },
+		{ "key": "docente_usuario_id", "value": "1", "enabled": true }
 	],
-	"_postman_variable_scope": "environment",
-	"_postman_exported_at": "2026-05-16T18:15:00.000Z",
-	"_postman_exported_using": "Postman/10.0.0"
+	"_postman_variable_scope": "environment"
 }
