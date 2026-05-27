@@ -228,7 +228,6 @@ services:
       context: .
       dockerfile: ms-auth/Dockerfile
     container_name: agm-ms-auth
-    env_file: ./ms-auth/.env
     ports:
       - "8001:8001"
       - "50051:50051"
@@ -254,7 +253,6 @@ services:
       context: .
       dockerfile: ms-auth/Dockerfile
     container_name: agm-ms-auth-outbox
-    env_file: ./ms-auth/.env
     environment:
       AGM_RUN_MODE: outbox-worker
       USE_EVENT_BUS: "true"
@@ -275,7 +273,6 @@ services:
       context: .
       dockerfile: ms-auth/Dockerfile
     container_name: agm-ms-auth-consumer
-    env_file: ./ms-auth/.env
     environment:
       AGM_RUN_MODE: event-consumer
       USE_EVENT_BUS: "true"
@@ -293,7 +290,6 @@ services:
       context: .
       dockerfile: ms-periodos/Dockerfile
     container_name: agm-ms-periodos
-    env_file: ./ms-periodos/.env
     environment:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
@@ -319,7 +315,6 @@ services:
       context: .
       dockerfile: ms-periodos/Dockerfile
     container_name: agm-ms-periodos-outbox
-    env_file: ./ms-periodos/.env
     environment:
       AGM_RUN_MODE: outbox-worker
       USE_EVENT_BUS: "true"
@@ -339,7 +334,6 @@ services:
       context: .
       dockerfile: ms-periodos/Dockerfile
     container_name: agm-ms-periodos-consumer
-    env_file: ./ms-periodos/.env
     environment:
       AGM_RUN_MODE: event-consumer
       USE_EVENT_BUS: "true"
@@ -359,7 +353,6 @@ services:
       context: .
       dockerfile: ms-alumnos/Dockerfile
     container_name: agm-ms-alumnos
-    env_file: ./ms-alumnos/.env
     environment:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
@@ -388,7 +381,6 @@ services:
       context: .
       dockerfile: ms-alumnos/Dockerfile
     container_name: agm-ms-alumnos-outbox
-    env_file: ./ms-alumnos/.env
     environment:
       AGM_RUN_MODE: outbox-worker
       USE_EVENT_BUS: "true"
@@ -408,7 +400,6 @@ services:
       context: .
       dockerfile: ms-alumnos/Dockerfile
     container_name: agm-ms-alumnos-consumer
-    env_file: ./ms-alumnos/.env
     environment:
       AGM_RUN_MODE: event-consumer
       USE_EVENT_BUS: "true"
@@ -428,7 +419,6 @@ services:
       context: .
       dockerfile: ms-calificaciones/Dockerfile
     container_name: agm-ms-calificaciones
-    env_file: ./ms-calificaciones/.env
     environment:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
@@ -453,7 +443,6 @@ services:
       context: .
       dockerfile: ms-calificaciones/Dockerfile
     container_name: agm-ms-calificaciones-outbox
-    env_file: ./ms-calificaciones/.env
     environment:
       AGM_RUN_MODE: event-outbox
       USE_EVENT_BUS: "true"
@@ -473,7 +462,6 @@ services:
       context: .
       dockerfile: ms-calificaciones/Dockerfile
     container_name: agm-ms-calificaciones-consumer
-    env_file: ./ms-calificaciones/.env
     environment:
       AGM_RUN_MODE: event-consumer
       USE_EVENT_BUS: "true"
@@ -493,7 +481,6 @@ services:
       context: .
       dockerfile: ms-asistencias/Dockerfile
     container_name: agm-ms-asistencias
-    env_file: ./ms-asistencias/.env
     environment:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
@@ -520,7 +507,6 @@ services:
       context: .
       dockerfile: ms-asistencias/Dockerfile
     container_name: agm-ms-asistencias-outbox
-    env_file: ./ms-asistencias/.env
     environment:
       AGM_RUN_MODE: event-outbox
       USE_EVENT_BUS: "true"
@@ -540,7 +526,6 @@ services:
       context: .
       dockerfile: ms-asistencias/Dockerfile
     container_name: agm-ms-asistencias-consumer
-    env_file: ./ms-asistencias/.env
     environment:
       AGM_RUN_MODE: event-consumer
       USE_EVENT_BUS: "true"
@@ -560,7 +545,6 @@ services:
       context: .
       dockerfile: ms-notificaciones/Dockerfile
     container_name: agm-ms-notificaciones
-    env_file: ./ms-notificaciones/.env
     environment:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
@@ -582,7 +566,6 @@ services:
       context: .
       dockerfile: ms-notificaciones/Dockerfile
     container_name: agm-ms-notificaciones-consumer
-    env_file: ./ms-notificaciones/.env
     environment:
       AGM_RUN_MODE: event-consumer
       USE_EVENT_BUS: "true"
@@ -602,7 +585,6 @@ services:
       context: .
       dockerfile: ms-reportes/Dockerfile
     container_name: agm-ms-reportes
-    env_file: ./ms-reportes/.env
     environment:
       USE_EVENT_BUS: "true"
       JWT_JWKS_URL: http://ms-auth:8001/.well-known/jwks.json
@@ -635,7 +617,6 @@ services:
       context: .
       dockerfile: ms-reportes/Dockerfile
     container_name: agm-ms-reportes-consumer
-    env_file: ./ms-reportes/.env
     environment:
       AGM_RUN_MODE: event-consumer
       USE_EVENT_BUS: "true"
