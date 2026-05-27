@@ -38,9 +38,63 @@ export function resolveApiBaseUrl(): string {
 }
 
 export function buildApiUrl(path: string): string {
-  const baseUrl = resolveApiBaseUrl();
   const normalizedPath = path.replace(/^\//, '');
+  const baseUrl = resolveApiBaseUrl();
+
+  if (!baseUrl || isLocalhostBaseUrl(baseUrl)) {
+    const localBaseUrl = resolveLocalServiceBaseUrl(normalizedPath);
+    if (localBaseUrl) {
+      return `${localBaseUrl}/${normalizedPath}`;
+    }
+  }
+
   return baseUrl ? `${baseUrl}/${normalizedPath}` : `/${normalizedPath}`;
+}
+
+function isLocalhostBaseUrl(baseUrl: string): boolean {
+  try {
+    const parsed = new URL(baseUrl);
+    const host = parsed.hostname.toLowerCase();
+    return host === 'localhost' || host === '127.0.0.1';
+  } catch {
+    return false;
+  }
+}
+
+function resolveLocalServiceBaseUrl(path: string): string | null {
+  if (/^(auth(?:\/|$)|usuarios(?:\/|$))/i.test(path)) {
+    return 'http://127.0.0.1:8001';
+  }
+
+  if (/^(periodos(?:\/|$)|materias(?:\/|$))/i.test(path)) {
+    return 'http://127.0.0.1:8002/api';
+  }
+
+  if (/^(docentes(?:\/|$)|alumnos(?:\/|$))/i.test(path)) {
+    return 'http://127.0.0.1:8003/api';
+  }
+
+  if (
+    /^(ponderaciones(?:\/|$)|actividades(?:\/|$)|calificaciones(?:\/|$)|concentrado(?:\/|$)|materias\/\d+\/(cerrar|imprimir-lista)\/?$)/i.test(
+      path,
+    )
+  ) {
+    return 'http://127.0.0.1:8004';
+  }
+
+  if (/^(sesiones(?:\/|$)|registros(?:\/|$)|qr(?:\/|$)|asistencias(?:\/|$))/i.test(path)) {
+    return 'http://127.0.0.1:8005/api';
+  }
+
+  if (/^notificaciones(?:\/|$)/i.test(path)) {
+    return 'http://127.0.0.1:8006/notificaciones';
+  }
+
+  if (/^(reportes(?:\/|$)|estadisticas(?:\/|$))/i.test(path)) {
+    return 'http://127.0.0.1:8007';
+  }
+
+  return null;
 }
 
 export function isAgmEnvelope(value: unknown): value is AgmApiResponse<unknown> {

@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, catchError, throwError } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 
 import {
   ConfirmarSesionResponse,
@@ -14,7 +14,7 @@ import {
   StatsAlumnoMateriaResponse,
   StatsSesionResponse,
 } from '../models/asistencias-api.model';
-import { buildApiUrl } from './tools/agm-api.helpers';
+import { buildApiUrl, extractAgmListData } from './tools/agm-api.helpers';
 
 @Injectable({ providedIn: 'root' })
 export class AsistenciasService {
@@ -30,17 +30,23 @@ export class AsistenciasService {
   }
 
   obtenerSesionActiva(materiaId: number): Observable<SesionActivaResponse> {
-    const params = new HttpParams({ fromObject: { materia_id: String(materiaId) } });
-    return this.http
-      .get<SesionActivaResponse>(buildApiUrl('sesiones/activa/'), { params })
-      .pipe(catchError((err) => this.fail(err, 'No se pudo consultar la sesión activa.')));
+    return this.listarSesionesMateria(materiaId).pipe(
+      map((sesiones) => {
+        const sesion = sesiones.find((item) => item.activa) ?? null;
+        return { activa: Boolean(sesion?.activa), sesion };
+      }),
+    );
   }
 
   obtenerSesionPendiente(materiaId: number): Observable<SesionActivaResponse> {
-    const params = new HttpParams({ fromObject: { materia_id: String(materiaId) } });
-    return this.http
-      .get<SesionActivaResponse>(buildApiUrl('sesiones/pendiente/'), { params })
-      .pipe(catchError((err) => this.fail(err, 'No se pudo consultar la sesión pendiente.')));
+    return this.listarSesionesMateria(materiaId).pipe(
+      map((sesiones) => {
+        const sesion =
+          sesiones.find((item) => item.estado === 'cerrada' || item.estado === 'activa') ??
+          null;
+        return { activa: Boolean(sesion?.activa), sesion };
+      }),
+    );
   }
 
   cerrarSesion(sesionId: number): Observable<ConfirmarSesionResponse> {
@@ -92,16 +98,25 @@ export class AsistenciasService {
     dias = 30,
     limit = 30,
   ): Observable<SesionesHistorialResponse> {
-    const params = new HttpParams({
-      fromObject: {
-        materia_id: String(materiaId),
-        dias: String(dias),
-        limit: String(limit),
-      },
-    });
-    return this.http
-      .get<SesionesHistorialResponse>(buildApiUrl('sesiones/historial/'), { params })
-      .pipe(catchError((err) => this.fail(err, 'No se pudo cargar el historial de pases.')));
+    return this.listarSesionesMateria(materiaId).pipe(
+      map((sesiones) => ({
+        materia_id: materiaId,
+        dias,
+        sesiones: sesiones
+          .sort((a, b) => new Date(b.fecha_inicio).getTime() - new Date(a.fecha_inicio).getTime())
+          .slice(0, limit)
+          .map((sesion) => ({
+            sesion_id: sesion.id,
+            fecha_inicio: sesion.fecha_inicio,
+            fecha_fin_teorica: sesion.fecha_fin_teorica,
+            estado: sesion.estado,
+            activa: sesion.activa,
+            total_registros: 0,
+            presentes: 0,
+            retardos: 0,
+          })),
+      })),
+    );
   }
 
   listarRegistrosPorMateriaHoy(materiaId: number): Observable<RegistroAsistenciaApiDto[]> {
@@ -141,6 +156,14 @@ export class AsistenciasService {
   segundosRestantesSesion(sesion: SesionAsistenciaApiDto): number {
     const fin = new Date(sesion.fecha_fin_teorica).getTime();
     return Math.max(0, Math.floor((fin - Date.now()) / 1000));
+  }
+
+  private listarSesionesMateria(materiaId: number): Observable<SesionAsistenciaApiDto[]> {
+    const params = new HttpParams({ fromObject: { materia_id: String(materiaId) } });
+    return this.http.get<unknown>(buildApiUrl('sesiones/'), { params }).pipe(
+      map((response) => extractAgmListData<SesionAsistenciaApiDto>(response)),
+      catchError((err) => this.fail(err, 'No se pudieron cargar las sesiones.').pipe(map(() => []))),
+    );
   }
 
   private fail(error: unknown, fallback: string): Observable<never> {

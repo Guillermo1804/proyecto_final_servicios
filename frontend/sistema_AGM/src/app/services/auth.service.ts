@@ -103,10 +103,16 @@ export class AuthService {
     }
 
     storage.setItem(ACCESS_TOKEN_KEY, loginData.access_token);
-    other.removeItem(ACCESS_TOKEN_KEY);
+    // Mirror token into the other storage as well to avoid transient races
+    // where some code may read the other storage before the chosen one is ready.
+    other.setItem(ACCESS_TOKEN_KEY, loginData.access_token);
 
     if (loginData.refresh_token) {
       storage.setItem(REFRESH_TOKEN_KEY, loginData.refresh_token);
+      other.setItem(REFRESH_TOKEN_KEY, loginData.refresh_token);
+    } else {
+      // Ensure stale refresh tokens are removed from both storages
+      storage.removeItem(REFRESH_TOKEN_KEY);
       other.removeItem(REFRESH_TOKEN_KEY);
     }
 
@@ -312,14 +318,15 @@ export class AuthService {
     storage: Storage,
     other: Storage,
   ): void {
+    // Mirror profile into both storages to keep consistent read-paths
     storage.setItem(USER_ID_KEY, String(user.id));
     storage.setItem(USER_ROLE_KEY, user.rol);
     storage.setItem(USER_NAME_KEY, user.nombre);
     storage.setItem(USER_EMAIL_KEY, user.email);
-    other.removeItem(USER_ID_KEY);
-    other.removeItem(USER_ROLE_KEY);
-    other.removeItem(USER_NAME_KEY);
-    other.removeItem(USER_EMAIL_KEY);
+    other.setItem(USER_ID_KEY, String(user.id));
+    other.setItem(USER_ROLE_KEY, user.rol);
+    other.setItem(USER_NAME_KEY, user.nombre);
+    other.setItem(USER_EMAIL_KEY, user.email);
   }
 
   private getActiveStorage(): Storage {

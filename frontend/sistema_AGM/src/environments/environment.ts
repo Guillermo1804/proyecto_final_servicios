@@ -5,10 +5,9 @@
 export const environment = {
   production: false,
   /**
-   * Vacio con `ng serve`: las peticiones van a localhost:4200 y proxy.conf.json
-   * las reenvia a Nginx (http://127.0.0.1:8080).
-   * Si corres el front sin proxy, usa: 'http://127.0.0.1:8080'
+   * En desarrollo apuntamos directo al gateway para no depender del proxy de
+   * `ng serve` ni de que el front se abra bajo el host correcto.
    */
-  apiBaseUrl: '',
-  url_api: '',
+  apiBaseUrl: 'http://127.0.0.1:8080',
+  url_api: 'http://127.0.0.1:8080',
 };

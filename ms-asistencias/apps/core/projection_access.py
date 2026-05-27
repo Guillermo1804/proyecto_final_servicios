@@ -26,9 +26,13 @@ class ProjectionRejection(Exception):
 def get_materia_local(materia_id: int) -> MateriaLocal:
     row = MateriaProjection.objects.filter(materia_id=materia_id).first()
     if row is None:
-        raise ProjectionRejection(
-            f'Materia {materia_id} no encontrada en proyección local',
-            codigo='materia_cerrada',
+        return MateriaLocal(
+            materia_id=materia_id,
+            periodo_id=0,
+            nrc='',
+            nombre='',
+            cerrada_upstream=False,
+            periodo_activo=True,
         )
     periodo_activo = row.periodo_activo
     periodo = PeriodoProjection.objects.filter(periodo_id=row.periodo_id).first()

@@ -308,15 +308,15 @@ def reset_password(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def logout(request):
     serializer = LogoutSerializer(data=request.data)
     if not serializer.is_valid():
         return Response({
-            'success': False,
+            'success': True,
             'data': None,
-            'message': 'Refresh token requerido'
-        }, status=status.HTTP_400_BAD_REQUEST)
+            'message': 'Sesión cerrada localmente'
+        }, status=status.HTTP_200_OK)
 
     try:
         from agm_events.jwt_revocation import revoke_jti
@@ -348,10 +348,10 @@ def logout(request):
                 )
     except TokenError:
         return Response({
-            'success': False,
+            'success': True,
             'data': None,
-            'message': 'Refresh token inválido o expirado'
-        }, status=status.HTTP_401_UNAUTHORIZED)
+            'message': 'Sesión cerrada localmente'
+        }, status=status.HTTP_200_OK)
 
     return Response({
         'success': True,
