@@ -10,70 +10,187 @@
         <h2>Control de Asistencia</h2>
 
         <p>
-          Ciclo Lectivo 2024-II | Martes, 12 Octubre
+          Selecciona la materia, escanea los QR y al terminar confirma la lista. Los escaneos se guardan en el servidor aunque cierres la c&aacute;mara antes de confirmar.
         </p>
-      </div>
 
-      <div class="tabs-control">
-
-        <button
-          [class.active]="modo === 'codigo'"
-          (click)="cambiarModo('codigo')"
-        >
-          Generar Código
-        </button>
-
-        <button
-          [class.active]="modo === 'scanner'"
-          (click)="cambiarModo('scanner')"
-        >
-          Escanear Manual
-        </button>
-
-      </div>
-
-      <section class="qr-section" *ngIf="modo === 'codigo'">
-
-        <div class="qr-image-box">
-
-          <div class="qr-stage">
-
-            <div class="qr-paper">
-              <i class="bi bi-qr-code"></i>
-            </div>
-
-          </div>
-
-        </div>
-
-        <div class="qr-status">
-
-          <span>
-            <i class="bi bi-dot"></i>
-            CÓDIGO ACTIVO
+        <div class="session-chip-row">
+          <span class="session-chip" [ngClass]="{ active: sesionActiva, closed: sesionFinalizada }">
+            {{ etiquetaChipSesion }}
           </span>
 
-          <p>
-            Pide a tus estudiantes que escaneen el código desde la aplicación móvil Portal Alumno.
-          </p>
+          <span class="session-chip">
+            C&oacute;digo: {{ codigoSesion }}
+          </span>
+
+          <span class="session-chip" *ngIf="listaConfirmada" style="background:#d1fae5;color:#065f46;">
+            Lista confirmada
+          </span>
+
+          <span class="session-chip soft">
+            Restante: {{ tiempoRestanteFormateado }}
+          </span>
+
+          <span class="session-chip materia-chip" *ngIf="materiaSeleccionada">
+            Materia: {{ materiaSeleccionada.clave }} - {{ materiaSeleccionada.materia }}
+          </span>
+        </div>
+      </div>
+
+      <section class="scanner-section">
+
+        <div class="session-setup-card" *ngIf="!sesionActiva && !sesionFinalizada">
+
+          <div class="session-setup-copy">
+            <h3>1. Elige la materia</h3>
+
+            <p>
+              Antes de encender la c&aacute;mara, selecciona la materia para la que vas a registrar asistencia.
+            </p>
+          </div>
+
+          <label class="materia-select-field">
+            <span>Materia impartida</span>
+
+            <select
+              [ngModel]="materiaSeleccionadaId"
+              (ngModelChange)="seleccionarMateria($event)"
+              [disabled]="materiasDocente.length === 0"
+            >
+              <option [ngValue]="null" disabled>
+                Selecciona una materia
+              </option>
+
+              <option *ngFor="let materia of materiasDocente" [ngValue]="materia.id">
+                {{ materia.clave }} - {{ materia.materia }} (Grupo {{ materia.seccion }})
+              </option>
+            </select>
+          </label>
+
+          <div class="session-setup-helper" *ngIf="materiaSeleccionada">
+            <strong>{{ materiaSeleccionada.materia }}</strong>
+            <p>
+              NRC {{ materiaSeleccionada.nrc }} | {{ materiaSeleccionada.salon }}
+            </p>
+          </div>
+        </div>
+
+        <div class="scanner-top">
+
+          <div>
+            <h3>Escaneo en vivo</h3>
+
+            <p>
+              La c&aacute;mara del dispositivo registra el QR del alumno y clasifica su asistencia seg&uacute;n el minuto de ingreso.
+            </p>
+          </div>
+
+          <span class="scanner-badge" [ngClass]="{ active: sesionActiva, closed: sesionFinalizada }">
+            {{ etiquetaBadgeScanner }}
+          </span>
 
         </div>
 
-      </section>
+        <div class="session-metrics-grid">
 
-      <section class="scanner-section" *ngIf="modo === 'scanner'">
+          <article class="session-metric-card">
+            <span>Tiempo restante</span>
+            <strong>{{ tiempoRestanteFormateado }}</strong>
+          </article>
 
-        <h3>Escaneo manual de asistencia</h3>
+          <article class="session-metric-card accent">
+            <span>Tiempo transcurrido</span>
+            <strong>{{ tiempoTranscurridoFormateado }}</strong>
+          </article>
 
-        <p>
-          Activa la cámara y escanea el QR generado por el alumno.
-        </p>
+          <article class="session-metric-card">
+            <span>Clasificaci&oacute;n</span>
+            <strong>0-5 Presente | 5-10 Retardo</strong>
+          </article>
 
-        <div id="reader"></div>
+        </div>
+
+        <div class="progress-track">
+          <div class="progress-fill" [style.width.%]="progresoSesion"></div>
+        </div>
+
+        <div class="scanner-callout" *ngIf="!sesionActiva && !sesionFinalizada">
+          <i class="bi bi-shield-lock"></i>
+          <span>{{ mensajeCalloutScanner }}</span>
+        </div>
+
+        <div id="reader" *ngIf="sesionActiva"></div>
+
+        <div class="session-actions-row">
+
+          <button class="start-session-btn" type="button" (click)="iniciarSesion()" *ngIf="!sesionActiva" [disabled]="!materiaSeleccionada">
+            <i class="bi bi-play-circle"></i>
+            Iniciar sesi&oacute;n de 10 minutos
+          </button>
+
+          <button class="close-session-btn" type="button" (click)="finalizarSesion(mensajeCierreManual)" *ngIf="sesionActiva">
+            <i class="bi bi-stop-circle"></i>
+            Cerrar sesi&oacute;n ahora
+          </button>
+
+        </div>
+
+        <div class="session-actions-row" *ngIf="sesionFinalizada && !listaConfirmada">
+          <button class="confirm-btn" type="button" (click)="confirmarLista()">
+            <i class="bi bi-check-circle"></i>
+            Confirmar lista
+          </button>
+
+          <button class="repeat-session-btn" type="button" (click)="solicitarReinicio()">
+            <i class="bi bi-arrow-repeat"></i>
+            Solicitarla de nuevo
+          </button>
+        </div>
+
+        <div class="session-actions-row" *ngIf="sesionFinalizada && listaConfirmada">
+          <button class="confirm-btn" type="button" disabled>
+            <i class="bi bi-check-circle"></i>
+            Lista confirmada
+          </button>
+
+          <button class="export-btn" type="button" (click)="descargarListaCsv()" [disabled]="registros.length === 0">
+            <i class="bi bi-filetype-csv"></i>
+            Descargar CSV
+          </button>
+
+          <button class="export-btn" type="button" (click)="descargarListaPdf()" [disabled]="registros.length === 0">
+            <i class="bi bi-file-earmark-pdf"></i>
+            Descargar PDF
+          </button>
+
+          <a class="reportes-link" routerLink="/docente/reportes">
+            <i class="bi bi-bar-chart"></i>
+            Ver reportes de la materia
+          </a>
+        </div>
+
+        <div class="session-actions-row" *ngIf="sesionFinalizada && !listaConfirmada && registros.length > 0">
+          <button class="export-btn" type="button" (click)="descargarListaCsv()">
+            <i class="bi bi-filetype-csv"></i>
+            Descargar borrador CSV
+          </button>
+
+          <button class="export-btn" type="button" (click)="descargarListaPdf()">
+            <i class="bi bi-file-earmark-pdf"></i>
+            Descargar borrador PDF
+          </button>
+        </div>
 
         <div class="qr-result" *ngIf="resultadoQr">
-          <strong>QR detectado:</strong>
+
+          <strong>&Uacute;ltimo QR detectado:</strong>
+
           <span>{{ resultadoQr }}</span>
+
+        </div>
+
+        <div class="session-status-note" *ngIf="mensajeSesion">
+          <i class="bi bi-bell"></i>
+          <span>{{ mensajeSesion }}</span>
         </div>
 
       </section>
@@ -81,17 +198,18 @@
       <section class="summary-row">
 
         <article>
-          <h3>42</h3>
+          <h3>{{ totalPresentes }}</h3>
           <p>PRESENTES</p>
         </article>
 
         <article>
-          <h3 class="azul">08</h3>
+          <h3 class="azul">{{ totalFaltantes }}</h3>
           <p>FALTANTES</p>
+          <small *ngIf="totalInscritos > 0">de {{ totalInscritos }} inscritos</small>
         </article>
 
         <article>
-          <h3 class="naranja">03</h3>
+          <h3 class="naranja">{{ totalRetardos }}</h3>
           <p>TARDANZAS</p>
         </article>
 
@@ -118,14 +236,13 @@
 
           <div class="student-info">
 
-            <img
-              [src]="registro.foto"
-              [alt]="registro.nombre"
-            >
+            <div class="student-initials" *ngIf="registro.iniciales">
+              {{ registro.iniciales }}
+            </div>
 
-            <div>
+            <div class="student-copy">
               <strong>{{ registro.nombre }}</strong>
-              <p>Registro: {{ registro.hora }}</p>
+              <p>Registro: {{ registro.hora }} | Minuto {{ registro.minuto }}</p>
             </div>
 
           </div>
@@ -139,6 +256,66 @@
 
         </article>
 
+      </div>
+
+    </section>
+
+    <section class="historial-card" *ngIf="materiaSeleccionada">
+
+      <div class="historial-header">
+        <div>
+          <h3>Pases de lista guardados</h3>
+          <p>
+            Tus listas quedan en el servidor ({{ historialDias }} d&iacute;as). Desc&aacute;rgalas cuando quieras, aunque ya no est&eacute; la sesi&oacute;n en pantalla.
+          </p>
+        </div>
+        <button class="export-btn" type="button" (click)="cargarHistorialPases()" [disabled]="cargandoHistorial">
+          <i class="bi bi-arrow-clockwise"></i>
+          Actualizar
+        </button>
+      </div>
+
+      <p class="historial-loading" *ngIf="cargandoHistorial">Cargando historial...</p>
+
+      <p class="historial-empty" *ngIf="!cargandoHistorial && historialPases.length === 0">
+        A&uacute;n no hay pases de lista para esta materia en los &uacute;ltimos {{ historialDias }} d&iacute;as.
+      </p>
+
+      <div class="historial-list" *ngIf="!cargandoHistorial && historialPases.length > 0">
+        <article class="historial-row" *ngFor="let item of historialPases">
+          <div class="historial-info">
+            <strong>SES-{{ item.sesion_id }}</strong>
+            <p>{{ formatFechaHistorial(item.fecha_inicio) }}</p>
+            <p>
+              {{ item.total_registros }} registro(s) &middot;
+              {{ item.presentes }} presentes &middot;
+              {{ item.retardos }} retardos
+            </p>
+          </div>
+
+          <span class="historial-estado" [class.confirmada]="item.estado === 'confirmada'">
+            {{ etiquetaEstadoSesion(item.estado) }}
+          </span>
+
+          <div class="historial-actions">
+            <button
+              class="export-btn small"
+              type="button"
+              (click)="descargarPaseHistorial(item, 'csv')"
+              [disabled]="exportandoSesionId === item.sesion_id || item.total_registros === 0"
+            >
+              CSV
+            </button>
+            <button
+              class="export-btn small"
+              type="button"
+              (click)="descargarPaseHistorial(item, 'pdf')"
+              [disabled]="exportandoSesionId === item.sesion_id || item.total_registros === 0"
+            >
+              PDF
+            </button>
+          </div>
+        </article>
       </div>
 
     </section>

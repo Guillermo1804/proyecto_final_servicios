@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package reportes;
+package agm.reportes;
 
 option java_multiple_files = true;
 option java_package = "com.agm.reportes";
 
 // =============================================
-// MS-7: Reportes & Estadísticas — Servicio gRPC
+// MS-7: Reportes & Estadísticas — EXPOSICIÓN gRPC
 // Puerto: 50057
 // =============================================
 

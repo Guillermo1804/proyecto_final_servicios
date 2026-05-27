@@ -1,4 +1,4 @@
-from django.test import RequestFactory, SimpleTestCase
+from django.test import RequestFactory, TestCase
 from unittest.mock import MagicMock, patch
 
 from apps.reportes.dto.report_dto import (
@@ -6,8 +6,8 @@ from apps.reportes.dto.report_dto import (
     MateriaAlumnoStatsDTO,
     StatsPeriodoDTO,
 )
+from apps.reportes.models import ReporteAlumnoProjection
 from apps.reportes.views import estadisticas_views
-from grpc_clients.exceptions import AlumnoNotFound
 
 
 def _periodo() -> StatsPeriodoDTO:
@@ -24,7 +24,7 @@ def _periodo() -> StatsPeriodoDTO:
     )
 
 
-class EstadisticasViewsTests(SimpleTestCase):
+class EstadisticasViewsTests(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
 
@@ -92,11 +92,18 @@ class EstadisticasViewsTests(SimpleTestCase):
         self.assertEqual(response.data['data']['alumno_id'], 5)
         self.assertAlmostEqual(response.data['data']['materias'][0]['promedio_real'], 8.0)
 
-    @patch('apps.reportes.views.estadisticas_views.alumnos_client.get_alumno_by_id')
     @patch('apps.reportes.views.reportes_views.validate_token')
-    def test_alumno_id_ajeno_403(self, mock_auth, mock_alumno):
+    def test_alumno_id_ajeno_403(self, mock_auth):
         mock_auth.return_value = MagicMock(user_id=100, rol='alumno', email='a@test.local')
-        mock_alumno.return_value = MagicMock(usuario_id=999)
+        ReporteAlumnoProjection.objects.create(
+            alumno_id=5,
+            materia_id=1,
+            usuario_id=999,
+            matricula='20240001',
+            nombre='Ana',
+            email='ana@test.local',
+            activa=True,
+        )
 
         request = self.factory.get(
             '/estadisticas/alumno/5',
@@ -105,11 +112,18 @@ class EstadisticasViewsTests(SimpleTestCase):
         response = estadisticas_views.estadisticas_alumno(request, alumno_id=5)
         self.assertEqual(response.status_code, 403)
 
-    @patch('apps.reportes.views.estadisticas_views.alumnos_client.get_alumno_by_id')
     @patch('apps.reportes.views.reportes_views.validate_token')
-    def test_alumno_self_passes_check(self, mock_auth, mock_alumno):
+    def test_alumno_self_passes_check(self, mock_auth):
         mock_auth.return_value = MagicMock(user_id=100, rol='alumno', email='a@test.local')
-        mock_alumno.return_value = MagicMock(usuario_id=100)
+        ReporteAlumnoProjection.objects.create(
+            alumno_id=5,
+            materia_id=1,
+            usuario_id=100,
+            matricula='20240001',
+            nombre='Ana',
+            email='ana@test.local',
+            activa=True,
+        )
 
         with patch('apps.reportes.views.estadisticas_views.EstadisticasService') as mock_svc:
             mock_svc.return_value.stats_alumno.return_value = AlumnoStatsDTO(

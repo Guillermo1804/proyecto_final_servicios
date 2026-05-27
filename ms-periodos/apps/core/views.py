@@ -9,6 +9,8 @@ from apps.core.models import Periodo, Materia
 from apps.core.serializers import PeriodoSerializer, MateriaSerializer
 from utils.pagination import AGMPagination
 from utils.responses import error_response, success_response
+from apps.core.event_bus.outbox import enqueue_domain_event
+from apps.core.event_bus.payloads import periodo_payload
 from utils.auth import jwt_required
 
 
@@ -97,15 +99,27 @@ class PeriodoViewSet(ViewSet):
         """
         try:
             with transaction.atomic():
-                # Bloquear el periodo objetivo
                 periodo = Periodo.objects.select_for_update().get(pk=pk)
-                # Desactivar cualquier otro periodo activo
-                Periodo.objects.filter(activo=True).exclude(pk=pk).update(
-                    activo=False
+                deactivated = list(
+                    Periodo.objects.filter(activo=True).exclude(pk=pk).values_list(
+                        "pk", flat=True
+                    )
                 )
-                # Activar el periodo indicado
+                Periodo.objects.filter(activo=True).exclude(pk=pk).update(activo=False)
                 periodo.activo = True
                 periodo.save(update_fields=["activo", "fecha_actualizacion"])
+
+                def _emit_deactivated_periodos() -> None:
+                    for other_id in deactivated:
+                        other = Periodo.objects.get(pk=other_id)
+                        enqueue_domain_event(
+                            event_name="periodo.closed.v1",
+                            aggregate_type="periodo",
+                            aggregate_id=str(other_id),
+                            payload=periodo_payload(other),
+                        )
+
+                transaction.on_commit(_emit_deactivated_periodos)
         except Periodo.DoesNotExist:
             return error_response("Periodo no encontrado", status=404)
         except IntegrityError:

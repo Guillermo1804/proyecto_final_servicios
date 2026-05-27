@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 
 
 def _default_data_provider() -> NotificacionesDataProvider:
+    if getattr(settings, 'USE_EVENT_BUS', False):
+        return PlaceholderDataProvider()
     if env_bool('USE_PLACEHOLDER_DATA', default=False):
         return PlaceholderDataProvider()
     return GrpcDataProvider()
@@ -246,7 +248,7 @@ class EmailService:
         }
 
     def send_reset_password(
-        self, email: str, token: str, reset_url: str
+        self, email: str, reset_url: str, nombre: str = ''
     ) -> Dict[str, Any]:
         if not email or not reset_url:
             return self._fail(
@@ -260,6 +262,7 @@ class EmailService:
         context = {
             'reset_url': reset_url,
             'frontend_url': self.frontend_url,
+            'nombre': nombre,
         }
         try:
             html = self.templates.render_reset_password(context)

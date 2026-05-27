@@ -75,6 +75,23 @@ class ChannelTests(SimpleTestCase):
 
 
 class MockClientTests(SimpleTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._block_patchers = [
+            patch('grpc_clients.calificaciones_client.block_business_grpc'),
+            patch('grpc_clients.asistencias_client.block_business_grpc'),
+            patch('grpc_clients.periodos_client.block_business_grpc'),
+        ]
+        for patcher in cls._block_patchers:
+            patcher.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        for patcher in reversed(cls._block_patchers):
+            patcher.stop()
+        super().tearDownClass()
+
     @patch('grpc_clients.calificaciones_client.use_mock_data', return_value=True)
     def test_get_concentrado_mock(self, _mock_flag):
         resp = calificaciones_client.get_concentrado(99)

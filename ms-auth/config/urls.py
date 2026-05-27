@@ -18,9 +18,12 @@ from django.contrib import admin
 from django.urls import path
 from config.health_views import health
 from apps.core.views import login, refresh_token, get_me, forgot_password, reset_password, logout, admin_only, docente_only, alumno_only, usuarios, usuario_detail, usuario_reset_password
+from apps.core.jwks_views import jwks, public_key_pem
 
 urlpatterns = [
     path('health/', health, name='health'),
+    path('.well-known/jwks.json', jwks, name='jwks'),
+    path('.well-known/jwt-public.pem', public_key_pem, name='jwt_public_pem'),
     path('admin/', admin.site.urls),
     
     # Auth endpoints

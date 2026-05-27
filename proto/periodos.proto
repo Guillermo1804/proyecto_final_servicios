@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package periodos;
+package agm.periodos;
 
 option java_multiple_files = true;
 option java_package = "com.agm.periodos";
 
 // =============================================
-// MS-2: Periodos & Materias — Servicio gRPC
+// MS-2: Periodos & Materias — EXPOSICIÓN gRPC
 // Puerto: 50052
 // =============================================
 // Consumido por MS-3, MS-4, MS-6, MS-7 para obtener
@@ -20,10 +20,8 @@ service PeriodosService {
   rpc GetMateriasByDocente (GetMateriasByDocenteRequest) returns (MateriasListResponse);
 
   // Obtiene el periodo actualmente activo
-  rpc GetPeriodoActivo (Empty) returns (PeriodoInfo);
+  rpc GetPeriodoActivo (GetPeriodoActivoRequest) returns (PeriodoInfo);
 }
-
-message Empty {}
 
 // ---------- GetMateriaById ----------
 
@@ -55,6 +53,10 @@ message MateriasListResponse {
 }
 
 // ---------- GetPeriodoActivo ----------
+
+message GetPeriodoActivoRequest {
+  // Reservado para filtros futuros (ej. plan_estudios).
+}
 
 message PeriodoInfo {
   int32 id = 1;

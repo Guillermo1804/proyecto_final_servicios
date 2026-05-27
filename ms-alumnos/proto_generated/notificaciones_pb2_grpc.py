@@ -27,10 +27,10 @@ if _version_not_supported:
 
 class NotificacionesServiceStub(object):
     """=============================================
-    MS-6: Notificaciones — Servicio gRPC
-    Puerto: 50056
+    MS-6: Notificaciones — EXPOSICIÓN gRPC (puerto 50056)
     =============================================
-    Consumido por MS-1, MS-3 y MS-4 para enviar correos.
+    Correos transaccionales. Seguridad: agm.common.PasswordResetDelivery.
+    Llamadas REST internas: X-Internal-Api-Key o JWT admin (JWKS MS-1).
 
     """
 
@@ -41,22 +41,22 @@ class NotificacionesServiceStub(object):
             channel: A grpc.Channel.
         """
         self.SendBienvenida = channel.unary_unary(
-                '/notificaciones.NotificacionesService/SendBienvenida',
+                '/agm.notificaciones.NotificacionesService/SendBienvenida',
                 request_serializer=notificaciones__pb2.SendBienvenidaRequest.SerializeToString,
                 response_deserializer=notificaciones__pb2.SendResponse.FromString,
                 _registered_method=True)
         self.SendBajaNotif = channel.unary_unary(
-                '/notificaciones.NotificacionesService/SendBajaNotif',
+                '/agm.notificaciones.NotificacionesService/SendBajaNotif',
                 request_serializer=notificaciones__pb2.SendBajaRequest.SerializeToString,
                 response_deserializer=notificaciones__pb2.SendResponse.FromString,
                 _registered_method=True)
         self.SendCierreMateria = channel.unary_unary(
-                '/notificaciones.NotificacionesService/SendCierreMateria',
+                '/agm.notificaciones.NotificacionesService/SendCierreMateria',
                 request_serializer=notificaciones__pb2.SendCierreMateriaRequest.SerializeToString,
                 response_deserializer=notificaciones__pb2.SendResponse.FromString,
                 _registered_method=True)
         self.SendResetPassword = channel.unary_unary(
-                '/notificaciones.NotificacionesService/SendResetPassword',
+                '/agm.notificaciones.NotificacionesService/SendResetPassword',
                 request_serializer=notificaciones__pb2.SendResetPasswordRequest.SerializeToString,
                 response_deserializer=notificaciones__pb2.SendResponse.FromString,
                 _registered_method=True)
@@ -64,37 +64,33 @@ class NotificacionesServiceStub(object):
 
 class NotificacionesServiceServicer(object):
     """=============================================
-    MS-6: Notificaciones — Servicio gRPC
-    Puerto: 50056
+    MS-6: Notificaciones — EXPOSICIÓN gRPC (puerto 50056)
     =============================================
-    Consumido por MS-1, MS-3 y MS-4 para enviar correos.
+    Correos transaccionales. Seguridad: agm.common.PasswordResetDelivery.
+    Llamadas REST internas: X-Internal-Api-Key o JWT admin (JWKS MS-1).
 
     """
 
     def SendBienvenida(self, request, context):
-        """Envía correo de bienvenida al alumno con su clave de acceso
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def SendBajaNotif(self, request, context):
-        """Notifica al docente que un alumno solicitó baja
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def SendCierreMateria(self, request, context):
-        """Notifica a todos los alumnos que la materia fue cerrada
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def SendResetPassword(self, request, context):
-        """Envía correo de restablecimiento de contraseña
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -124,18 +120,18 @@ def add_NotificacionesServiceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'notificaciones.NotificacionesService', rpc_method_handlers)
+            'agm.notificaciones.NotificacionesService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('notificaciones.NotificacionesService', rpc_method_handlers)
+    server.add_registered_method_handlers('agm.notificaciones.NotificacionesService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class NotificacionesService(object):
     """=============================================
-    MS-6: Notificaciones — Servicio gRPC
-    Puerto: 50056
+    MS-6: Notificaciones — EXPOSICIÓN gRPC (puerto 50056)
     =============================================
-    Consumido por MS-1, MS-3 y MS-4 para enviar correos.
+    Correos transaccionales. Seguridad: agm.common.PasswordResetDelivery.
+    Llamadas REST internas: X-Internal-Api-Key o JWT admin (JWKS MS-1).
 
     """
 
@@ -153,7 +149,7 @@ class NotificacionesService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/notificaciones.NotificacionesService/SendBienvenida',
+            '/agm.notificaciones.NotificacionesService/SendBienvenida',
             notificaciones__pb2.SendBienvenidaRequest.SerializeToString,
             notificaciones__pb2.SendResponse.FromString,
             options,
@@ -180,7 +176,7 @@ class NotificacionesService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/notificaciones.NotificacionesService/SendBajaNotif',
+            '/agm.notificaciones.NotificacionesService/SendBajaNotif',
             notificaciones__pb2.SendBajaRequest.SerializeToString,
             notificaciones__pb2.SendResponse.FromString,
             options,
@@ -207,7 +203,7 @@ class NotificacionesService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/notificaciones.NotificacionesService/SendCierreMateria',
+            '/agm.notificaciones.NotificacionesService/SendCierreMateria',
             notificaciones__pb2.SendCierreMateriaRequest.SerializeToString,
             notificaciones__pb2.SendResponse.FromString,
             options,
@@ -234,7 +230,7 @@ class NotificacionesService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/notificaciones.NotificacionesService/SendResetPassword',
+            '/agm.notificaciones.NotificacionesService/SendResetPassword',
             notificaciones__pb2.SendResetPasswordRequest.SerializeToString,
             notificaciones__pb2.SendResponse.FromString,
             options,

@@ -334,6 +334,130 @@
 
 }
 
+.notas-page {
+  background:
+    radial-gradient(circle at top left, rgba(47, 128, 255, 0.1), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(217, 180, 91, 0.08), transparent 22%),
+    var(--bg-page);
+}
+
+.hero,
+.average-card,
+.subject-card,
+.history-card {
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 1.1rem 1rem;
+  color: var(--text-inverse);
+  background:
+    radial-gradient(circle at 84% 16%, rgba(244, 207, 119, 0.18), transparent 18%),
+    radial-gradient(circle at 18% 18%, rgba(47, 128, 255, 0.24), transparent 18%),
+    linear-gradient(145deg, #04122f, #0a2a59 52%, #11326d);
+}
+
+.average-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.average-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(47, 128, 255, 0.08), transparent 38%);
+  pointer-events: none;
+}
+
+.average-card h2 {
+  text-shadow: 0 0 24px rgba(47, 128, 255, 0.16);
+}
+
+.progress-bar {
+  background: rgba(15, 23, 42, 0.08);
+  box-shadow: inset 0 1px 3px rgba(7, 26, 61, 0.08);
+}
+
+.progress-bar div {
+  background: linear-gradient(90deg, var(--primary-blue), var(--primary-electric), var(--accent-gold));
+  box-shadow: 0 0 18px rgba(47, 128, 255, 0.25);
+}
+
+.subjects-list .subject-card:nth-child(1) {
+  animation-delay: 60ms;
+}
+
+.subjects-list .subject-card:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.subjects-list .subject-card:nth-child(3) {
+  animation-delay: 180ms;
+}
+
+.subject-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.subject-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary-electric), var(--accent-gold));
+}
+
+.subject-icon,
+.grade-pill,
+.time-badge,
+.table-card,
+.history-card {
+  box-shadow: inset 0 0 0 1px rgba(47, 128, 255, 0.08);
+}
+
+.partials-grid {
+  animation: fade-in-up 280ms ease both;
+}
+
+.partial-card {
+  background: rgba(255, 255, 255, 0.7);
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base),
+    background-color var(--transition-base),
+    color var(--transition-base);
+}
+
+.partial-card.active {
+  background: linear-gradient(145deg, var(--primary-deep), var(--primary-blue));
+  box-shadow: 0 16px 36px rgba(47, 128, 255, 0.2);
+}
+
+.history-card .table-head {
+  background: rgba(47, 128, 255, 0.06);
+}
+
+.history-card .table-row:nth-child(2n) {
+  background: rgba(47, 128, 255, 0.02);
+}
+
+.history-header a {
+  color: var(--primary-blue);
+}
+
 /* DESKTOP */
 
 @media (min-width: 1024px) {
@@ -348,3 +472,53 @@
   }
 
 }
+
+/* ACCIONES DE BAJA */
+.materia-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.drop-btn {
+  background: #fff;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.dropped-note {
+  color: #6b7280;
+  font-weight: 700;
+}
+
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  z-index: 1200;
+}
+
+.modal-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.2rem;
+  width: 92%;
+  max-width: 520px;
+  box-shadow: 0 10px 40px rgba(2,6,23,0.25);
+}
+
+.modal-card h3 { margin: 0 0 .4rem }
+.confirm-instruction { margin: .4rem 0; color: #374151 }
+.modal-actions { display:flex; justify-content:flex-end; gap: .5rem; margin-top: .8rem }
+.modal-actions .cancel { background: transparent; border: 1px solid #d1d5db; padding: .45rem .8rem; border-radius: 8px }
+.modal-actions .confirm { background: #ef4444; color: white; border: none; padding: .45rem .9rem; border-radius: 8px }
+.modal-error { color: #dc2626; margin-top: .6rem }
+.modal-success { color: #15803d; margin-top: .6rem }

@@ -1,81 +1,92 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { TopbarAdmin } from "../../partials/topbar-admin/topbar-admin";
-import { BottomNavbarAdmin } from "../../partials/bottom-navbar-admin/bottom-navbar-admin";
+import { Component, inject, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
+import { TopbarAdmin } from '../../partials/topbar-admin/topbar-admin';
+import { BottomNavbarAdmin } from '../../partials/bottom-navbar-admin/bottom-navbar-admin';
+import { AuthService } from '../../services/auth.service';
+import {
+  AdminDashboardResumen,
+  DashboardService,
+} from '../../services/admin-services/dashboard.service';
 
 @Component({
   selector: 'app-dashboard-screen',
   standalone: true,
-  imports: [CommonModule, TopbarAdmin, BottomNavbarAdmin],
+  imports: [CommonModule, RouterLink, TopbarAdmin, BottomNavbarAdmin],
   templateUrl: './dashboard-screen.html',
-  styleUrl: './dashboard-screen.scss'
+  styleUrl: './dashboard-screen.scss',
 })
-export class DashboardScreen {
+export class DashboardScreen implements OnInit {
+  private readonly dashboardService = inject(DashboardService);
+  private readonly auth = inject(AuthService);
 
-  estadisticas = [
-    {
-      icono: 'bi-people',
-      titulo: 'TOTAL DE ALUMNOS',
-      valor: '1,284',
-      estado: '+4%',
-      tipo: 'verde',
-      color: 'azul'
-    },
-    {
-      icono: 'bi-mortarboard',
-      titulo: 'TOTAL DE DOCENTES',
-      valor: '86',
-      estado: 'Estable',
-      tipo: 'gris',
-      color: 'azul'
-    },
-    {
-      icono: 'bi-journal-bookmark',
-      titulo: 'MATERIAS ACTIVAS',
-      valor: '42',
-      estado: 'Activo',
-      tipo: 'verde',
-      color: 'naranja'
-    },
-    {
-      icono: 'bi-calendar',
-      titulo: 'PERIODOS ACTIVOS',
-      valor: '2',
-      estado: 'Finaliza hoy',
-      tipo: 'rojo',
-      color: 'gris'
+  nombreUsuario = '';
+  rolLabel = '';
+  fechaHoy = '';
+
+  readonly acciones = this.dashboardService.getAcciones();
+
+  resumen: AdminDashboardResumen | null = null;
+  isLoadingResumen = true;
+  resumenError = '';
+
+  ngOnInit(): void {
+    this.fechaHoy = this.auth.formatTodayLong();
+    this.loadUsuario();
+    this.loadResumen();
+  }
+
+  formatFecha(fecha: string): string {
+    if (!fecha?.trim()) {
+      return '—';
     }
-  ];
-
-  actividades = [
-    {
-      icono: 'bi-person-plus',
-      accion: 'Registro de Estudiante',
-      usuario: 'Carlos Ortega',
-      fecha: 'Hace 10 min',
-      color: 'azul'
-    },
-    {
-      icono: 'bi-list-check',
-      accion: 'Modificación de Notas',
-      usuario: 'Dra. María Lopez',
-      fecha: 'Hace 1 h',
-      color: 'negro'
-    },
-    {
-      icono: 'bi-exclamation-triangle',
-      accion: 'Error de Conexión API',
-      usuario: 'Sistema Central',
-      fecha: 'Hace 2 h',
-      color: 'rojo'
-    },
-    {
-      icono: 'bi-box-arrow-in-right',
-      accion: 'Cierre de Periodo 2023-2',
-      usuario: 'Dr. Smith',
-      fecha: 'Ayer',
-      color: 'negro'
+    const parsed = new Date(`${fecha}T12:00:00`);
+    if (Number.isNaN(parsed.getTime())) {
+      return fecha;
     }
-  ];
+    return parsed.toLocaleDateString('es-MX', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
 
+  private loadUsuario(): void {
+    this.auth.refreshCurrentUser().subscribe({
+      next: (user) => {
+        this.nombreUsuario = user?.nombre?.trim() || this.auth.getGreetingName();
+        this.rolLabel = this.auth.getRoleLabel(user?.rol);
+      },
+      error: () => {
+        this.nombreUsuario = this.auth.getGreetingName();
+        this.rolLabel = this.auth.getRoleLabel();
+      },
+    });
+  }
+
+  private loadResumen(): void {
+    this.isLoadingResumen = true;
+    this.resumenError = '';
+
+    this.dashboardService
+      .loadResumen()
+      .pipe(finalize(() => {
+        this.isLoadingResumen = false;
+      }))
+      .subscribe({
+        next: (resumen) => {
+          this.resumen = resumen;
+        },
+        error: () => {
+          this.resumenError = 'No se pudo cargar el resumen del sistema.';
+          this.resumen = {
+            totalPeriodos: 0,
+            periodoActivo: null,
+            materiasPeriodoActivo: 0,
+            totalDocentes: 0,
+          };
+        },
+      });
+  }
 }

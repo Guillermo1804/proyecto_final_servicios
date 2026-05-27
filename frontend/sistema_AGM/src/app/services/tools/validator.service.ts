@@ -75,4 +75,8 @@ export class ValidatorService {
     console.log(pat.test(input), input);
     return pat.test(input);
   }
+
+  equals(a:any, b:any){
+    return a === b;
+  }
 }

@@ -89,7 +89,7 @@ class EmailServiceTests(TestCase):
 
     def test_send_reset_password_ok(self):
         url = 'http://localhost:4200/reset-password?token=abc'
-        result = self.service.send_reset_password('user@test.local', 'abc', url)
+        result = self.service.send_reset_password('user@test.local', url)
         self.assertTrue(result['success'])
         self.assertIn(url, mail.outbox[0].alternatives[0][0])
 

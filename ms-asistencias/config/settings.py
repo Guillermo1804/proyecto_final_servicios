@@ -1,10 +1,15 @@
 """Django settings for MS-5 Asistencias QR."""
 
+import os
+import sys
 from pathlib import Path
+
 from decouple import config
+
 from config.agm_env import env_bool, cors_allowed_origins_list, mysql_database_settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, os.path.join(BASE_DIR, "proto_generated"))
 
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me')
 DEBUG = config('DEBUG', default=True, cast=bool)
@@ -19,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'apps.core.apps.CoreConfig',
 ]
 
 MIDDLEWARE = [
@@ -65,6 +71,47 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ===== REDIS CONFIGURATION =====
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f"redis://{config('REDIS_HOST', default='localhost')}:{config('REDIS_PORT', default='6379')}/1",
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'IGNORE_EXCEPTIONS': True,
+        }
+    }
+}
+
+# QR Secret Key for HMAC signing
+QR_HMAC_SECRET = config('QR_HMAC_SECRET', default='clave-secreta-para-hmac-cambiar-en-produccion')
+
+SERVICE_NAME = config('SERVICE_NAME', default='ms-asistencias')
+USE_EVENT_BUS = config('USE_EVENT_BUS', default=True, cast=bool)
+EVENT_QUEUE_NAME = config('EVENT_QUEUE_NAME', default='ms-asistencias.events')
+EVENT_CONTRACTS_DIR = config(
+    'EVENT_CONTRACTS_DIR',
+    default=str(BASE_DIR.parent / 'contracts' / 'events'),
+)
+
+JWT_JWKS_URL = config(
+    'JWT_JWKS_URL',
+    default='http://ms-auth:8001/.well-known/jwks.json',
+)
+JWT_JWKS_CACHE_TTL_SECONDS = config('JWT_JWKS_CACHE_TTL_SECONDS', default=300, cast=int)
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'utils.jwt_auth.AGMJwtAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
 
 if env_bool('CORS_ALLOW_ALL_ORIGINS', default=True):
     CORS_ALLOW_ALL_ORIGINS = True

@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package agm.common;
+
+option java_multiple_files = true;
+option java_package = "com.agm.common";
+
+// =============================================================================
+// BASE COMPARTIDA AGM — no es un microservicio (package agm.common)
+// =============================================================================
+// Tipos reutilizables entre dominios, eventos y mensajes anidados.
+// NO usar estos mensajes como firma directa de un rpc (ver agm.auth, etc.).
+
+// ---------- Utilidades ----------
+
+message Empty {}
+
+// Claims estandar del access token JWT emitido por MS-1 (RS256 + JWKS).
+message UserClaims {
+  int32 user_id = 1;
+  string email = 2;
+  string nombre = 3;
+  string rol = 4;  // admin | docente | alumno
+}
+
+// ---------- JWT (bloques reutilizables, no firmas RPC) ----------
+
+message AccessTokenCredential {
+  string access_token = 1;  // JWT sin prefijo "Bearer "
+}
+
+message TokenValidationResult {
+  bool valid = 1;
+  UserClaims user = 2;
+  string jti = 3;
+  int64 expires_at_unix = 4;
+}
+
+// Espejo del evento token.revoked.v1 (contracts/events/).
+message TokenRevocationPayload {
+  int32 user_id = 1;
+  string jti = 2;
+  string token_type = 3;  // access | refresh
+}
+
+// ---------- Correo reset password ----------
+
+message PasswordResetDelivery {
+  string email = 1;
+  string reset_url = 2;
+  string nombre = 3;
+}
+
+// ---------- Rotacion de claves MS-1 ----------
+
+message SigningKeysRotatedPayload {
+  string kid = 1;
+  int64 rotated_at_unix = 2;
+}
+

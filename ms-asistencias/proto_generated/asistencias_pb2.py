@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11\x61sistencias.proto\x12\x0b\x61sistencias\"C\n\x1aGetAsistenciaAlumnoRequest\x12\x11\n\talumno_id\x18\x01 \x01(\x05\x12\x12\n\nmateria_id\x18\x02 \x01(\x05\"J\n\x12RegistroAsistencia\x12\r\n\x05\x66\x65\x63ha\x18\x01 \x01(\t\x12\x0e\n\x06\x65stado\x18\x02 \x01(\t\x12\x15\n\rhora_registro\x18\x03 \x01(\t\"\xe3\x01\n\x18\x41sistenciaAlumnoResponse\x12\x11\n\talumno_id\x18\x01 \x01(\x05\x12\x12\n\nmateria_id\x18\x02 \x01(\x05\x12\x16\n\x0etotal_sesiones\x18\x03 \x01(\x05\x12\x11\n\tpresentes\x18\x04 \x01(\x05\x12\x10\n\x08retardos\x18\x05 \x01(\x05\x12\x10\n\x08\x61usentes\x18\x06 \x01(\x05\x12\x1d\n\x15porcentaje_asistencia\x18\x07 \x01(\x01\x12\x32\n\tregistros\x18\x08 \x03(\x0b\x32\x1f.asistencias.RegistroAsistencia\"6\n GetEstadisticasAsistenciaRequest\x12\x12\n\nmateria_id\x18\x01 \x01(\x05\"\x9a\x01\n\x17\x41sistenciaAlumnoResumen\x12\x11\n\talumno_id\x18\x01 \x01(\x05\x12\x11\n\tmatricula\x18\x02 \x01(\t\x12\x0e\n\x06nombre\x18\x03 \x01(\t\x12\x11\n\tpresentes\x18\x04 \x01(\x05\x12\x10\n\x08retardos\x18\x05 \x01(\x05\x12\x10\n\x08\x61usentes\x18\x06 \x01(\x05\x12\x12\n\nporcentaje\x18\x07 \x01(\x01\"\xa9\x01\n\x1e\x45stadisticasAsistenciaResponse\x12\x12\n\nmateria_id\x18\x01 \x01(\x05\x12\x16\n\x0etotal_sesiones\x18\x02 \x01(\x05\x12$\n\x1cporcentaje_asistencia_grupal\x18\x03 \x01(\x01\x12\x35\n\x07\x61lumnos\x18\x04 \x03(\x0b\x32$.asistencias.AsistenciaAlumnoResumen2\xf4\x01\n\x12\x41sistenciasService\x12\x65\n\x13GetAsistenciaAlumno\x12\'.asistencias.GetAsistenciaAlumnoRequest\x1a%.asistencias.AsistenciaAlumnoResponse\x12w\n\x19GetEstadisticasAsistencia\x12-.asistencias.GetEstadisticasAsistenciaRequest\x1a+.asistencias.EstadisticasAsistenciaResponseB\x17\n\x13\x63om.agm.asistenciasP\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11\x61sistencias.proto\x12\x0f\x61gm.asistencias\"C\n\x1aGetAsistenciaAlumnoRequest\x12\x11\n\talumno_id\x18\x01 \x01(\x05\x12\x12\n\nmateria_id\x18\x02 \x01(\x05\"J\n\x12RegistroAsistencia\x12\r\n\x05\x66\x65\x63ha\x18\x01 \x01(\t\x12\x0e\n\x06\x65stado\x18\x02 \x01(\t\x12\x15\n\rhora_registro\x18\x03 \x01(\t\"\xe7\x01\n\x18\x41sistenciaAlumnoResponse\x12\x11\n\talumno_id\x18\x01 \x01(\x05\x12\x12\n\nmateria_id\x18\x02 \x01(\x05\x12\x16\n\x0etotal_sesiones\x18\x03 \x01(\x05\x12\x11\n\tpresentes\x18\x04 \x01(\x05\x12\x10\n\x08retardos\x18\x05 \x01(\x05\x12\x10\n\x08\x61usentes\x18\x06 \x01(\x05\x12\x1d\n\x15porcentaje_asistencia\x18\x07 \x01(\x01\x12\x36\n\tregistros\x18\x08 \x03(\x0b\x32#.agm.asistencias.RegistroAsistencia\"6\n GetEstadisticasAsistenciaRequest\x12\x12\n\nmateria_id\x18\x01 \x01(\x05\"\x9a\x01\n\x17\x41sistenciaAlumnoResumen\x12\x11\n\talumno_id\x18\x01 \x01(\x05\x12\x11\n\tmatricula\x18\x02 \x01(\t\x12\x0e\n\x06nombre\x18\x03 \x01(\t\x12\x11\n\tpresentes\x18\x04 \x01(\x05\x12\x10\n\x08retardos\x18\x05 \x01(\x05\x12\x10\n\x08\x61usentes\x18\x06 \x01(\x05\x12\x12\n\nporcentaje\x18\x07 \x01(\x01\"\xad\x01\n\x1e\x45stadisticasAsistenciaResponse\x12\x12\n\nmateria_id\x18\x01 \x01(\x05\x12\x16\n\x0etotal_sesiones\x18\x02 \x01(\x05\x12$\n\x1cporcentaje_asistencia_grupal\x18\x03 \x01(\x01\x12\x39\n\x07\x61lumnos\x18\x04 \x03(\x0b\x32(.agm.asistencias.AsistenciaAlumnoResumen2\x84\x02\n\x12\x41sistenciasService\x12m\n\x13GetAsistenciaAlumno\x12+.agm.asistencias.GetAsistenciaAlumnoRequest\x1a).agm.asistencias.AsistenciaAlumnoResponse\x12\x7f\n\x19GetEstadisticasAsistencia\x12\x31.agm.asistencias.GetEstadisticasAsistenciaRequest\x1a/.agm.asistencias.EstadisticasAsistenciaResponseB\x17\n\x13\x63om.agm.asistenciasP\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,18 +32,18 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'asistencias_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\023com.agm.asistenciasP\001'
-  _globals['_GETASISTENCIAALUMNOREQUEST']._serialized_start=34
-  _globals['_GETASISTENCIAALUMNOREQUEST']._serialized_end=101
-  _globals['_REGISTROASISTENCIA']._serialized_start=103
-  _globals['_REGISTROASISTENCIA']._serialized_end=177
-  _globals['_ASISTENCIAALUMNORESPONSE']._serialized_start=180
-  _globals['_ASISTENCIAALUMNORESPONSE']._serialized_end=407
-  _globals['_GETESTADISTICASASISTENCIAREQUEST']._serialized_start=409
-  _globals['_GETESTADISTICASASISTENCIAREQUEST']._serialized_end=463
-  _globals['_ASISTENCIAALUMNORESUMEN']._serialized_start=466
-  _globals['_ASISTENCIAALUMNORESUMEN']._serialized_end=620
-  _globals['_ESTADISTICASASISTENCIARESPONSE']._serialized_start=623
-  _globals['_ESTADISTICASASISTENCIARESPONSE']._serialized_end=792
-  _globals['_ASISTENCIASSERVICE']._serialized_start=795
-  _globals['_ASISTENCIASSERVICE']._serialized_end=1039
+  _globals['_GETASISTENCIAALUMNOREQUEST']._serialized_start=38
+  _globals['_GETASISTENCIAALUMNOREQUEST']._serialized_end=105
+  _globals['_REGISTROASISTENCIA']._serialized_start=107
+  _globals['_REGISTROASISTENCIA']._serialized_end=181
+  _globals['_ASISTENCIAALUMNORESPONSE']._serialized_start=184
+  _globals['_ASISTENCIAALUMNORESPONSE']._serialized_end=415
+  _globals['_GETESTADISTICASASISTENCIAREQUEST']._serialized_start=417
+  _globals['_GETESTADISTICASASISTENCIAREQUEST']._serialized_end=471
+  _globals['_ASISTENCIAALUMNORESUMEN']._serialized_start=474
+  _globals['_ASISTENCIAALUMNORESUMEN']._serialized_end=628
+  _globals['_ESTADISTICASASISTENCIARESPONSE']._serialized_start=631
+  _globals['_ESTADISTICASASISTENCIARESPONSE']._serialized_end=804
+  _globals['_ASISTENCIASSERVICE']._serialized_start=807
+  _globals['_ASISTENCIASSERVICE']._serialized_end=1067
 # @@protoc_insertion_point(module_scope)

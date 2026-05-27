@@ -22,9 +22,10 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
+import agm_common_pb2 as agm__common__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nauth.proto\x12\x04\x61uth\"%\n\x14ValidateTokenRequest\x12\r\n\x05token\x18\x01 \x01(\t\"c\n\x15ValidateTokenResponse\x12\r\n\x05valid\x18\x01 \x01(\x08\x12\x0f\n\x07user_id\x18\x02 \x01(\x05\x12\r\n\x05\x65mail\x18\x03 \x01(\t\x12\x0e\n\x06nombre\x18\x04 \x01(\t\x12\x0b\n\x03rol\x18\x05 \x01(\t\"%\n\x12GetUserByIdRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\x05\"U\n\x0bUserProfile\x12\n\n\x02id\x18\x01 \x01(\x05\x12\r\n\x05\x65mail\x18\x02 \x01(\t\x12\x0e\n\x06nombre\x18\x03 \x01(\t\x12\x0b\n\x03rol\x18\x04 \x01(\t\x12\x0e\n\x06\x61\x63tivo\x18\x05 \x01(\x08\"1\n\x10\x43heckRoleRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\x05\x12\x0c\n\x04role\x18\x02 \x01(\t\"%\n\x11\x43heckRoleResponse\x12\x10\n\x08has_role\x18\x01 \x01(\x08\"Q\n\x11\x43reateUserRequest\x12\r\n\x05\x65mail\x18\x01 \x01(\t\x12\x0e\n\x06nombre\x18\x02 \x01(\t\x12\x0b\n\x03rol\x18\x03 \x01(\t\x12\x10\n\x08password\x18\x04 \x01(\t\"G\n\x12\x43reateUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07user_id\x18\x02 \x01(\x05\x12\x0f\n\x07message\x18\x03 \x01(\t2\x92\x02\n\x0b\x41uthService\x12H\n\rValidateToken\x12\x1a.auth.ValidateTokenRequest\x1a\x1b.auth.ValidateTokenResponse\x12:\n\x0bGetUserById\x12\x18.auth.GetUserByIdRequest\x1a\x11.auth.UserProfile\x12<\n\tCheckRole\x12\x16.auth.CheckRoleRequest\x1a\x17.auth.CheckRoleResponse\x12?\n\nCreateUser\x12\x17.auth.CreateUserRequest\x1a\x18.auth.CreateUserResponseB\x10\n\x0c\x63om.agm.authP\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nauth.proto\x12\x08\x61gm.auth\x1a\x10\x61gm_common.proto\"M\n\x14ValidateTokenRequest\x12\x35\n\ncredential\x18\x01 \x01(\x0b\x32!.agm.common.AccessTokenCredential\"J\n\x15ValidateTokenResponse\x12\x31\n\x06result\x18\x01 \x01(\x0b\x32!.agm.common.TokenValidationResult\"%\n\x12GetUserByIdRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\x05\"E\n\x0bUserProfile\x12&\n\x06\x63laims\x18\x01 \x01(\x0b\x32\x16.agm.common.UserClaims\x12\x0e\n\x06\x61\x63tivo\x18\x02 \x01(\x08\"1\n\x10\x43heckRoleRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\x05\x12\x0c\n\x04role\x18\x02 \x01(\t\"%\n\x11\x43heckRoleResponse\x12\x10\n\x08has_role\x18\x01 \x01(\x08\"Q\n\x11\x43reateUserRequest\x12\r\n\x05\x65mail\x18\x01 \x01(\t\x12\x0e\n\x06nombre\x18\x02 \x01(\t\x12\x0b\n\x03rol\x18\x03 \x01(\t\x12\x10\n\x08password\x18\x04 \x01(\t\"G\n\x12\x43reateUserResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07user_id\x18\x02 \x01(\x05\x12\x0f\n\x07message\x18\x03 \x01(\t2\xb2\x02\n\x0b\x41uthService\x12P\n\rValidateToken\x12\x1e.agm.auth.ValidateTokenRequest\x1a\x1f.agm.auth.ValidateTokenResponse\x12\x42\n\x0bGetUserById\x12\x1c.agm.auth.GetUserByIdRequest\x1a\x15.agm.auth.UserProfile\x12\x44\n\tCheckRole\x12\x1a.agm.auth.CheckRoleRequest\x1a\x1b.agm.auth.CheckRoleResponse\x12G\n\nCreateUser\x12\x1b.agm.auth.CreateUserRequest\x1a\x1c.agm.auth.CreateUserResponseB\x10\n\x0c\x63om.agm.authP\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,22 +33,22 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'auth_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\014com.agm.authP\001'
-  _globals['_VALIDATETOKENREQUEST']._serialized_start=20
-  _globals['_VALIDATETOKENREQUEST']._serialized_end=57
-  _globals['_VALIDATETOKENRESPONSE']._serialized_start=59
-  _globals['_VALIDATETOKENRESPONSE']._serialized_end=158
-  _globals['_GETUSERBYIDREQUEST']._serialized_start=160
-  _globals['_GETUSERBYIDREQUEST']._serialized_end=197
-  _globals['_USERPROFILE']._serialized_start=199
-  _globals['_USERPROFILE']._serialized_end=284
-  _globals['_CHECKROLEREQUEST']._serialized_start=286
-  _globals['_CHECKROLEREQUEST']._serialized_end=335
-  _globals['_CHECKROLERESPONSE']._serialized_start=337
-  _globals['_CHECKROLERESPONSE']._serialized_end=374
-  _globals['_CREATEUSERREQUEST']._serialized_start=376
-  _globals['_CREATEUSERREQUEST']._serialized_end=457
-  _globals['_CREATEUSERRESPONSE']._serialized_start=459
-  _globals['_CREATEUSERRESPONSE']._serialized_end=530
-  _globals['_AUTHSERVICE']._serialized_start=533
-  _globals['_AUTHSERVICE']._serialized_end=807
+  _globals['_VALIDATETOKENREQUEST']._serialized_start=42
+  _globals['_VALIDATETOKENREQUEST']._serialized_end=119
+  _globals['_VALIDATETOKENRESPONSE']._serialized_start=121
+  _globals['_VALIDATETOKENRESPONSE']._serialized_end=195
+  _globals['_GETUSERBYIDREQUEST']._serialized_start=197
+  _globals['_GETUSERBYIDREQUEST']._serialized_end=234
+  _globals['_USERPROFILE']._serialized_start=236
+  _globals['_USERPROFILE']._serialized_end=305
+  _globals['_CHECKROLEREQUEST']._serialized_start=307
+  _globals['_CHECKROLEREQUEST']._serialized_end=356
+  _globals['_CHECKROLERESPONSE']._serialized_start=358
+  _globals['_CHECKROLERESPONSE']._serialized_end=395
+  _globals['_CREATEUSERREQUEST']._serialized_start=397
+  _globals['_CREATEUSERREQUEST']._serialized_end=478
+  _globals['_CREATEUSERRESPONSE']._serialized_start=480
+  _globals['_CREATEUSERRESPONSE']._serialized_end=551
+  _globals['_AUTHSERVICE']._serialized_start=554
+  _globals['_AUTHSERVICE']._serialized_end=860
 # @@protoc_insertion_point(module_scope)

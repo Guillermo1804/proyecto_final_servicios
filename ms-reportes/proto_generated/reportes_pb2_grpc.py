@@ -27,7 +27,7 @@ if _version_not_supported:
 
 class ReportesServiceStub(object):
     """=============================================
-    MS-7: Reportes & Estadísticas — Servicio gRPC
+    MS-7: Reportes & Estadísticas — EXPOSICIÓN gRPC
     Puerto: 50057
     =============================================
 
@@ -40,12 +40,12 @@ class ReportesServiceStub(object):
             channel: A grpc.Channel.
         """
         self.GenerateReport = channel.unary_unary(
-                '/reportes.ReportesService/GenerateReport',
+                '/agm.reportes.ReportesService/GenerateReport',
                 request_serializer=reportes__pb2.GenerateReportRequest.SerializeToString,
                 response_deserializer=reportes__pb2.ReportResponse.FromString,
                 _registered_method=True)
         self.GetHistorialDocente = channel.unary_unary(
-                '/reportes.ReportesService/GetHistorialDocente',
+                '/agm.reportes.ReportesService/GetHistorialDocente',
                 request_serializer=reportes__pb2.GetHistorialDocenteRequest.SerializeToString,
                 response_deserializer=reportes__pb2.HistorialDocenteResponse.FromString,
                 _registered_method=True)
@@ -53,7 +53,7 @@ class ReportesServiceStub(object):
 
 class ReportesServiceServicer(object):
     """=============================================
-    MS-7: Reportes & Estadísticas — Servicio gRPC
+    MS-7: Reportes & Estadísticas — EXPOSICIÓN gRPC
     Puerto: 50057
     =============================================
 
@@ -88,15 +88,15 @@ def add_ReportesServiceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'reportes.ReportesService', rpc_method_handlers)
+            'agm.reportes.ReportesService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('reportes.ReportesService', rpc_method_handlers)
+    server.add_registered_method_handlers('agm.reportes.ReportesService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class ReportesService(object):
     """=============================================
-    MS-7: Reportes & Estadísticas — Servicio gRPC
+    MS-7: Reportes & Estadísticas — EXPOSICIÓN gRPC
     Puerto: 50057
     =============================================
 
@@ -116,7 +116,7 @@ class ReportesService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/reportes.ReportesService/GenerateReport',
+            '/agm.reportes.ReportesService/GenerateReport',
             reportes__pb2.GenerateReportRequest.SerializeToString,
             reportes__pb2.ReportResponse.FromString,
             options,
@@ -143,7 +143,7 @@ class ReportesService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/reportes.ReportesService/GetHistorialDocente',
+            '/agm.reportes.ReportesService/GetHistorialDocente',
             reportes__pb2.GetHistorialDocenteRequest.SerializeToString,
             reportes__pb2.HistorialDocenteResponse.FromString,
             options,

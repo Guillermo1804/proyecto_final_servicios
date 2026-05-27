@@ -1,63 +1,84 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { BottomNavbarDocente } from '../../../partials/bottom-navbar-docente/bottom-navbar-docente';
-import { BottomNavbarAdmin } from "../../../partials/bottom-navbar-admin/bottom-navbar-admin";
-import { TopbarAdmin } from "../../../partials/topbar-admin/topbar-admin";
+import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
+import { AuthService } from '../../../services/auth.service';
+import {
+  DashboardClaseItem,
+  DashboardDocenteService,
+  DashboardResumenMateriaItem,
+} from '../../../services/docente-services/dashboard-docente.service';
 
 @Component({
   selector: 'app-dashboard-docente-screen',
   standalone: true,
-  imports: [CommonModule, BottomNavbarDocente, TopbarAdmin],
+  imports: [CommonModule, BottomNavbarDocente, TopbarAdmin, RouterLink],
   templateUrl: './dashboard-screen.html',
-  styleUrl: './dashboard-screen.scss'
+  styleUrl: './dashboard-screen.scss',
 })
-export class DashboardScreen {
+export class DashboardScreen implements OnInit {
+  private readonly auth = inject(AuthService);
 
-  clasesHoy = [
-    {
-      hora: '08:00-10:00',
-      materia: 'Cálculo Integral',
-      grupo: 'Grupo A - Ingeniería Civil',
-      aula: 'Aula Magna 302',
-      icono: 'bi-broadcast',
-      activo: true
-    },
-    {
-      hora: '11:30-13:30',
-      materia: 'Física Mecánica',
-      grupo: 'Grupo B - Ingeniería Mecánica',
-      aula: 'Laboratorio L4',
-      icono: 'bi-people',
-      activo: false
-    }
-  ];
+  nombreUsuario = '';
+  rolLabel = '';
+  fechaHoy = '';
 
-  pendientes = [
-    {
-      icono: 'bi-clipboard2-alert',
-      color: 'rojo',
-      titulo: 'Práctica: Leyes de Newton',
-      detalle: '12 entregas nuevas'
-    },
-    {
-      icono: 'bi-clipboard-check',
-      color: 'azul',
-      titulo: 'Proyecto Final Parcial',
-      detalle: '4 entregas nuevas'
-    }
-  ];
+  clasesHoy: DashboardClaseItem[] = [];
+  resumenMaterias: DashboardResumenMateriaItem[] = [];
 
-  notificaciones = [
-    {
-      fecha: 'Hoy, 10:15',
-      asunto: 'Cierre de actas - Periodo Otoño 2023',
-      emisor: 'Dirección Académica'
-    },
-    {
-      fecha: 'Ayer, 16:40',
-      asunto: 'Nueva solicitud de examen extraordinario',
-      emisor: 'Control Escolar'
-    }
-  ];
+  totalMateriasAsignadas = 0;
+  totalAlumnosInscritos = 0;
+  periodoActivoNombre: string | null = null;
+  emptyMessage = '';
+  isLoading = true;
+  loadError = '';
 
+  ultimaActualizacion = '';
+
+  constructor(private readonly dashboardService: DashboardDocenteService) {}
+
+  ngOnInit(): void {
+    this.fechaHoy = this.auth.formatTodayLong();
+    this.auth.refreshCurrentUser().subscribe({
+      next: (user) => {
+        this.nombreUsuario = user?.nombre?.trim() || this.auth.getGreetingName();
+        this.rolLabel = this.auth.getRoleLabel(user?.rol);
+      },
+      error: () => {
+        this.nombreUsuario = this.auth.getGreetingName();
+        this.rolLabel = this.auth.getRoleLabel();
+      },
+    });
+    this.cargarDashboard();
+  }
+
+  private cargarDashboard(): void {
+    this.isLoading = true;
+    this.loadError = '';
+
+    this.dashboardService
+      .loadDashboard()
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (data) => {
+          this.periodoActivoNombre = data.periodoActivoNombre;
+          this.clasesHoy = data.clasesHoy;
+          this.resumenMaterias = data.resumenMaterias;
+          this.totalMateriasAsignadas = data.totalMateriasAsignadas;
+          this.totalAlumnosInscritos = data.totalAlumnosInscritos;
+          this.emptyMessage = data.emptyMessage;
+          this.ultimaActualizacion = new Date().toLocaleTimeString('es-MX', {
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+        },
+        error: () => {
+          this.loadError = 'No se pudo cargar el resumen del docente.';
+          this.clasesHoy = [];
+          this.resumenMaterias = [];
+        },
+      });
+  }
 }

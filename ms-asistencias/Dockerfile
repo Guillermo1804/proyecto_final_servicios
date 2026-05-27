@@ -13,13 +13,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY packages/agm_events /packages/agm_events
+COPY contracts/events /contracts/events
+ENV EVENT_CONTRACTS_DIR=/contracts/events
+RUN pip install --no-cache-dir /packages/agm_events
+
+COPY ms-asistencias/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY proto /proto
+COPY ms-asistencias /app
 
-RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
+RUN pip install --no-cache-dir grpcio-tools \
+ && bash /app/generate_proto.sh \
+ && pip uninstall -y grpcio-tools || true
+
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 EXPOSE 8005 50055
-
 ENTRYPOINT ["./entrypoint.sh"]

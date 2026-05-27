@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "calificacion.updated.v1 payload",
+  "type": "object",
+  "required": ["calificacion_id", "actividad_id", "alumno_id", "materia_id", "calificacion"],
+  "properties": {
+    "calificacion_id": { "type": "integer" },
+    "actividad_id": { "type": "integer" },
+    "alumno_id": { "type": "integer" },
+    "materia_id": { "type": "integer" },
+    "calificacion": { "type": "number" },
+    "created": { "type": "boolean" }
+  }
+}

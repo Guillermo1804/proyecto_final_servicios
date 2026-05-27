@@ -86,10 +86,39 @@
   margin-bottom: 2rem;
 }
 
+.empty-state {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  color: #4b5563;
+
+  i {
+    font-size: 2rem;
+    color: #0a67d8;
+    margin-bottom: .75rem;
+    display: inline-block;
+  }
+
+  h3 {
+    margin: 0 0 .35rem;
+    font-size: 1.35rem;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
 .schedule-item {
   display: grid;
   grid-template-columns: 60px 1fr;
   gap: 1rem;
+
+  &.no-hour {
+    grid-template-columns: 1fr;
+  }
 }
 
 .hour {

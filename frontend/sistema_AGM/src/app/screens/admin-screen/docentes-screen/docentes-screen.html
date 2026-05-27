@@ -8,14 +8,15 @@
       <h2>Gestión de Docentes</h2>
 
       <p>
-        Administre la nómina académica, asignaciones y estados de los docentes con precisión institucional.
+        Administre la nómina académica y estados de los docentes con precisión institucional.
       </p>
     </section>
 
-    <button class="create-btn">
+    <label class="create-btn">
       <i class="bi bi-person-plus"></i>
-      Registrar Docente
-    </button>
+      Importar Docentes (PDF)
+      <input type="file" accept=".pdf" hidden (change)="onImportarDocentes($event)" />
+    </label>
 
     <section class="filters-section">
 
@@ -23,25 +24,11 @@
         <i class="bi bi-search"></i>
 
         <input
+          #searchInput
           type="text"
-          placeholder="Buscar por nombre, ID o especialidad"
+          placeholder="Buscar por nombre, apellido o correo..."
+          (input)="onSearch(searchInput.value)"
         >
-      </div>
-
-      <div class="filter-row">
-
-        <select>
-          <option>Todas las Carreras</option>
-          <option>ITI</option>
-          <option>ICC</option>
-          <option>ITC</option>
-
-        </select>
-
-        <button class="filter-btn">
-          <i class="bi bi-filter"></i>
-        </button>
-
       </div>
 
     </section>
@@ -49,55 +36,101 @@
     <section class="table-card">
 
       <div class="table-head">
-        <span>Docente</span>
-        <span>Facultad</span>
+        <span>Nombre Docente</span>
+        <span>Correo</span>
+        <span>Ubicación</span>
+        <span>Eliminar</span>
         <span>Estado</span>
       </div>
 
       <div
         class="table-row"
-        *ngFor="let docente of docentes"
+        *ngFor="let docente of docentes; trackBy: trackByDocenteId"
       >
 
-        <div class="teacher-info">
-
-          <img
-            [src]="docente.foto"
-            [alt]="docente.nombre"
-          >
+        <div class="table-cell teacher-info" data-label="Nombre docente">
 
           <div>
             <strong>{{ docente.nombre }}</strong>
-            <p>ID: {{ docente.id }}</p>
+            <p>{{ docente.ubicacion }}</p>
           </div>
 
         </div>
 
-        <span class="faculty">
-          {{ docente.facultad }}
+        <span class="table-cell table-value" data-label="Correo">
+          {{ docente.correo }}
         </span>
 
-        <span
-          class="status"
-          [ngClass]="docente.tipo"
-        >
-          {{ docente.estado }}
+        <span class="table-cell table-value" data-label="Ubicación">
+          {{ docente.ubicacion }}
         </span>
 
+        <div class="table-cell action-cell" data-label="Eliminar">
+          <button
+            type="button"
+            class="delete-btn"
+            aria-label="Eliminar docente"
+            (click)="eliminarDocente(docente)"
+          >
+            <i class="bi bi-trash3"></i>
+          </button>
+        </div>
+
+        <div class="table-cell action-cell" data-label="Estado">
+          <button
+            *ngIf="docente.estado === 'Inactivo'; else estadoActivo"
+            type="button"
+            class="status-toggle inactivo clickable"
+            title="Crear o vincular usuario en MS-1"
+            (click)="activarDocente(docente)"
+          >
+            Activar
+          </button>
+          <ng-template #estadoActivo>
+            <span class="status-toggle activo" title="Vinculado a MS-1">
+              Activo
+            </span>
+          </ng-template>
+        </div>
+
+      </div>
+
+      <div
+        class="empty-state"
+        *ngIf="!isLoading && docentes.length === 0"
+      >
+        No se encontraron docentes con los filtros actuales.
+      </div>
+
+      <div
+        class="loading-state"
+        *ngIf="isLoading"
+      >
+        Cargando docentes...
       </div>
 
       <div class="table-footer">
 
-        <span>Mostrando 4 de 128 docentes</span>
+        <span>
+          Mostrando {{ rangeStart }} - {{ rangeEnd }} de {{ totalItems }} docentes
+        </span>
 
         <div class="pagination">
-          <button disabled>
+          <button
+            type="button"
+            [disabled]="currentPage === 1 || isLoading"
+            (click)="previousPage()"
+          >
             <i class="bi bi-chevron-left"></i>
           </button>
 
-          <strong>1</strong>
+          <strong>{{ currentPage }}</strong>
 
-          <button>
+          <button
+            type="button"
+            [disabled]="currentPage >= totalPages || isLoading"
+            (click)="nextPage()"
+          >
             <i class="bi bi-chevron-right"></i>
           </button>
         </div>
@@ -108,9 +141,6 @@
 
   </main>
 
-  <button class="floating-btn">
-    <i class="bi bi-plus-lg"></i>
-  </button>
 
   <app-bottom-navbar-admin></app-bottom-navbar-admin>
 

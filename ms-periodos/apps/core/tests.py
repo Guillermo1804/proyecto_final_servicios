@@ -3,14 +3,19 @@ import sys
 import grpc
 from django.test import TestCase
 from rest_framework.test import APIClient
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-# Añadir proto_generated al path para evitar ModuleNotFoundError en archivos gRPC generados
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(BASE_DIR, "proto_generated"))
-
-from proto_generated import auth_pb2
+from utils.jwt_local import AuthenticatedUser
 from apps.core.models import Periodo
+
+
+def _admin_user():
+    return AuthenticatedUser(
+        user_id=1,
+        email="test@buap.mx",
+        rol="admin",
+        nombre="Test",
+    )
 
 
 class PeriodoCRUDTests(TestCase):
@@ -19,18 +24,9 @@ class PeriodoCRUDTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
-        self.patcher = patch("utils.auth.get_auth_stub")
-        self.mock_get_auth_stub = self.patcher.start()
-        
-        self.mock_stub = MagicMock()
-        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
-            valid=True,
-            user_id=1,
-            email="test@buap.mx",
-            rol="admin",
-            nombre="Test"
-        )
-        self.mock_get_auth_stub.return_value = self.mock_stub
+        self.patcher = patch("utils.auth.validate_access_token")
+        self.mock_validate = self.patcher.start()
+        self.mock_validate.return_value = _admin_user()
 
     def tearDown(self):
         self.patcher.stop()
@@ -199,12 +195,11 @@ class PeriodoCRUDTests(TestCase):
     # ── Test 6: request con rol incorrecto retorna 403 ─────────────────
     def test_request_rol_incorrecto_retorna_403(self):
         """Un usuario con rol no autorizado (ej. alumno) debe recibir 403 en ruta de admin."""
-        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
-            valid=True,
+        self.mock_validate.return_value = AuthenticatedUser(
             user_id=2,
             email="alumno@buap.mx",
             rol="alumno",
-            nombre="Alumno Test"
+            nombre="Alumno Test",
         )
         payload = {
             "nombre": "Primavera 2026",
@@ -224,18 +219,9 @@ class MateriaCRUDTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.client.credentials(HTTP_AUTHORIZATION="Bearer valid_token")
-        self.patcher = patch("utils.auth.get_auth_stub")
-        self.mock_get_auth_stub = self.patcher.start()
-        
-        self.mock_stub = MagicMock()
-        self.mock_stub.ValidateToken.return_value = auth_pb2.ValidateTokenResponse(
-            valid=True,
-            user_id=1,
-            email="test@buap.mx",
-            rol="admin",
-            nombre="Test"
-        )
-        self.mock_get_auth_stub.return_value = self.mock_stub
+        self.patcher = patch("utils.auth.validate_access_token")
+        self.mock_validate = self.patcher.start()
+        self.mock_validate.return_value = _admin_user()
 
         self.periodo = Periodo.objects.create(
             nombre="Periodo Prueba",
@@ -344,7 +330,7 @@ class PeriodosGRPCTests(TestCase):
 
     def test_grpc_get_periodo_activo(self):
         """GetPeriodoActivo debe retornar los datos del periodo con activo=True."""
-        request = periodos_pb2.Empty()
+        request = periodos_pb2.GetPeriodoActivoRequest()
         context = MagicMock()
         response = self.servicer.GetPeriodoActivo(request, context)
         

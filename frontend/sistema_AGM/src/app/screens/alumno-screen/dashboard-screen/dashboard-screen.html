@@ -8,13 +8,23 @@
 
     <section class="hero-card">
 
-      <p>Bienvenido de nuevo.</p>
+      <p>Bienvenido de nuevo, {{ rolLabel }}</p>
 
-      <h2>Roberto García</h2>
+      <h2>{{ perfilLoading ? 'Cargando…' : alumno.nombre }}</h2>
 
-      <span>
-        Tienes 3 clases programadas para hoy y un examen parcial la próxima semana.
-        ¡Sigue con el excelente desempeño!
+      <div class="hero-meta">
+        <span>Matrícula: <strong>{{ alumno.matricula }}</strong></span>
+        <span *ngIf="emailUsuario">Correo: <strong>{{ emailUsuario }}</strong></span>
+        <span *ngIf="alumno.tipoFormacion && alumno.tipoFormacion !== '—'">Carrera: <strong>{{ alumno.tipoFormacion }}</strong></span>
+      </div>
+
+      <span *ngIf="materiasLoading">Cargando materias inscritas…</span>
+      <span *ngIf="!materiasLoading && materiasError">{{ materiasError }}</span>
+      <span *ngIf="!materiasLoading && !materiasError && materiasActuales.length">
+        Tienes {{ materiasActuales.length }} materia(s) inscrita(s) en el periodo activo.
+      </span>
+      <span *ngIf="!materiasLoading && !materiasError && !materiasActuales.length">
+        No tienes inscripciones activas. El docente debe importarte en su materia (MS-3).
       </span>
 
       <div class="hero-bg"></div>
@@ -25,14 +35,49 @@
 
     <section class="average-card">
 
-      <p>PROMEDIO GENERAL</p>
+      <p>MATERIAS INSCRITAS</p>
 
-      <h3>9.4</h3>
+      <h3>{{ materiasLoading ? '…' : materiasActuales.length }}</h3>
 
-      <span>
-        <i class="bi bi-graph-up-arrow"></i>
-        Superior al ciclo anterior
-      </span>
+      <span>Datos desde MS-3 (alumnos/me/materias)</span>
+
+    </section>
+
+    <!-- MATERIAS ACTUALES (TABLA) -->
+
+    <section class="section-title">
+
+      <div>
+        <h2>Materias Actuales</h2>
+        <p>Plan de materias inscritas en el periodo activo</p>
+      </div>
+
+    </section>
+
+    <section class="table-card subjects-table">
+
+      <div class="table-head">
+        <span>NRC</span>
+        <span>MATERIA</span>
+        <span>DOCENTE</span>
+        <span>SECCIÓN</span>
+      </div>
+
+      <div
+        class="table-row"
+        *ngFor="let m of materiasActuales"
+      >
+
+        <span>{{ m.nrc }}</span>
+        <span>{{ m.nombre }}</span>
+        <span>{{ m.docente }}</span>
+        <span>{{ m.seccion }}</span>
+
+      </div>
+
+      <p class="table-empty" *ngIf="!materiasLoading && !materiasActuales.length">
+        Sin materias para mostrar.
+      </p>
 
     </section>
 
@@ -42,13 +87,8 @@
 
       <div>
         <h2>Materias de Hoy</h2>
-        <p>Viernes, 24 de Mayo</p>
+        <p>{{ fechaHoyLabel }}</p>
       </div>
-
-      <a href="#">
-        Ver horario completo
-        <i class="bi bi-arrow-right"></i>
-      </a>
 
     </section>
 
@@ -113,53 +153,16 @@
 
       </div>
 
-    </section>
-
-    <!-- AVISOS -->
-
-    <section class="section-heading">
-      <h2>Avisos Campus</h2>
-    </section>
-
-    <section class="alerts-card">
-
-      <article class="alert-item">
-
-        <div class="alert-icon">
-          <i class="bi bi-wifi"></i>
-        </div>
-
-        <div>
-          <strong>Mantenimiento Red</strong>
-
-          <p>
-            Mañana de 02:00 a 05:00 AM.
-          </p>
-        </div>
-
-      </article>
-
-      <article class="alert-item">
-
-        <div class="alert-icon">
-          <i class="bi bi-journal-text"></i>
-        </div>
-
-        <div>
-          <strong>Libros Nuevos</strong>
-
-          <p>
-            Sección de Ingeniería actualizada.
-          </p>
-        </div>
-
-      </article>
-
-      <button>
-        Ver todos los avisos
-      </button>
+      <p class="table-empty" *ngIf="!materiasLoading && !evaluaciones.length">
+        Sin actividades con fecha futura en tus materias (MS-4 /actividades).
+      </p>
 
     </section>
+
+    <p class="table-empty" *ngIf="!materiasLoading && !materiasError && !materiasHoy.length && materiasActuales.length">
+      No tienes clases programadas para hoy segun el horario de tus materias.
+    </p>
+
 
   </main>
 

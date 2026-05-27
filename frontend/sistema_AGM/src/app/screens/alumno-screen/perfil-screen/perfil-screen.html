@@ -21,15 +21,11 @@
 
       </div>
 
-      <h1>Alejandro García Martínez</h1>
-
-      <p>Ingeniería en Sistemas</p>
+      <h1>{{ nombre || 'Alumno' }}</h1>
 
       <div class="hero-tags">
 
-        <span>Matrícula: 20210452</span>
-
-        <span>6to Semestre</span>
+        <span>Matrícula: {{ matricula || '—' }}</span>
 
       </div>
 
@@ -43,12 +39,12 @@
 
       <article class="info-item">
 
-        <i class="bi bi-code-square"></i>
 
-        <div>
+
+        <!-- <div>
           <span>Carrera</span>
           <strong>Ingeniería en Sistemas Computacionales</strong>
-        </div>
+        </div> -->
 
       </article>
 
@@ -58,7 +54,7 @@
 
         <div>
           <span>Ciclo Escolar</span>
-          <strong>Enero - Junio 2024</strong>
+          <strong>Enero - Junio Primavera 2026</strong>
         </div>
 
       </article>
@@ -80,50 +76,104 @@
 
     <section class="settings-card">
 
-      <h2>Configuración</h2>
+      <h2>GENERAR QR PARA PASE DE LISTA</h2>
 
-      <article class="setting-item">
+      <label class="qr-materia-label" *ngIf="materiasInscritas.length">
+        Materia (el docente debe tener sesión activa)
+        <select
+          class="qr-materia-select"
+          [ngModel]="materiaQrId"
+          (ngModelChange)="onMateriaQrChange($event)"
+          [disabled]="qrActivo"
+        >
+          <option [ngValue]="null">— Selecciona —</option>
+          <option *ngFor="let item of materiasInscritas" [ngValue]="item.materia_id">
+            {{ item.nombre_materia }} ({{ item.nrc }})
+          </option>
+        </select>
+      </label>
 
-        <div class="setting-left">
-          <i class="bi bi-lock"></i>
-          <span>Cambio de contraseña</span>
+      <p class="qr-hint" *ngIf="!materiasInscritas.length">
+        No tienes materias activas inscritas. El QR requiere una inscripci&oacute;n vigente.
+      </p>
+
+      <div class="asistencia-resumen" *ngIf="materiaQrId">
+        <h3>Mi asistencia en esta materia</h3>
+        <p *ngIf="asistenciaCargando">Cargando resumen...</p>
+        <p class="qr-error" *ngIf="asistenciaError">{{ asistenciaError }}</p>
+        <div class="asistencia-stats-grid" *ngIf="!asistenciaCargando && asistenciaStats">
+          <article>
+            <strong>{{ asistenciaStats.porcentaje_asistencia | number:'1.0-0' }}%</strong>
+            <span>Asistencia</span>
+          </article>
+          <article>
+            <strong>{{ asistenciaStats.presentes }}</strong>
+            <span>Presentes</span>
+          </article>
+          <article>
+            <strong>{{ asistenciaStats.retardos }}</strong>
+            <span>Retardos</span>
+          </article>
+          <article>
+            <strong>{{ asistenciaStats.total_registros }}</strong>
+            <span>Pases registrados</span>
+          </article>
         </div>
+        <p class="qr-hint" *ngIf="!asistenciaCargando && asistenciaStats && asistenciaStats.total_registros === 0">
+          A&uacute;n no hay registros de pase de lista en esta materia.
+        </p>
+      </div>
 
-        <i class="bi bi-chevron-right"></i>
-
-      </article>
-
-      <article class="setting-item">
-
-        <div class="setting-left">
-          <i class="bi bi-gear"></i>
-          <span>Ajustes de cuenta</span>
-        </div>
-
-        <i class="bi bi-chevron-right"></i>
-
-      </article>
-
-      <article class="setting-item">
-
-        <div class="setting-left">
-          <i class="bi bi-bell"></i>
-          <span>Notificaciones</span>
-        </div>
-
-        <i class="bi bi-chevron-right"></i>
-
-      </article>
-
-      <hr>
-
-      <button class="logout-btn">
-
-        <i class="bi bi-box-arrow-right"></i>
-
-        Cerrar Sesión
-
+      <button
+        type="button"
+        class="activate-qr-btn"
+        *ngIf="!qrActivo"
+        (click)="activarQr()"
+        [disabled]="!materiaQrId || !materiasInscritas.length"
+      >
+        Activar QR
       </button>
+
+      <div class="qr-card" *ngIf="qrActivo">
+
+        <div class="qr-meta">
+          <span class="qr-label">Matrícula</span>
+          <strong>{{ matricula }}</strong>
+
+          <span class="qr-label">Materia</span>
+          <strong>{{ materiaQrSeleccionada?.nombre_materia || '—' }}</strong>
+
+          <span class="qr-label">Sesi&oacute;n</span>
+          <strong>{{ qrSnapshot?.sesionId ? ('SES-' + qrSnapshot?.sesionId) : 'Esperando docente...' }}</strong>
+
+          <span class="qr-label">Renovación</span>
+          <strong>Cada {{ qrRefreshSeconds }} segundos</strong>
+        </div>
+
+        <div class="qr-visual">
+
+          <div class="qr-frame" *ngIf="!qrLoading && qrSnapshot; else qrLoadingTpl">
+            <img [src]="qrSnapshot.qrDataUrl" alt="Código QR personal de asistencia">
+          </div>
+
+          <ng-template #qrLoadingTpl>
+            <div class="qr-loading">
+              <i class="bi bi-qr-code"></i>
+              <span>Generando QR...</span>
+            </div>
+          </ng-template>
+
+          <p class="qr-timer">Se renueva en {{ qrCountdown }}s</p>
+          <small class="qr-note">
+            El QR se renueva cada pocos segundos. El docente debe iniciar el pase de lista antes de escanear.
+          </small>
+
+          <p class="qr-error" *ngIf="qrError">{{ qrError }}</p>
+
+        </div>
+
+      </div>
+
 
     </section>
 

@@ -17,12 +17,26 @@ done
 echo "MySQL listo!"
 
 # Aplicar migraciones
+echo "Claves JWT RSA (RS256)..."
+python manage.py ensure_jwt_keys
+
 echo "Aplicando migraciones..."
 python manage.py migrate --noinput
 
 # Crear usuario administrador inicial
 echo "Inicializando administrador..."
 python manage.py create_admin
+
+# Modos worker (Fase 2+) — docker-compose define AGM_RUN_MODE
+if [ "${AGM_RUN_MODE}" = "outbox-worker" ]; then
+  echo "Iniciando relay outbox → RabbitMQ..."
+  exec python manage.py run_event_outbox
+fi
+
+if [ "${AGM_RUN_MODE}" = "event-consumer" ]; then
+  echo "Iniciando consumidor de eventos MS-1..."
+  exec python manage.py run_event_consumer
+fi
 
 # Arrancar servidor gRPC en background (si existe el management command)
 if python manage.py help grpc_server 2>/dev/null; then

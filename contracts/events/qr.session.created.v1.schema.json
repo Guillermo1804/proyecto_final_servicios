@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "qr.session.created.v1 payload",
+  "type": "object",
+  "required": ["sesion_id", "materia_id", "docente_id"],
+  "properties": {
+    "sesion_id": { "type": "integer" },
+    "materia_id": { "type": "integer" },
+    "docente_id": { "type": "integer" },
+    "fecha_fin_teorica": { "type": "string", "format": "date-time" }
+  }
+}

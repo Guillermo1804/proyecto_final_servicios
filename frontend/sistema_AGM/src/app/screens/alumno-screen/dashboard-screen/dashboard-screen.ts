@@ -1,61 +1,101 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
-import { BottomNavbarAlumno } from '../../../partials/bottom-navbar-alumno/bottom-navbar-alumno';
-
-@Component({
-  selector: 'app-dashboard-screen',
-  standalone: true,
-  imports: [
-    CommonModule,
-    TopbarAdmin,
-    BottomNavbarAlumno
-  ],
-  templateUrl: './dashboard-screen.html',
-  styleUrl: './dashboard-screen.scss'
-})
-export class DashboardScreen {
-
-  materiasHoy = [
-    {
-      icono: 'bi-compass',
-      color: 'azul',
-      materia: 'Cálculo Estructural',
-      aula: 'Aula B-204, Edificio Norte',
-      horario: '08:00-10:00'
-    },
-    {
-      icono: 'bi-tree',
-      color: 'naranja',
-      materia: 'Resistencia de Materiales',
-      aula: 'Laboratorio de Ingeniería',
-      horario: '10:30-12:30'
-    },
-    {
-      icono: 'bi-vector-pen',
-      color: 'morado',
-      materia: 'Ética Profesional',
-      aula: 'Aula Magna 1',
-      horario: '14:00-16:00'
-    }
-  ];
-
-  evaluaciones = [
-    {
-      materia: 'Arquitectura de Software',
-      fecha: '30 de Mayo',
-      valor: '25%'
-    },
-    {
-      materia: 'Sistemas Operativos',
-      fecha: '05 de Junio',
-      valor: '30%'
-    },
-    {
-      materia: 'Base de Datos II',
-      fecha: '12 de Junio',
-      valor: '20%'
-    }
-  ];
-
-}
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { finalize } from 'rxjs';
+import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
+import { BottomNavbarAlumno } from '../../../partials/bottom-navbar-alumno/bottom-navbar-alumno';
+import { AuthService } from '../../../services/auth.service';
+import { AlumnosService } from '../../../services/alumno-services/alumnos.service';
+import { PerfilService } from '../../../services/alumno-services/perfil.service';
+import {
+  AlumnoResumen,
+  DashboardService,
+  EvaluacionItem,
+  MateriaActual,
+  MateriaHoy,
+} from '../../../services/alumno-services/dashboard.service';
+
+@Component({
+  selector: 'app-dashboard-screen',
+  standalone: true,
+  imports: [CommonModule, TopbarAdmin, BottomNavbarAlumno],
+  templateUrl: './dashboard-screen.html',
+  styleUrl: './dashboard-screen.scss',
+})
+export class DashboardScreen implements OnInit {
+  alumno: AlumnoResumen = { nombre: '', matricula: '', tipoFormacion: '—', periodoActivo: '—' };
+  rolLabel = '';
+  emailUsuario = '';
+  materiasActuales: MateriaActual[] = [];
+  materiasHoy: MateriaHoy[] = [];
+  evaluaciones: EvaluacionItem[] = [];
+  perfilLoading = true;
+  materiasLoading = true;
+  materiasError = '';
+  fechaHoyLabel = '';
+
+  constructor(
+    private auth: AuthService,
+    private perfilService: PerfilService,
+    private dashboardService: DashboardService,
+  ) {}
+
+  ngOnInit(): void {
+    this.rolLabel = this.auth.getRoleLabel();
+    this.fechaHoyLabel = this.dashboardService.getFechaHoyLabel();
+
+    this.auth.refreshCurrentUser().subscribe({
+      next: (user) => {
+        this.emailUsuario = user?.email || '';
+      },
+    });
+
+    this.perfilService.getProfile(true).subscribe({
+      next: (perfil) => {
+        this.alumno = {
+          nombre: perfil.nombre,
+          matricula: perfil.matricula,
+          tipoFormacion: perfil.carrera || '—',
+          periodoActivo: '—',
+        };
+        if (perfil.email) {
+          this.emailUsuario = perfil.email;
+        }
+        this.perfilLoading = false;
+      },
+      error: () => {
+        const user = this.auth.getStoredUser();
+        this.alumno = {
+          nombre: user?.nombre || 'Usuario',
+          matricula: user?.email || '—',
+          tipoFormacion: '—',
+          periodoActivo: '—',
+        };
+        this.perfilLoading = false;
+      },
+    });
+
+    this.dashboardService
+      .loadDashboard()
+      .pipe(finalize(() => (this.materiasLoading = false)))
+      .subscribe({
+        next: (data) => {
+          this.materiasActuales = data.materiasActuales;
+          this.materiasHoy = data.materiasHoy;
+          this.evaluaciones = data.evaluaciones;
+          this.alumno = {
+            ...this.alumno,
+            periodoActivo: data.periodoActivo,
+          };
+          this.materiasError = '';
+        },
+        error: (err) => {
+          this.materiasError = AlumnosService.extractError(
+            err,
+            'No se pudieron cargar tus materias inscritas (MS-3).',
+          );
+          this.materiasActuales = [];
+          this.materiasHoy = [];
+        },
+      });
+  }
+}

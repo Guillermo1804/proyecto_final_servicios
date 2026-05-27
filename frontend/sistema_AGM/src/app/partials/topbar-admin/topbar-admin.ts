@@ -1,22 +1,30 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
-import { FacadeService } from '../../services/facade.service';
+import { AsyncPipe, NgIf } from '@angular/common';
+import { Component, inject } from '@angular/core';
+import { map } from 'rxjs/operators';
+
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-topbar-admin',
-  imports: [],
+  imports: [AsyncPipe, NgIf],
   templateUrl: './topbar-admin.html',
   styleUrl: './topbar-admin.scss',
 })
 export class TopbarAdmin {
-  constructor(
-    private facadeService: FacadeService,
-    private router: Router
-  ) {}
+  private readonly auth = inject(AuthService);
+
+  readonly session$ = this.auth.currentUser$.pipe(
+    map((user) => {
+      const role = this.auth.getUserRole();
+      return {
+        nombre: user?.nombre?.trim() || this.auth.getGreetingName(),
+        email: user?.email?.trim() || '',
+        rol: this.auth.getRoleLabel(role),
+      };
+    }),
+  );
 
   logout(): void {
-    this.facadeService.clearSession();
-    this.router.navigate(['/login'], { replaceUrl: true });
+    this.auth.logout();
   }
-
 }

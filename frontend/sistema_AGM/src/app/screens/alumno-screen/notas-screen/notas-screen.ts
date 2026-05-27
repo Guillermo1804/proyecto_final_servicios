@@ -1,80 +1,128 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { finalize } from 'rxjs';
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
 import { BottomNavbarAlumno } from '../../../partials/bottom-navbar-alumno/bottom-navbar-alumno';
+import { DropConfirmModal } from '../../../modals/drop-confirm-modal/drop-confirm-modal';
+import { AlumnosService } from '../../../services/alumno-services/alumnos.service';
+import { HistorialPeriodo, MateriaAlumno, NotasService } from '../../../services/alumno-services/notas.service';
 
 @Component({
   selector: 'app-notas-screen',
   standalone: true,
-  imports: [
-    CommonModule,
-    TopbarAdmin,
-    BottomNavbarAlumno
-  ],
+  imports: [CommonModule, TopbarAdmin, BottomNavbarAlumno, DropConfirmModal],
   templateUrl: './notas-screen.html',
-  styleUrl: './notas-screen.scss'
+  styleUrls: ['./notas-screen.scss'],
 })
-export class NotasScreen {
+export class NotasScreen implements OnInit {
+  promedioGeneral = 0;
+  progresoPeriodo = 0;
 
-  materias = [
-    {
-      icono: 'bi-calculator',
-      color: 'azul',
-      nombre: 'Cálculo Multivariado',
-      nrc: '14502',
-      profesor: 'Ricardo Méndez',
-      promedio: 9.2,
-      promedioColor: 'verde',
-      expandido: true,
-      parciales: [
-        { titulo: 'Parcial 1', valor: '9.5' },
-        { titulo: 'Parcial 2', valor: '8.9' },
-        { titulo: 'Final', valor: '--', activo: true }
-      ]
-    },
-    {
-      icono: 'bi-beaker',
-      color: 'naranja',
-      nombre: 'Física Cuántica I',
-      nrc: '18221',
-      profesor: 'Elena Soto',
-      promedio: 5.8,
-      promedioColor: 'rojo',
-      expandido: false
-    },
-    {
-      icono: 'bi-code-slash',
-      color: 'morado',
-      nombre: 'Estructura de Datos',
-      nrc: '12003',
-      profesor: 'Iván Torres',
-      promedio: 8.4,
-      promedioColor: 'verde',
-      expandido: false
-    },
-    {
-      icono: 'bi-book',
-      color: 'gris',
-      nombre: 'Ética Profesional',
-      nrc: '11109',
-      profesor: 'Carlos Ruiz',
-      promedio: 10.0,
-      promedioColor: 'verde',
-      expandido: false
+  materias: MateriaAlumno[] = [];
+  historial: HistorialPeriodo[] = [];
+  isLoading = true;
+  loadError = '';
+
+  modalVisible = false;
+  dropConfirmationText = '';
+  dropError: string | null = null;
+  dropSuccess: string | null = null;
+  materiaSeleccionada: MateriaAlumno | null = null;
+  bajaEnProgreso = false;
+
+  constructor(
+    private readonly notasService: NotasService,
+    private readonly alumnosService: AlumnosService,
+  ) {}
+
+  ngOnInit(): void {
+    this.cargarNotas();
+  }
+
+  private cargarNotas(): void {
+    this.isLoading = true;
+    this.loadError = '';
+
+    this.notasService
+      .loadNotas()
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (result) => {
+          this.materias = result.materias;
+          this.historial = result.historial;
+          this.progresoPeriodo = result.progresoPeriodo;
+          this.calcularPromedioGeneral();
+        },
+        error: () => {
+          this.loadError = 'No se pudieron cargar tus calificaciones.';
+          this.materias = [];
+          this.historial = [];
+          this.progresoPeriodo = 0;
+        },
+      });
+  }
+
+  abrirModalBaja(m: MateriaAlumno): void {
+    if (m.dropped) {
+      return;
     }
-  ];
+    this.materiaSeleccionada = m;
+    this.dropConfirmationText = '';
+    this.dropError = null;
+    this.dropSuccess = null;
+    this.modalVisible = true;
+  }
 
-  historial = [
-    {
-      periodo: 'Otoño 2023',
-      materias: 6,
-      aprobadas: 6
-    },
-    {
-      periodo: 'Primavera 2023',
-      materias: 7,
-      aprobadas: 6
+  cerrarModal(): void {
+    this.modalVisible = false;
+    this.materiaSeleccionada = null;
+  }
+
+  confirmarBaja(): void {
+    const m = this.materiaSeleccionada;
+    if (!m) {
+      return;
     }
-  ];
 
+    if (this.dropConfirmationText !== 'DARSE DE BAJA') {
+      this.dropError = 'Debes escribir "DARSE DE BAJA" para confirmar.';
+      return;
+    }
+
+    if (m.dropped) {
+      this.dropError = 'Ya se realizo la baja de esta materia.';
+      return;
+    }
+
+    if (!m.alumnoId || !m.materiaId) {
+      this.dropError = 'No se encontro la inscripcion para dar de baja.';
+      return;
+    }
+
+    this.bajaEnProgreso = true;
+    this.dropError = null;
+
+    this.alumnosService.bajaMateria(m.alumnoId, m.materiaId).subscribe({
+      next: () => {
+        this.notasService.marcarBaja(m);
+        this.dropSuccess =
+          'Baja realizada correctamente. Se notifico al docente por correo (MS-6).';
+        this.calcularPromedioGeneral();
+        this.bajaEnProgreso = false;
+        setTimeout(() => this.cerrarModal(), 1200);
+      },
+      error: (err) => {
+        this.dropError = AlumnosService.extractError(err, 'No se pudo completar la baja.');
+        this.bajaEnProgreso = false;
+      },
+    });
+  }
+
+  toggleExpand(m: MateriaAlumno): void {
+    m.expandido = !m.expandido;
+  }
+
+  calcularPromedioGeneral(): void {
+    this.promedioGeneral = this.notasService.calcularPromedioGeneral(this.materias);
+  }
 }

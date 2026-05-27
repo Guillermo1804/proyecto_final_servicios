@@ -1,12 +1,11 @@
 from functools import wraps
 
+from django.conf import settings
 from django.utils.crypto import constant_time_compare
 from decouple import config
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import BasePermission
-
-from grpc_clients.auth_client import validate_token
 
 _UNAUTHORIZED_MSG = (
     'No autorizado: requiere X-Internal-Api-Key válida o JWT de administrador'
@@ -26,15 +25,28 @@ def _authorize_admin_jwt(request):
     if not token:
         return None
     try:
+        if getattr(settings, 'USE_EVENT_BUS', True):
+            from utils.jwt_local import validate_access_token
+
+            user = validate_access_token(token)
+            if user.rol != 'admin':
+                return None
+            request.user_id = user.user_id
+            request.user_rol = user.rol
+            request.user_email = user.email
+            return True
+        from grpc_clients.auth_client import validate_token
+
         response = validate_token(token)
+        result = response.result
+        if not result.valid or result.user.rol != 'admin':
+            return None
+        request.user_id = result.user.user_id
+        request.user_rol = result.user.rol
+        request.user_email = result.user.email
+        return True
     except Exception:
         return None
-    if not response.valid or response.rol != 'admin':
-        return None
-    request.user_id = response.user_id
-    request.user_rol = response.rol
-    request.user_email = response.email
-    return True
 
 
 def check_internal_or_admin(request) -> bool:
@@ -44,7 +56,7 @@ def check_internal_or_admin(request) -> bool:
 
 
 class InternalOrAdminAuthentication(BaseAuthentication):
-    """API key interna o JWT admin; sin credenciales → 401 en permisos."""
+    """API key interna o JWT admin; sin credenciales -> 401 en permisos."""
 
     www_authenticate_realm = 'internal'
 
