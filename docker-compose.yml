@@ -236,6 +236,11 @@ services:
       USE_EVENT_BUS: "true"
       JWT_ALGORITHM: RS256
       EVENT_CONTRACTS_DIR: /contracts/events
+      DB_HOST: db-auth
+      DB_PORT: '3306'
+      DB_NAME: agm_auth_db
+      DB_USER: root
+      DB_PASSWORD: root_password
     depends_on:
       db-auth:
         condition: service_healthy
@@ -294,6 +299,11 @@ services:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
       JWT_JWKS_URL: http://ms-auth:8001/.well-known/jwks.json
+      DB_HOST: db-periodos
+      DB_PORT: '3306'
+      DB_NAME: agm_periodos_db
+      DB_USER: root
+      DB_PASSWORD: root_password
     ports:
       - "8002:8002"
       - "50052:50052"
@@ -360,6 +370,11 @@ services:
       MS_AUTH_HTTP_URL: http://ms-auth:8001
       MS_AUTH_HTTP_TIMEOUT: "10"
       INTERNAL_API_KEY: cambiar-en-produccion
+      DB_HOST: db-alumnos
+      DB_PORT: '3306'
+      DB_NAME: agm_alumnos_db
+      DB_USER: root
+      DB_PASSWORD: root_password
     ports:
       - "8003:8003"
       - "50053:50053"
@@ -423,6 +438,11 @@ services:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
       JWT_JWKS_URL: http://ms-auth:8001/.well-known/jwks.json
+      DB_HOST: db-calificaciones
+      DB_PORT: '3306'
+      DB_NAME: agm_calificaciones_db
+      DB_USER: root
+      DB_PASSWORD: root_password
     ports:
       - "8004:8004"
     depends_on:
@@ -485,6 +505,11 @@ services:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
       JWT_JWKS_URL: http://ms-auth:8001/.well-known/jwks.json
+      DB_HOST: db-asistencias
+      DB_PORT: '3306'
+      DB_NAME: agm_asistencias_db
+      DB_USER: root
+      DB_PASSWORD: root_password
     ports:
       - "8005:8005"
     depends_on:
@@ -548,6 +573,11 @@ services:
     environment:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
+      DB_HOST: db-notificaciones
+      DB_PORT: '3306'
+      DB_NAME: agm_notificaciones_db
+      DB_USER: root
+      DB_PASSWORD: root_password
     ports:
       - "8006:8006"
     depends_on:
@@ -595,6 +625,11 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-agm_bus_dev_change_me}
       RABBITMQ_VHOST: ${RABBITMQ_VHOST:-agm}
       EVENT_EXCHANGE: agm.domain
+      DB_HOST: db-reportes
+      DB_PORT: '3306'
+      DB_NAME: agm_reportes_db
+      DB_USER: root
+      DB_PASSWORD: root_password
     ports:
       - "8007:8007"
       - "50057:50057"
