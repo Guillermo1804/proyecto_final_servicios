@@ -1,51 +1,9 @@
-# =============================================
-# AGM — docker-compose.yml (perfil completo / produccion local)
-#
-# Stack coordinado (docker compose up --build):
-#   Infra: rabbitmq, redis, 7x MySQL (db-auth ... db-reportes)
-#   API: ms-auth, ms-periodos, ms-alumnos, ms-calificaciones, ms-asistencias,
-#        ms-notificaciones, ms-reportes, nginx (gateway :8080)
-#   Outbox workers (5): ms-auth-outbox-worker, ms-periodos-outbox-worker,
-#        ms-alumnos-outbox-worker, ms-calificaciones-worker-outbox,
-#        ms-asistencias-worker-outbox
-#   Consumer workers (7): ms-auth-event-consumer, ms-periodos-worker-consumer,
-#        ms-alumnos-worker-consumer, ms-calificaciones-worker-consumer,
-#        ms-asistencias-worker-consumer, ms-notificaciones-worker-consumer,
-#        ms-reportes-worker-consumer
-#
-# Comando (Compose V2 plugin, recomendado):
-#   docker compose up --build
-# Alternativa (binario legacy):
-#   docker-compose up --build
-#
-# Variables en cada ms-*/.env (desde .env.example):
-#   DB_HOST = nombre del servicio de BD (ej. db-auth), puerto 3306 *interno*
-#   MS_*_GRPC_HOST = nombre del contenedor del otro MS (ej. ms-auth)
-#
-# MySQL expuesto al host (depuración; dentro de Docker usar DB_HOST y puerto 3306):
-#   db-auth → localhost:13307 … db-reportes → localhost:13313
-#
-# API Gateway Nginx en servicio `nginx` (puerto host 8080 → 80).
-#
-# Requisito: cada ./ms-* incluye Dockerfile + entrypoint.sh; copiar ms-*/.env desde .env.example.
-# Healthcheck REST: GET /health/ en cada MS (Epic 1).
-#
-# Bus de eventos (Fase 1): servicio rabbitmq en agm-network.
-# Smoke test desde host: docker compose up -d rabbitmq && python packages/agm_events/smoke_test.py
-# =============================================
-
 x-ms-healthcheck: &ms-healthcheck
   interval: 15s
   timeout: 5s
   retries: 5
   start_period: 60s
-
 services:
-
-  # ============================================
-  # BASES DE DATOS
-  # ============================================
-
   db-auth:
     image: mysql:8.0
     container_name: agm-db-auth
@@ -64,7 +22,6 @@ services:
       retries: 5
     networks:
       - agm-network
-
   db-periodos:
     image: mysql:8.0
     container_name: agm-db-periodos
@@ -83,7 +40,6 @@ services:
       retries: 5
     networks:
       - agm-network
-
   db-alumnos:
     image: mysql:8.0
     container_name: agm-db-alumnos
@@ -102,7 +58,6 @@ services:
       retries: 5
     networks:
       - agm-network
-
   db-calificaciones:
     image: mysql:8.0
     container_name: agm-db-calificaciones
@@ -121,7 +76,6 @@ services:
       retries: 5
     networks:
       - agm-network
-
   db-asistencias:
     image: mysql:8.0
     container_name: agm-db-asistencias
@@ -140,7 +94,6 @@ services:
       retries: 5
     networks:
       - agm-network
-
   db-notificaciones:
     image: mysql:8.0
     container_name: agm-db-notificaciones
@@ -159,7 +112,6 @@ services:
       retries: 5
     networks:
       - agm-network
-
   db-reportes:
     image: mysql:8.0
     container_name: agm-db-reportes
@@ -178,8 +130,6 @@ services:
       retries: 5
     networks:
       - agm-network
-
-  # Bus de eventos — RabbitMQ (Fase 1+)
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: agm-rabbitmq
@@ -202,8 +152,6 @@ services:
       start_period: 30s
     networks:
       - agm-network
-
-  # Redis para MS-5 (sesiones QR en vivo)
   redis:
     image: redis:7-alpine
     container_name: agm-redis
@@ -218,11 +166,6 @@ services:
       retries: 5
     networks:
       - agm-network
-
-  # ============================================
-  # MICROSERVICIOS
-  # ============================================
-
   ms-auth:
     build:
       context: .
@@ -251,8 +194,6 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health/')\""]
     networks:
       - agm-network
-
-  # Fase 2 — relay outbox MS-1 → RabbitMQ
   ms-auth-outbox-worker:
     build:
       context: .
@@ -271,8 +212,6 @@ services:
         condition: service_healthy
     networks:
       - agm-network
-
-  # Fase 2 — consumidor MS-1 (user.create_requested.v1)
   ms-auth-event-consumer:
     build:
       context: .
@@ -319,7 +258,6 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/health/')\""]
     networks:
       - agm-network
-
   ms-periodos-outbox-worker:
     build:
       context: .
@@ -338,7 +276,6 @@ services:
         condition: service_healthy
     networks:
       - agm-network
-
   ms-periodos-worker-consumer:
     build:
       context: .
@@ -357,7 +294,6 @@ services:
         condition: service_healthy
     networks:
       - agm-network
-
   ms-alumnos:
     build:
       context: .
@@ -390,7 +326,6 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8003/health/')\""]
     networks:
       - agm-network
-
   ms-alumnos-outbox-worker:
     build:
       context: .
@@ -409,7 +344,6 @@ services:
         condition: service_healthy
     networks:
       - agm-network
-
   ms-alumnos-worker-consumer:
     build:
       context: .
@@ -428,7 +362,6 @@ services:
         condition: service_healthy
     networks:
       - agm-network
-
   ms-calificaciones:
     build:
       context: .
@@ -457,7 +390,6 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8004/health/')\""]
     networks:
       - agm-network
-
   ms-calificaciones-worker-outbox:
     build:
       context: .
@@ -476,7 +408,6 @@ services:
         condition: service_healthy
     networks:
       - agm-network
-
   ms-calificaciones-worker-consumer:
     build:
       context: .
@@ -495,7 +426,6 @@ services:
         condition: service_healthy
     networks:
       - agm-network
-
   ms-asistencias:
     build:
       context: .
@@ -526,7 +456,6 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8005/health/')\""]
     networks:
       - agm-network
-
   ms-asistencias-worker-outbox:
     build:
       context: .
@@ -545,7 +474,6 @@ services:
         condition: service_healthy
     networks:
       - agm-network
-
   ms-asistencias-worker-consumer:
     build:
       context: .
@@ -564,7 +492,6 @@ services:
         condition: service_healthy
     networks:
       - agm-network
-
   ms-notificaciones:
     build:
       context: .
@@ -590,7 +517,6 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8006/health/')\""]
     networks:
       - agm-network
-
   ms-notificaciones-worker-consumer:
     build:
       context: .
@@ -609,7 +535,6 @@ services:
         condition: service_healthy
     networks:
       - agm-network
-
   ms-reportes:
     build:
       context: .
@@ -645,8 +570,6 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8007/health/')\""]
     networks:
       - agm-network
-
-  # Fase 8 — consumidor analítico MS-7 (proyecciones locales db-reportes)
   ms-reportes-worker-consumer:
     build:
       context: .
@@ -672,7 +595,6 @@ services:
         condition: service_healthy
     networks:
       - agm-network
-
   nginx:
     image: nginx:1.25-alpine
     container_name: agm-nginx-gateway
@@ -703,11 +625,6 @@ services:
       start_period: 5s
     networks:
       - agm-network
-
-# ============================================
-# VOLUMES & NETWORKS
-# ============================================
-
 volumes:
   db_auth_data:
   db_periodos_data:
@@ -718,7 +635,6 @@ volumes:
   db_reportes_data:
   redis_data:
   rabbitmq_data:
-
 networks:
   agm-network:
     driver: bridge
