@@ -1,3 +1,5 @@
 #!/bin/bash
-python -m grpc_tools.protoc -I../proto --python_out=./proto_generated --grpc_python_out=./proto_generated ../proto/notificaciones.proto
-echo 'Stubs generados en proto_generated/'
+set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+bash "${REPO_ROOT}/scripts/generate_ms_proto.sh" ms-notificaciones

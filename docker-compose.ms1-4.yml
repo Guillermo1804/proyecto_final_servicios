@@ -1,0 +1,16 @@
+# Perfil desarrollo: flujo MS-1…MS-4 + Nginx (sin exigir MS-5/6/7 para el gateway).
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.ms1-4.yml up -d <servicios>
+# Ver scripts/start-ms1-4-stack.ps1
+
+services:
+  nginx:
+    depends_on:
+      ms-auth:
+        condition: service_healthy
+      ms-periodos:
+        condition: service_healthy
+      ms-alumnos:
+        condition: service_healthy
+      ms-calificaciones:
+        condition: service_healthy

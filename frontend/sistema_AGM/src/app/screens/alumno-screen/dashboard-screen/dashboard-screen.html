@@ -1,0 +1,171 @@
+<div class="alumno-dashboard">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <!-- HERO -->
+
+    <section class="hero-card">
+
+      <p>Bienvenido de nuevo, {{ rolLabel }}</p>
+
+      <h2>{{ perfilLoading ? 'Cargando…' : alumno.nombre }}</h2>
+
+      <div class="hero-meta">
+        <span>Matrícula: <strong>{{ alumno.matricula }}</strong></span>
+        <span *ngIf="emailUsuario">Correo: <strong>{{ emailUsuario }}</strong></span>
+        <span *ngIf="alumno.tipoFormacion && alumno.tipoFormacion !== '—'">Carrera: <strong>{{ alumno.tipoFormacion }}</strong></span>
+      </div>
+
+      <span *ngIf="materiasLoading">Cargando materias inscritas…</span>
+      <span *ngIf="!materiasLoading && materiasError">{{ materiasError }}</span>
+      <span *ngIf="!materiasLoading && !materiasError && materiasActuales.length">
+        Tienes {{ materiasActuales.length }} materia(s) inscrita(s) en el periodo activo.
+      </span>
+      <span *ngIf="!materiasLoading && !materiasError && !materiasActuales.length">
+        No tienes inscripciones activas. El docente debe importarte en su materia (MS-3).
+      </span>
+
+      <div class="hero-bg"></div>
+
+    </section>
+
+    <!-- PROMEDIO -->
+
+    <section class="average-card">
+
+      <p>MATERIAS INSCRITAS</p>
+
+      <h3>{{ materiasLoading ? '…' : materiasActuales.length }}</h3>
+
+      <span>Datos desde MS-3 (alumnos/me/materias)</span>
+
+    </section>
+
+    <!-- MATERIAS ACTUALES (TABLA) -->
+
+    <section class="section-title">
+
+      <div>
+        <h2>Materias Actuales</h2>
+        <p>Plan de materias inscritas en el periodo activo</p>
+      </div>
+
+    </section>
+
+    <section class="table-card subjects-table">
+
+      <div class="table-head">
+        <span>NRC</span>
+        <span>MATERIA</span>
+        <span>DOCENTE</span>
+        <span>SECCIÓN</span>
+      </div>
+
+      <div
+        class="table-row"
+        *ngFor="let m of materiasActuales"
+      >
+
+        <span>{{ m.nrc }}</span>
+        <span>{{ m.nombre }}</span>
+        <span>{{ m.docente }}</span>
+        <span>{{ m.seccion }}</span>
+
+      </div>
+
+      <p class="table-empty" *ngIf="!materiasLoading && !materiasActuales.length">
+        Sin materias para mostrar.
+      </p>
+
+    </section>
+
+    <!-- MATERIAS -->
+
+    <section class="section-title">
+
+      <div>
+        <h2>Materias de Hoy</h2>
+        <p>{{ fechaHoyLabel }}</p>
+      </div>
+
+    </section>
+
+    <section class="subjects-list">
+
+      <article
+        class="subject-card"
+        *ngFor="let materia of materiasHoy"
+      >
+
+        <div class="card-top">
+
+          <div
+            class="icon-box"
+            [ngClass]="materia.color"
+          >
+            <i class="bi" [ngClass]="materia.icono"></i>
+          </div>
+
+          <span class="time-badge">
+            {{ materia.horario }}
+          </span>
+
+        </div>
+
+        <h3>{{ materia.materia }}</h3>
+
+        <p>
+          <i class="bi bi-geo-alt"></i>
+          {{ materia.aula }}
+        </p>
+
+      </article>
+
+    </section>
+
+    <!-- EVALUACIONES -->
+
+    <section class="section-heading">
+      <h2>Próximas Evaluaciones</h2>
+    </section>
+
+    <section class="table-card">
+
+      <div class="table-head">
+        <span>MATERIA</span>
+        <span>FECHA</span>
+        <span>VALOR</span>
+      </div>
+
+      <div
+        class="table-row"
+        *ngFor="let item of evaluaciones"
+      >
+
+        <span>{{ item.materia }}</span>
+        <span>{{ item.fecha }}</span>
+
+        <div class="badge">
+          {{ item.valor }}
+        </div>
+
+      </div>
+
+      <p class="table-empty" *ngIf="!materiasLoading && !evaluaciones.length">
+        Sin actividades con fecha futura en tus materias (MS-4 /actividades).
+      </p>
+
+    </section>
+
+    <p class="table-empty" *ngIf="!materiasLoading && !materiasError && !materiasHoy.length && materiasActuales.length">
+      No tienes clases programadas para hoy segun el horario de tus materias.
+    </p>
+
+
+  </main>
+
+  <app-bottom-navbar-alumno></app-bottom-navbar-alumno>
+
+</div>

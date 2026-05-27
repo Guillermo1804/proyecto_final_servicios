@@ -1,0 +1,641 @@
+<div class="detalle-materia-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+
+      <span class="group-badge">
+        <i class="bi bi-people"></i>
+        NRC: {{ codigoMateria }}
+        <span *ngIf="resumenMateria.grupo"> · {{ resumenMateria.grupo }}</span>
+      </span>
+
+      <h2>{{ resumenMateria.materia || 'Cargando materia…' }}</h2>
+
+      <p>
+        {{ resumenMateria.horario || 'Sin horario registrado' }}
+      </p>
+
+<div class="actions-row">
+
+  <button class="attendance-btn"
+  routerLink="/docente/asistencias">
+    <i class="bi bi-calendar-check"></i>
+    Pasar Lista
+  </button>
+
+  <button
+    type="button"
+    class="import-btn"
+    (click)="irImportarAlumnos()"
+  >
+    <i class="bi bi-upload"></i>
+    Importar Alumnos
+  </button>
+
+  <button
+  class="performance-btn"
+  [routerLink]="['/docente/materias', codigoMateria, 'rendimiento']"
+>
+  <i class="bi bi-graph-up-arrow"></i>
+  Rendimiento
+</button>
+</div>
+
+  <div class="actions-row">
+
+    <button class="close-btn" (click)="cerrarMateria()">
+      <i class="bi bi-lock"></i>
+      Cerrar Materia
+    </button>
+
+    <button class="print-btn" (click)="imprimirListaNotas()">
+      <i class="bi bi-printer"></i>
+      Imprimir lista de notas
+    </button>
+
+  </div>
+    </section>
+
+    <section class="stats-grid">
+
+      <article class="stat-card">
+        <div class="stat-head">
+          <i class="bi bi-people"></i>
+        </div>
+        <p>Alumnos inscritos</p>
+        <h3>{{ alumnosLoading ? '…' : totalAlumnosInscritos }}</h3>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-head">
+          <i class="bi bi-graph-up-arrow"></i>
+        </div>
+        <p>Promedio grupal (MS-4)</p>
+        <h3>{{ promedioGrupal }}</h3>
+      </article>
+
+    </section>
+
+<section class="tabs">
+
+  <button [class.active]="tabActiva === 'alumnos'" (click)="cambiarTab('alumnos')">
+    Lista de Alumnos
+  </button>
+
+  <button [class.active]="tabActiva === 'evaluacion'" (click)="cambiarTab('evaluacion')">
+    Plan de Evaluación
+  </button>
+
+  <button [class.active]="tabActiva === 'actividades'" (click)="cambiarTab('actividades')">
+    Actividades
+  </button>
+
+</section>
+
+<section class="students-card" *ngIf="tabActiva === 'alumnos'">
+
+  <div class="students-header">
+
+    <div class="students-title-block">
+      <h3>Estudiantes Matriculados</h3>
+      <p class="students-count" *ngIf="!alumnosLoading && alumnos.length">
+        {{ alumnos.length }} inscrito(s) · {{ alumnosPorPagina }} por página
+      </p>
+    </div>
+
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+
+      <input
+        type="text"
+        placeholder="Buscar alumno..."
+        [(ngModel)]="busquedaAlumno"
+        (ngModelChange)="buscarAlumnos($event)"
+      >
+    </div>
+
+  </div>
+
+  <p class="students-hint" *ngIf="alumnosLoading">Cargando alumnos inscritos…</p>
+  <p class="students-hint students-hint--error" *ngIf="!alumnosLoading && alumnosError">{{ alumnosError }}</p>
+  <p class="students-hint" *ngIf="!alumnosLoading && !alumnosError && !alumnos.length">
+    No hay alumnos inscritos. Usa <strong>Importar alumnos</strong> con el PDF de lista de clase.
+  </p>
+
+  <p class="students-scroll-hint" *ngIf="!alumnosLoading && alumnos.length">
+    Desliza horizontalmente si no ves la columna <strong>Correo institucional</strong>.
+  </p>
+
+  <div class="students-table" *ngIf="!alumnosLoading && alumnos.length">
+
+    <div class="table-head students-grid">
+      <span>Nombre del Alumno</span>
+      <span>Matrícula</span>
+      <span>Correo institucional</span>
+      <span>MS-1</span>
+      <span>Promedio</span>
+    </div>
+
+    <div
+      class="table-row students-grid"
+      *ngFor="let alumno of alumnosPaginados"
+    >
+
+      <div class="student-name">
+
+        <div class="initials">
+          {{ alumno.iniciales }}
+        </div>
+
+        <span>
+          {{ alumno.nombre }}
+        </span>
+
+      </div>
+
+      <span class="cell-matricula">
+        {{ alumno.matricula }}
+      </span>
+
+      <span class="cell-email" [title]="alumno.email">
+        <a *ngIf="alumno.email && alumno.email !== '—'" [href]="'mailto:' + alumno.email" (click)="$event.stopPropagation()">
+          {{ alumno.email }}
+        </a>
+        <span *ngIf="!alumno.email || alumno.email === '—'">—</span>
+        <small class="email-tag placeholder" *ngIf="esEmailPlaceholder(alumno.email)">placeholder</small>
+        <small class="email-tag pending" *ngIf="alumno.usuarioId == null && alumno.email && alumno.email !== '—'">sin usuario MS-1</small>
+      </span>
+
+      <div class="cell-ms1">
+        <button
+          *ngIf="puedeDesactivarAlumno(alumno); else alumnoMs1Pendiente"
+          type="button"
+          class="status-toggle activo clickable"
+          title="Desactivar acceso en MS-1 (dejo de asistir)"
+          [disabled]="procesandoMs1AlumnoId === alumno.alumnoId"
+          (click)="desactivarAlumno(alumno)"
+        >
+          {{ procesandoMs1AlumnoId === alumno.alumnoId ? 'Procesando…' : 'Desactivar' }}
+        </button>
+        <ng-template #alumnoMs1Pendiente>
+          <button
+            *ngIf="puedeActivarAlumno(alumno); else alumnoMs1SinCorreo"
+            type="button"
+            class="status-toggle inactivo clickable"
+            title="MS-1 no disponible al importar; reintentar activacion"
+            [disabled]="procesandoMs1AlumnoId === alumno.alumnoId"
+            (click)="activarAlumno(alumno)"
+          >
+            {{ procesandoMs1AlumnoId === alumno.alumnoId ? 'Procesando…' : 'Activar' }}
+          </button>
+          <ng-template #alumnoMs1SinCorreo>
+            <span class="status-toggle muted" title="Sin correo para vincular MS-1">—</span>
+          </ng-template>
+        </ng-template>
+      </div>
+
+      <span>
+        {{ alumno.promedioRedondeado != null && alumno.promedioRedondeado > 0 ? alumno.promedioRedondeado : '—' }}
+      </span>
+
+    </div>
+
+  </div>
+
+  <p class="students-range" *ngIf="!alumnosLoading && alumnosFiltrados.length">
+    Mostrando {{ alumnosDesdeRegistro }}–{{ alumnosHastaRegistro }} de {{ alumnosFiltrados.length }}
+  </p>
+
+  <div class="students-pagination" *ngIf="totalPaginasAlumnos > 1">
+
+    <button
+      type="button"
+      class="pagination-btn"
+      (click)="paginaAnteriorAlumnos()"
+      [disabled]="paginaActualAlumnos === 1"
+    >
+      Anterior
+    </button>
+
+    <div class="pagination-pages">
+      <button
+        type="button"
+        class="page-number"
+        *ngFor="let page of paginasAlumnos"
+        [class.active]="paginaActualAlumnos === page"
+        (click)="irAPaginaAlumnos(page)"
+      >
+        {{ page }}
+      </button>
+    </div>
+
+    <button
+      type="button"
+      class="pagination-btn"
+      (click)="paginaSiguienteAlumnos()"
+      [disabled]="paginaActualAlumnos === totalPaginasAlumnos"
+    >
+      Siguiente
+    </button>
+
+  </div>
+
+</section>
+
+<section class="evaluation-card" *ngIf="tabActiva === 'evaluacion'">
+
+  <div class="evaluation-top">
+
+    <div>
+      <h3>Plan de Evaluación</h3>
+      <p>Configure los rubros y ponderaciones.</p>
+    </div>
+
+    <div class="total-box">
+      {{ totalEvaluacion }}%
+    </div>
+
+  </div>
+
+  <article
+    class="evaluation-item"
+    *ngFor="let rubro of rubrosEvaluacion; let i = index"
+  >
+
+    <div class="evaluation-left">
+
+      <input
+        type="text"
+        [(ngModel)]="rubro.nombre"
+        placeholder="Nombre del rubro"
+        class="title-input"
+      >
+
+      <textarea
+        [(ngModel)]="rubro.descripcion"
+        placeholder="Descripción"
+      ></textarea>
+
+    </div>
+
+    <div class="evaluation-right">
+
+      <div class="percent-box">
+
+        <input
+          type="number"
+          [(ngModel)]="rubro.porcentaje"
+          min="0"
+          [attr.max]="getMaximoRubro(i)"
+          step="1"
+          inputmode="numeric"
+          (input)="limitarPorcentajeRubro(i)"
+        >
+
+        <span>%</span>
+
+      </div>
+
+      <button
+        class="delete-btn"
+        (click)="eliminarRubro(i)"
+      >
+        <i class="bi bi-trash"></i>
+      </button>
+
+    </div>
+
+  </article>
+
+  <div class="evaluation-actions">
+
+    <button
+      class="add-btn"
+      (click)="agregarRubro()"
+    >
+      <i class="bi bi-plus-circle"></i>
+      Agregar Rubro
+    </button>
+
+    <button class="save-btn" (click)="guardarPlanEvaluacion()" [disabled]="!planEvaluacionValido">
+      <i class="bi bi-check-circle"></i>
+      Guardar Plan
+    </button>
+
+    <button class="import-excel-btn" (click)="abrirImportacionExcel()">
+      <i class="bi bi-file-earmark-excel"></i>
+      Importar desde Excel
+    </button>
+
+    <input
+      #excelInput
+      type="file"
+      accept=".xlsx,.xls,.csv"
+      hidden
+      (change)="onExcelSeleccionado($event)"
+    >
+
+  </div>
+
+  <div
+    class="warning-box"
+    *ngIf="totalEvaluacion !== 100"
+  >
+
+    <i class="bi bi-exclamation-triangle"></i>
+
+    El total de ponderación debe ser exactamente 100%.
+
+  </div>
+
+</section>
+
+<section class="activities-section" *ngIf="tabActiva === 'actividades'">
+
+  <div class="activities-top">
+    <div>
+      <h3>Actividades</h3>
+      <p>Cree actividades asociadas a los rubros del plan de evaluación.</p>
+    </div>
+
+    <button class="add-btn" (click)="abrirFormularioActividad()">
+      <i class="bi bi-plus-circle"></i>
+      Crear Actividad
+    </button>
+  </div>
+
+  <section class="grades-summary-card">
+    <div class="grades-summary-top">
+      <div>
+        <h3>Concentrado de calificaciones</h3>
+        <p>Promedio ponderado real y promedio redondeado por alumno.</p>
+      </div>
+
+      <div class="summary-metrics">
+        <div class="summary-metric">
+          <span>Promedio ponderado real</span>
+          <strong>{{ promedioPonderadoReal | number:'1.1-2' }}</strong>
+        </div>
+
+        <div class="summary-metric accent">
+          <span>Promedio redondeado</span>
+          <strong>{{ promedioPonderadoRedondeado }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="grades-summary-table">
+      <div class="grades-summary-head">
+        <span>Alumno</span>
+        <span>Matrícula</span>
+        <span>Promedio real</span>
+        <span>Promedio redondeado</span>
+      </div>
+
+      <div class="grades-summary-row" *ngFor="let alumno of concentradoCalificacionesPaginado">
+        <div class="student-name">
+          <div class="initials">{{ alumno.iniciales }}</div>
+          <span>{{ alumno.nombre }}</span>
+        </div>
+
+        <span>{{ alumno.matricula }}</span>
+        <span>{{ alumno.promedioReal | number:'1.1-2' }}</span>
+        <span>{{ alumno.promedioRedondeado }}</span>
+      </div>
+    </div>
+
+    <div class="students-pagination" *ngIf="totalPaginasConcentrado > 1">
+      <button
+        type="button"
+        class="pagination-btn"
+        (click)="paginaAnteriorConcentrado()"
+        [disabled]="paginaActualConcentrado === 1"
+      >
+        Anterior
+      </button>
+
+      <div class="pagination-pages">
+        <button
+          type="button"
+          class="page-number"
+          *ngFor="let page of paginasConcentrado"
+          [class.active]="paginaActualConcentrado === page"
+          (click)="irAPaginaConcentrado(page)"
+        >
+          {{ page }}
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="pagination-btn"
+        (click)="paginaSiguienteConcentrado()"
+        [disabled]="paginaActualConcentrado === totalPaginasConcentrado"
+      >
+        Siguiente
+      </button>
+    </div>
+  </section>
+
+  <input
+    #actividadExcelInput
+    type="file"
+    accept=".xlsx,.xls,.csv"
+    hidden
+    (change)="onCalificacionesExcelSeleccionado($event)"
+  >
+
+  <section class="activity-form" *ngIf="mostrarFormularioActividad">
+
+    <input
+      type="text"
+      placeholder="Nombre de la actividad"
+      [(ngModel)]="nuevaActividad.titulo"
+    >
+
+    <textarea
+      placeholder="Descripción de la actividad"
+      [(ngModel)]="nuevaActividad.descripcion"
+    ></textarea>
+
+    <select [(ngModel)]="nuevaActividad.rubro">
+      <option value="">Seleccione rubro</option>
+
+      <option
+        *ngFor="let rubro of rubrosEvaluacion"
+        [value]="rubro.nombre"
+      >
+        {{ rubro.nombre }}
+      </option>
+    </select>
+
+    <input
+      type="date"
+      [(ngModel)]="nuevaActividad.fechaEntrega"
+    >
+
+    <div class="form-actions">
+      <button class="cancel-btn" (click)="cancelarActividad()">
+        Cancelar
+      </button>
+
+      <button class="save-btn" (click)="crearActividad()">
+        Guardar Actividad
+      </button>
+    </div>
+
+  </section>
+
+  <section class="activities-grid">
+
+    <article
+      class="activity-box"
+      *ngFor="let actividad of actividadesPaginadas"
+    >
+
+      <div class="activity-header">
+        <span class="activity-status" [ngClass]="actividad.tipo">
+          {{ actividad.estado }}
+        </span>
+
+        <span class="activity-rubro">
+          {{ actividad.rubro }}
+        </span>
+      </div>
+
+      <h3>{{ actividad.titulo }}</h3>
+
+      <p>{{ actividad.descripcion }}</p>
+
+      <div class="activity-meta">
+        <span>
+          <i class="bi bi-calendar"></i>
+          {{ actividad.fechaEntrega }}
+        </span>
+
+        <span>
+          <i class="bi bi-percent"></i>
+          {{ actividad.valorInterno }}% del rubro
+        </span>
+
+        <!-- <span>
+          <i class="bi bi-inbox"></i>
+          {{ actividad.entregas }} entregas
+        </span> -->
+      </div>
+
+      <div class="auto-weight-info">
+        <i class="bi bi-calculator"></i>
+        <span>
+          Peso calculado automáticamente: {{ actividad.valorInterno | number:'1.0-2' }}% del rubro
+        </span>
+      </div>
+
+      <div class="activity-actions-row">
+        <button class="import-grade-btn" type="button" (click)="abrirImportacionCalificaciones(actividades.indexOf(actividad))">
+          <i class="bi bi-file-earmark-excel"></i>
+          Importar calificaciones Excel
+        </button>
+      </div>
+
+      <div class="activity-grades">
+        <div class="activity-grades-head">
+          <span>Alumno</span>
+          <span>Calificación</span>
+        </div>
+
+        <div class="activity-grade-row" *ngFor="let alumno of getAlumnosActividadPaginados(actividades.indexOf(actividad))">
+          <span>{{ alumno.nombre }}</span>
+
+          <input
+            type="number"
+            min="0"
+            max="10"
+            step="0.01"
+            [disabled]="listaImpresa"
+            [ngModel]="obtenerCalificacionActividad(actividad, alumno.matricula)"
+            (ngModelChange)="setCalificacionActividad(actividad, alumno.matricula, $event)"
+            (blur)="guardarCalificacionEnServidor(actividad, alumno, obtenerCalificacionActividad(actividad, alumno.matricula))"
+            (input)="onCalificacionInput($event, actividad, alumno.matricula)"
+          >
+        </div>
+
+        <div class="students-pagination activity-students-pagination" *ngIf="getTotalPaginasAlumnosActividad() > 1">
+          <button
+            type="button"
+            class="pagination-btn"
+            (click)="paginaAnteriorAlumnosActividad(actividades.indexOf(actividad))"
+            [disabled]="getPaginaActualAlumnosActividad(actividades.indexOf(actividad)) === 1"
+          >
+            Anterior
+          </button>
+
+          <div class="pagination-pages">
+            <button
+              type="button"
+              class="page-number"
+              *ngFor="let page of getPaginasAlumnosActividad()"
+              [class.active]="getPaginaActualAlumnosActividad(actividades.indexOf(actividad)) === page"
+              (click)="irAPaginaAlumnosActividad(actividades.indexOf(actividad), page)"
+            >
+              {{ page }}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="pagination-btn"
+            (click)="paginaSiguienteAlumnosActividad(actividades.indexOf(actividad))"
+            [disabled]="getPaginaActualAlumnosActividad(actividades.indexOf(actividad)) === getTotalPaginasAlumnosActividad()"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
+
+    </article>
+
+  </section>
+
+  <div class="students-pagination" *ngIf="totalPaginasActividades > 1">
+    <button
+      type="button"
+      class="pagination-btn"
+      (click)="paginaAnteriorActividades()"
+      [disabled]="paginaActualActividades === 1"
+    >
+      Anterior
+    </button>
+
+    <div class="pagination-pages">
+      <button
+        type="button"
+        class="page-number"
+        *ngFor="let page of paginasActividades"
+        [class.active]="paginaActualActividades === page"
+        (click)="irAPaginaActividades(page)"
+      >
+        {{ page }}
+      </button>
+    </div>
+
+    <button
+      type="button"
+      class="pagination-btn"
+      (click)="paginaSiguienteActividades()"
+      [disabled]="paginaActualActividades === totalPaginasActividades"
+    >
+      Siguiente
+    </button>
+  </div>
+
+</section>
+
+  </main>
+
+  <app-bottom-navbar-docente></app-bottom-navbar-docente>
+
+</div>

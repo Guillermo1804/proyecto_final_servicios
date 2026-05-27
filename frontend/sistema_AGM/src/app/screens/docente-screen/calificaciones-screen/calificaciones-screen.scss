@@ -1,0 +1,330 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f7f7fb;
+  color: #080b13;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.calificaciones-page {
+  min-height: 100vh;
+  padding-bottom: 76px;
+  background: #f7f7fb;
+}
+
+.content {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.4rem;
+}
+
+/* HERO */
+
+.hero {
+  margin-bottom: 1.4rem;
+
+  h2 {
+    margin: 0 0 .5rem;
+    font-size: 2.1rem;
+    line-height: 1.1;
+    font-weight: 900;
+  }
+
+  p {
+    margin: 0;
+    color: #374151;
+    font-size: 1.05rem;
+    line-height: 1.45;
+  }
+}
+
+/* BOTONES */
+
+.actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .7rem;
+  margin-bottom: 1.7rem;
+
+  button {
+    height: 62px;
+
+    border-radius: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .7rem;
+
+    font-size: 1rem;
+    font-weight: 800;
+
+    cursor: pointer;
+
+    i {
+      font-size: 1.25rem;
+    }
+  }
+}
+
+.outline-btn {
+  background: white;
+  color: #0057c2;
+  border: 1.5px solid #0057c2;
+}
+
+.primary-btn {
+  background: #075fc6;
+  color: white;
+  border: 1.5px solid #075fc6;
+}
+
+/* STATS */
+
+.stats-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.7rem;
+}
+
+.stat-card {
+  min-height: 96px;
+
+  background: white;
+
+  border: 1px solid #c9ced8;
+  border-radius: 12px;
+
+  padding: 1.2rem;
+
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+
+  box-shadow: 0 8px 18px rgba(15, 23, 42, .04);
+
+  p {
+    margin: 0 0 .2rem;
+    color: #6b7280;
+    font-size: .95rem;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.9rem;
+    font-weight: 900;
+  }
+}
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    font-size: 1.5rem;
+  }
+
+  &.azul {
+    background: #dbeafe;
+    color: #0057c2;
+  }
+
+  &.verde {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  &.rojo {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+}
+
+/* TABLA */
+
+.grades-card {
+  background: white;
+
+  border: 1px solid #c9ced8;
+  border-radius: 12px;
+
+  overflow: hidden;
+}
+
+.grades-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-head,
+.table-row {
+  min-width: 720px;
+
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+.table-head {
+  background: #ececef;
+
+  padding: 1rem 1.4rem;
+
+  font-size: .95rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.table-row {
+  padding: 1.2rem 1.4rem;
+
+  border-top: 1px solid #e5e7eb;
+}
+
+.student-cell {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+
+  img {
+    width: 48px;
+    height: 48px;
+
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  strong {
+    display: block;
+    font-size: 1rem;
+    line-height: 1.3;
+    font-weight: 800;
+  }
+
+  p {
+    margin: .2rem 0 0;
+    color: #6b7280;
+    font-size: .9rem;
+  }
+}
+
+input {
+  width: 76px;
+  height: 40px;
+
+  border: 1.5px solid #c9ced8;
+  border-radius: 5px;
+
+  background: white;
+  color: #0057c2;
+
+  text-align: center;
+
+  font-size: 1.05rem;
+  font-weight: 800;
+
+  outline: none;
+
+  &:focus {
+    border-color: #0057c2;
+  }
+
+  &.riesgo {
+    color: #dc2626;
+  }
+}
+
+/* PAGINACIÓN */
+
+.pagination-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  padding: 1.4rem 0;
+
+  p {
+    margin: 0;
+    color: #374151;
+    font-size: .95rem;
+    max-width: 150px;
+  }
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+
+  button {
+    width: 40px;
+    height: 40px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: transparent;
+    color: #111827;
+
+    font-size: 1rem;
+    cursor: pointer;
+
+    &.active {
+      background: #075fc6;
+      color: white;
+      font-weight: 800;
+    }
+
+    i {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+/* TABLET */
+
+@media (min-width: 768px) {
+
+  .content {
+    padding: 2rem;
+  }
+
+  .hero h2 {
+    font-size: 2.6rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+}
+
+/* DESKTOP */
+
+@media (min-width: 1024px) {
+
+  .content {
+    padding: 2.5rem;
+  }
+
+  .hero h2 {
+    font-size: 3rem;
+  }
+
+  .actions-row {
+    max-width: 520px;
+  }
+
+}

@@ -1,0 +1,443 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f7f7fb;
+  color: #080b13;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.rendimiento-page {
+  min-height: 100vh;
+  padding-bottom: 76px;
+  background: #f7f7fb;
+}
+
+.content {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* HERO */
+
+.hero {
+  margin-bottom: 1.2rem;
+
+  p {
+    margin: 0;
+    color: #1f2937;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+}
+
+/* ACTIONS */
+
+.actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .7rem;
+
+  margin-bottom: 1.8rem;
+
+  button {
+    height: 42px;
+
+    border: none;
+    border-radius: 7px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+
+    font-size: 1rem;
+    cursor: pointer;
+  }
+}
+
+.export-btn {
+  background: #e8e6e9;
+  color: #111827;
+}
+
+.pdf-btn {
+  background: #050711;
+  color: white;
+}
+
+/* AVERAGE */
+
+.average-card,
+.chart-card,
+.risk-card {
+  background: white;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+
+  margin-bottom: 1.5rem;
+
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .04);
+}
+
+.average-card {
+  padding: 1.5rem;
+
+  > p {
+    margin: 0;
+    color: #6b7280;
+    font-size: .9rem;
+    letter-spacing: .08em;
+  }
+}
+
+.average-row {
+  display: flex;
+  align-items: end;
+  gap: 1rem;
+
+  margin-top: .3rem;
+
+  h2 {
+    margin: 0;
+    font-size: 3.2rem;
+    line-height: 1;
+    font-weight: 900;
+  }
+
+  span {
+    margin-bottom: .5rem;
+
+    color: #0057c2;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+}
+
+.divider {
+  height: 1px;
+  background: #c9ced8;
+  margin: 1.4rem 0;
+}
+
+.comparison {
+  margin-bottom: .7rem !important;
+  color: #1f2937 !important;
+  letter-spacing: 0 !important;
+}
+
+.progress-bar {
+  height: 8px;
+
+  background: #e5e7eb;
+  border-radius: 999px;
+
+  overflow: hidden;
+
+  div {
+    width: 84%;
+    height: 100%;
+
+    background: #075fc6;
+    border-radius: inherit;
+  }
+}
+
+/* CHART */
+
+.chart-card {
+  padding: 1.5rem;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h3 {
+    margin: 0;
+
+    max-width: 210px;
+
+    font-size: 1.05rem;
+    line-height: 1.35;
+    font-weight: 500;
+  }
+
+  span {
+    color: #6b7280;
+
+    i {
+      color: #075fc6;
+      font-size: .75rem;
+    }
+  }
+}
+
+.chart-space {
+  height: 210px;
+
+  display: flex;
+  align-items: end;
+
+  padding: 1rem 0 .5rem;
+}
+
+.chart-bars {
+  width: 100%;
+  height: 100%;
+
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: .7rem;
+  align-items: end;
+
+  span {
+    display: block;
+
+    background: #075fc6;
+    border-radius: 6px 6px 0 0;
+
+    opacity: .85;
+  }
+}
+
+.chart-labels {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+
+  font-size: .72rem;
+  color: #4b5563;
+  text-align: center;
+}
+
+/* RISK */
+
+.risk-card {
+  overflow: hidden;
+}
+
+.risk-header {
+  padding: 1.4rem;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h3 {
+    margin: 0;
+
+    font-size: 1.05rem;
+    line-height: 1.35;
+    font-weight: 500;
+  }
+}
+
+.alert-badge {
+  width: 78px;
+  height: 78px;
+
+  border-radius: 50%;
+
+  background: #c91515;
+  color: white;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  font-size: .95rem;
+  font-weight: 800;
+
+  strong {
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+}
+
+.risk-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.pagination-section {
+  padding: 0 1.4rem 1.4rem;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  p {
+    margin: 0;
+    color: #6b7280;
+    font-size: .85rem;
+  }
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex-wrap: wrap;
+
+  button {
+    min-width: 38px;
+    height: 38px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    color: #111827;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: .2s ease;
+
+    &:hover:not(:disabled) {
+      border-color: #075fc6;
+      color: #075fc6;
+    }
+
+    &.active {
+      background: #075fc6;
+      border-color: #075fc6;
+      color: white;
+      font-weight: 800;
+    }
+
+    &:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.table-head,
+.table-row {
+  min-width: 620px;
+
+  display: grid;
+  grid-template-columns: 1.5fr .8fr .8fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+.table-head {
+  background: #ececef;
+
+  padding: 1rem 1.4rem;
+
+  font-size: .9rem;
+  font-weight: 800;
+}
+
+.table-row {
+  padding: 1.1rem 1.4rem;
+
+  border-top: 1px solid #d1d5db;
+}
+
+.student-cell {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+
+  strong {
+    display: block;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+
+  p {
+    margin: .2rem 0 0;
+    color: #6b7280;
+    font-size: .8rem;
+  }
+}
+
+.initials {
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  background: #c8ccd6;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.danger {
+  color: #d00000;
+}
+
+/* SOURCE */
+
+.source-info {
+  padding: 1.2rem 0 2rem;
+
+  color: #6b7280;
+  font-size: .85rem;
+  font-style: italic;
+
+  p {
+    margin: 0 0 .2rem;
+  }
+}
+
+/* TABLET */
+
+@media (min-width: 768px) {
+  .content {
+    padding: 1.5rem;
+  }
+}
+
+/* DESKTOP */
+
+@media (min-width: 1024px) {
+  .content {
+    max-width: 1100px;
+    padding: 2rem;
+  }
+
+  .chart-space {
+    height: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .actions-row {
+    grid-template-columns: 1fr;
+  }
+
+  .risk-header,
+  .pagination-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pagination-section {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .pagination {
+    width: 100%;
+  }
+
+}

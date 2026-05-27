@@ -1,0 +1,147 @@
+<div class="docentes-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+      <h2>Gestión de Docentes</h2>
+
+      <p>
+        Administre la nómina académica y estados de los docentes con precisión institucional.
+      </p>
+    </section>
+
+    <label class="create-btn">
+      <i class="bi bi-person-plus"></i>
+      Importar Docentes (PDF)
+      <input type="file" accept=".pdf" hidden (change)="onImportarDocentes($event)" />
+    </label>
+
+    <section class="filters-section">
+
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+
+        <input
+          #searchInput
+          type="text"
+          placeholder="Buscar por nombre, apellido o correo..."
+          (input)="onSearch(searchInput.value)"
+        >
+      </div>
+
+    </section>
+
+    <section class="table-card">
+
+      <div class="table-head">
+        <span>Nombre Docente</span>
+        <span>Correo</span>
+        <span>Ubicación</span>
+        <span>Eliminar</span>
+        <span>Estado</span>
+      </div>
+
+      <div
+        class="table-row"
+        *ngFor="let docente of docentes; trackBy: trackByDocenteId"
+      >
+
+        <div class="table-cell teacher-info" data-label="Nombre docente">
+
+          <div>
+            <strong>{{ docente.nombre }}</strong>
+            <p>{{ docente.ubicacion }}</p>
+          </div>
+
+        </div>
+
+        <span class="table-cell table-value" data-label="Correo">
+          {{ docente.correo }}
+        </span>
+
+        <span class="table-cell table-value" data-label="Ubicación">
+          {{ docente.ubicacion }}
+        </span>
+
+        <div class="table-cell action-cell" data-label="Eliminar">
+          <button
+            type="button"
+            class="delete-btn"
+            aria-label="Eliminar docente"
+            (click)="eliminarDocente(docente)"
+          >
+            <i class="bi bi-trash3"></i>
+          </button>
+        </div>
+
+        <div class="table-cell action-cell" data-label="Estado">
+          <button
+            *ngIf="docente.estado === 'Inactivo'; else estadoActivo"
+            type="button"
+            class="status-toggle inactivo clickable"
+            title="Crear o vincular usuario en MS-1"
+            (click)="activarDocente(docente)"
+          >
+            Activar
+          </button>
+          <ng-template #estadoActivo>
+            <span class="status-toggle activo" title="Vinculado a MS-1">
+              Activo
+            </span>
+          </ng-template>
+        </div>
+
+      </div>
+
+      <div
+        class="empty-state"
+        *ngIf="!isLoading && docentes.length === 0"
+      >
+        No se encontraron docentes con los filtros actuales.
+      </div>
+
+      <div
+        class="loading-state"
+        *ngIf="isLoading"
+      >
+        Cargando docentes...
+      </div>
+
+      <div class="table-footer">
+
+        <span>
+          Mostrando {{ rangeStart }} - {{ rangeEnd }} de {{ totalItems }} docentes
+        </span>
+
+        <div class="pagination">
+          <button
+            type="button"
+            [disabled]="currentPage === 1 || isLoading"
+            (click)="previousPage()"
+          >
+            <i class="bi bi-chevron-left"></i>
+          </button>
+
+          <strong>{{ currentPage }}</strong>
+
+          <button
+            type="button"
+            [disabled]="currentPage >= totalPages || isLoading"
+            (click)="nextPage()"
+          >
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <app-bottom-navbar-admin></app-bottom-navbar-admin>
+
+</div>

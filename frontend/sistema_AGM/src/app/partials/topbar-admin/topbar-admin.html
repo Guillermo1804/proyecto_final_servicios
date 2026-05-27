@@ -1,0 +1,14 @@
+<header class="topbar card-glass">
+  <div class="brand-chip">
+    <img src="/logoAGM.png" alt="AGM Portal" class="avatar">
+    <div *ngIf="session$ | async as session">
+      <p>{{ session.nombre }}</p>
+      <span>{{ session.rol }} · {{ session.email }}</span>
+    </div>
+  </div>
+
+  <button type="button" class="logout-btn btn-premium" (click)="logout()" aria-label="Cerrar sesión">
+    <i class="bi bi-box-arrow-right"></i>
+    <span>Cerrar sesión</span>
+  </button>
+</header>

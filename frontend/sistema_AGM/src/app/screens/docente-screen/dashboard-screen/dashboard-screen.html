@@ -1,0 +1,99 @@
+<div class="docente-dashboard">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+      <h2>¡Buen día, {{ nombreUsuario }}!</h2>
+      <p>
+        {{ rolLabel }} — resumen académico para hoy, {{ fechaHoy }}.
+        <span *ngIf="periodoActivoNombre"> Periodo: <strong>{{ periodoActivoNombre }}</strong>.</span>
+      </p>
+    </section>
+
+    <p class="load-error" *ngIf="loadError">{{ loadError }}</p>
+    <p class="load-hint" *ngIf="isLoading">Cargando materias y alumnos inscritos…</p>
+    <p class="load-hint" *ngIf="!isLoading && emptyMessage">{{ emptyMessage }}</p>
+
+    <section class="stats-grid" *ngIf="!isLoading">
+
+      <article class="stat-card primary">
+        <span>Total materias asignadas</span>
+        <strong>{{ totalMateriasAsignadas }}</strong>
+        <small>Según periodo activo (MS-2)</small>
+      </article>
+
+      <article class="stat-card accent">
+        <span>Total alumnos inscritos</span>
+        <strong>{{ totalAlumnosInscritos }}</strong>
+        <small>Inscripciones activas (MS-3)</small>
+      </article>
+
+      <article class="stat-card soft">
+        <span>Última actualización</span>
+        <strong>{{ ultimaActualizacion || '—' }}</strong>
+        <small>Datos al abrir esta vista</small>
+      </article>
+
+    </section>
+
+    <section class="section-title" *ngIf="clasesHoy.length">
+      <h3>Tus materias</h3>
+      <a routerLink="/docente/materias">Ver todas</a>
+    </section>
+
+    <section class="classes-list" *ngIf="clasesHoy.length">
+
+      <a
+        class="class-card"
+        *ngFor="let clase of clasesHoy"
+        [routerLink]="['/docente/materias', clase.nrc]"
+      >
+        <div class="class-head">
+          <span>{{ clase.hora }}</span>
+          <i class="bi" [ngClass]="[clase.icono, clase.activo ? 'activo' : '']"></i>
+        </div>
+        <h4>{{ clase.materia }}</h4>
+        <p>{{ clase.grupo }}</p>
+        <p class="class-meta">{{ clase.alumnosInscritos }} alumno(s) inscritos</p>
+      </a>
+
+    </section>
+
+    <section class="summary-section" *ngIf="resumenMaterias.length">
+
+      <div class="section-title compact">
+        <h3>Resumen por materia</h3>
+      </div>
+
+      <div class="summary-card">
+        <div class="table-head summary-head">
+          <span>Materia</span>
+          <span>NRC</span>
+          <span>Inscritos</span>
+          <span>Estado</span>
+        </div>
+
+        <a
+          class="table-row summary-row"
+          *ngFor="let materia of resumenMaterias"
+          [routerLink]="['/docente/materias', materia.nrc]"
+        >
+          <span class="summary-materia">{{ materia.materia }}</span>
+          <span>{{ materia.nrc }}</span>
+          <span>{{ materia.alumnosInscritos }}</span>
+          <span>
+            <i class="bi bi-circle-fill status-active"></i>
+            {{ materia.estado }}
+          </span>
+        </a>
+      </div>
+
+    </section>
+
+  </main>
+
+  <app-bottom-navbar-docente></app-bottom-navbar-docente>
+
+</div>

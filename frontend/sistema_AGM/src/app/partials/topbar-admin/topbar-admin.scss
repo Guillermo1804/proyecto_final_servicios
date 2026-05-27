@@ -1,0 +1,88 @@
+.topbar {
+  height: 64px;
+  padding: 0 1rem 0 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: linear-gradient(135deg, rgba(6, 17, 43, 0.92), rgba(10, 42, 89, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 16px 40px rgba(7, 26, 61, 0.18);
+}
+
+.brand-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.brand-chip div {
+  min-width: 0;
+}
+
+.brand-chip p {
+  margin: 0;
+  color: var(--text-inverse);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.brand-chip span {
+  display: block;
+  margin-top: 0.15rem;
+  color: rgba(248, 251, 255, 0.7);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 42px;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.logout-btn i {
+  font-size: 1rem;
+}
+
+.logout-btn:hover {
+  transform: translateY(-1px);
+}
+
+.logout-btn:focus-visible {
+  outline: 2px solid rgba(244, 207, 119, 0.9);
+  outline-offset: 3px;
+}
+
+@media (min-width: 1024px) {
+  .topbar {
+    height: 72px;
+    padding-inline: 1.5rem;
+  }
+}

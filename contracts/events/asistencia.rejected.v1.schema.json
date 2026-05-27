@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "asistencia.rejected.v1 payload",
+  "type": "object",
+  "required": ["materia_id", "alumno_id", "motivo", "codigo"],
+  "properties": {
+    "sesion_id": { "type": ["integer", "null"] },
+    "materia_id": { "type": "integer" },
+    "alumno_id": { "type": "integer" },
+    "motivo": { "type": "string" },
+    "codigo": {
+      "type": "string",
+      "enum": [
+        "alumno_no_inscrito",
+        "materia_cerrada",
+        "periodo_inactivo",
+        "sesion_inactiva",
+        "qr_invalido",
+        "qr_replay",
+        "otro"
+      ]
+    }
+  }
+}

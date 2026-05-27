@@ -1,0 +1,80 @@
+<div class="rendimiento-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+      <p>
+        Alumnos en riesgo — NRC <strong>{{ codigoMateria }}</strong>
+        <br>
+        Promedio redondeado menor a 7.0 (MS-4 concentrado).
+      </p>
+    </section>
+
+    <p *ngIf="isLoading">Cargando datos de rendimiento…</p>
+    <p *ngIf="loadError" class="load-error">{{ loadError }}</p>
+
+    <section class="actions-row" *ngIf="!isLoading && estudiantesRiesgo.length">
+
+      <button class="export-btn" type="button" (click)="exportarCsv()">
+        <i class="bi bi-download"></i>
+        Exportar CSV
+      </button>
+
+      <button class="pdf-btn" type="button" (click)="exportarPdf()">
+        <i class="bi bi-file-earmark-pdf"></i>
+        Reporte HTML
+      </button>
+
+    </section>
+
+    <section class="risk-card" *ngIf="!isLoading">
+
+      <div class="risk-header">
+        <h3>Alumnos en riesgo académico</h3>
+        <div class="alert-badge">
+          <strong>{{ totalEstudiantesRiesgo }}</strong>
+          {{ totalEstudiantesRiesgo === 1 ? 'alumno' : 'alumnos' }}
+        </div>
+      </div>
+
+      <p *ngIf="!estudiantesRiesgo.length" class="empty-hint">
+        No hay alumnos bajo el umbral de riesgo, o aún no hay concentrado en MS-4.
+      </p>
+
+      <div class="risk-table" *ngIf="estudiantesRiesgo.length">
+
+        <div class="table-head">
+          <span>Estudiante</span>
+          <span>Promedio</span>
+          <span>Asistencia</span>
+        </div>
+
+        <div class="table-row" *ngFor="let estudiante of estudiantesRiesgoPaginados">
+          <div class="student-cell">
+            <div class="initials">{{ estudiante.iniciales }}</div>
+            <div>
+              <strong>{{ estudiante.nombre }}</strong>
+              <p>Matrícula: {{ estudiante.matricula }}</p>
+            </div>
+          </div>
+          <strong class="danger">{{ estudiante.promedio }}</strong>
+          <span>{{ estudiante.asistencia }}</span>
+        </div>
+
+      </div>
+
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button type="button" (click)="paginaAnterior()" [disabled]="currentPage <= 1">Anterior</button>
+        <span>{{ desdeRegistro }}–{{ hastaRegistro }} de {{ totalEstudiantesRiesgo }}</span>
+        <button type="button" (click)="paginaSiguiente()" [disabled]="currentPage >= totalPages">Siguiente</button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <app-bottom-navbar-docente></app-bottom-navbar-docente>
+
+</div>

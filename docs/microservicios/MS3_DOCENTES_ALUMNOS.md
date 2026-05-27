@@ -12,7 +12,7 @@
 | **Puerto REST** | 8003 |
 | **Puerto gRPC** | 50053 |
 | **BD** | MySQL – `agm_alumnos_db` |
-| **Responsabilidad** | Importación PDF directorio docente, CRUD docentes, importación Excel alumnos, inscripciones, baja de materia |
+| **Responsabilidad** | Importación PDF directorio docente, CRUD docentes, importación PDF lista de clase alumnos, inscripciones, baja de materia |
 
 ## Dependencias extras
 ```
@@ -45,6 +45,49 @@ pandas>=2.2
 - `fecha_baja` (DateTimeField, null)
 - **unique_together**: `['alumno', 'materia_id']`
 
+## Datos Pre-cargados: Bases de Datos BUAP
+
+> **IMPORTANTE**: El equipo cuenta con bases de datos reales de la BUAP:
+> - **43,025 trabajadores** (13,157 con email) → para pre-cargar docentes
+> - **318,374 alumnos** (316,807 con email) → para pre-cargar alumnos
+
+### Archivos de DOCENTES en `test-data/`
+| Archivo | Formato | Registros | Uso |
+|---------|---------|-----------|-----|
+| `buap_trabajadores.db` | SQLite | 43,025 | BD original, consultas con Python |
+| `trabajadores_buap.csv` | CSV | 43,025 | Universal, abrir en Excel |
+| `seed_docentes_mysql.sql` | SQL (MySQL) | 13,157 | INSERT directo a MySQL |
+| `export_trabajadores.py` | Python | — | Script para regenerar CSV y SQL |
+
+### Archivos de ALUMNOS en `test-data/`
+| Archivo | Formato | Registros | Uso |
+|---------|---------|-----------|-----|
+| `buap_alumnos.db` | SQLite | 318,374 | BD original, consultas con Python |
+| `alumnos_buap.csv` | CSV | 318,374 | Universal, abrir en Excel |
+| `seed_alumnos_mysql.sql` | SQL (MySQL) | 316,807 | INSERT directo a MySQL (bloques de 1000) |
+| `export_alumnos.py` | Python | — | Script para regenerar CSV y SQL |
+
+### Estructura de los datos (igual para ambas BDs)
+| Campo BD | Tipo | Ejemplo (docente) | Ejemplo (alumno) |
+|----------|------|-------|-------|
+| `matricula` | INTEGER | 100000004 | 202000000 |
+| `paterno` | TEXT | PEREZ | SOSA |
+| `materno` | TEXT | BONILLA | JUAREZ |
+| `nombre` | TEXT | EVELIA | MARISOL |
+| `email` | TEXT | evelia.perez@correo.buap.mx | marisol.sosaj@alumno.buap.mx |
+
+### Cómo usarlas
+```bash
+# Después de correr migraciones de MS-3
+mysql -u root -p agm_alumnos_db < test-data/seed_docentes_mysql.sql
+mysql -u root -p agm_alumnos_db < test-data/seed_alumnos_mysql.sql
+```
+
+> **Nota**: Los endpoints de importación (PDF docentes y PDF lista de clase alumnos) siguen siendo
+> necesarios para la evaluación. Los datos pre-cargados sirven para tener datos desde el día 1.
+
+---
+
 ## Endpoints REST
 
 ### Docentes
@@ -54,15 +97,19 @@ pandas>=2.2
   - Guardar en BD local con usuario_id
   - Manejar duplicados por email
 
+- `POST /docentes/seed` — Auth: admin. **Endpoint adicional** para cargar docentes desde el CSV/SQLite pre-existente.
+  - Lee `test-data/trabajadores_buap.csv` o recibe el CSV como upload
+  - Crea usuarios en MS-1 y docentes en BD local
+  - Útil para inicialización rápida del sistema
+
 - `GET /docentes` — Auth: admin. Paginado con búsqueda.
 - `GET /docentes/:id` — Auth: admin o el propio docente
 - `PUT /docentes/:id` — Auth: admin
 - `POST /docentes/:id/reset-password` — Auth: admin → gRPC a MS-1
 
 ### Alumnos
-- `POST /alumnos/importar/:materiaId` — Auth: docente de la materia. Upload Excel/CSV.
-  - Si `?preview=true`: retornar vista previa sin guardar
-  - Confirmar: parsear, crear usuario (gRPC MS-1), guardar alumno, inscribir, enviar correo (gRPC MS-6 SendBienvenida)
+- `POST /alumnos/importar/` — Auth: admin o docente. Multipart: `file` (PDF lista de clase BUAP), `materia_id`.
+  - Parsear matrícula y nombre; crear/actualizar alumno; inscribir en materia; usuario MS-1 vía event bus o gRPC
   - Manejar duplicados por matrícula
 
 - `GET /alumnos/materia/:materiaId` — Auth: docente de la materia. Solo alumnos activos (no dados de baja).

@@ -1,0 +1,32 @@
+<div class="calificaciones-page">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+      <h2>Calificaciones por materia</h2>
+      <p>
+        El registro de calificaciones, plan de evaluacion y concentrado viven en el detalle de cada materia (MS-4).
+      </p>
+    </section>
+
+    <p *ngIf="isLoading">Cargando materias…</p>
+    <p *ngIf="!isLoading && emptyMessage">{{ emptyMessage }}</p>
+
+    <section class="materias-list" *ngIf="!isLoading && materias.length">
+      <a
+        class="materia-link"
+        *ngFor="let m of materias"
+        [routerLink]="['/docente/materias', m.nrc]"
+      >
+        <strong>{{ m.nombre }}</strong>
+        <span>NRC {{ m.nrc }}</span>
+      </a>
+    </section>
+
+  </main>
+
+  <app-bottom-navbar-docente></app-bottom-navbar-docente>
+
+</div>

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "actividad.created.v1 payload",
+  "type": "object",
+  "required": ["actividad_id", "materia_id", "ponderacion_id", "nombre"],
+  "properties": {
+    "actividad_id": { "type": "integer" },
+    "materia_id": { "type": "integer" },
+    "ponderacion_id": { "type": "integer" },
+    "nombre": { "type": "string" },
+    "descripcion": { "type": "string" },
+    "fecha": { "type": ["string", "null"], "format": "date" },
+    "categoria": { "type": "string" }
+  }
+}

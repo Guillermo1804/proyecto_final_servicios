@@ -1,0 +1,152 @@
+<div class="admin-dashboard">
+
+  <app-topbar-admin></app-topbar-admin>
+
+  <main class="content">
+
+    <section class="hero">
+      <h2>Hola, {{ nombreUsuario || 'Administrador' }}</h2>
+
+      <p>
+        {{ rolLabel || 'Administrador' }} — resumen del sistema, {{ fechaHoy }}.
+      </p>
+    </section>
+
+    <p class="resumen-status" *ngIf="isLoadingResumen">Cargando resumen...</p>
+    <p class="resumen-error" *ngIf="resumenError">{{ resumenError }}</p>
+
+    <section class="stats-grid" *ngIf="!isLoadingResumen && resumen">
+
+      <article class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon azul">
+            <i class="bi bi-calendar3"></i>
+          </div>
+          <span class="badge" [ngClass]="resumen.periodoActivo ? 'verde' : 'gris'">
+            {{ resumen.periodoActivo ? 'Con activo' : 'Sin activo' }}
+          </span>
+        </div>
+        <p>Periodos registrados</p>
+        <h3>{{ resumen.totalPeriodos }}</h3>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon naranja">
+            <i class="bi bi-journal-bookmark"></i>
+          </div>
+        </div>
+        <p>Materias (periodo activo)</p>
+        <h3>{{ resumen.materiasPeriodoActivo }}</h3>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon gris">
+            <i class="bi bi-people"></i>
+          </div>
+        </div>
+        <p>Docentes en catalogo</p>
+        <h3>{{ resumen.totalDocentes }}</h3>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon azul">
+            <i class="bi bi-check2-circle"></i>
+          </div>
+          <span class="badge verde" *ngIf="resumen.periodoActivo">Activo</span>
+        </div>
+        <p>Periodo en curso</p>
+        <h3 class="stat-text" [title]="resumen.periodoActivo?.nombre || ''">
+          {{ resumen.periodoActivo?.nombre || '—' }}
+        </h3>
+      </article>
+
+    </section>
+
+    <section class="period-card">
+
+      <div>
+
+        <h3 *ngIf="resumen?.periodoActivo; else sinPeriodoActivo">
+          {{ resumen!.periodoActivo!.nombre }}
+        </h3>
+        <ng-template #sinPeriodoActivo>
+          <h3>Sin periodo activo</h3>
+        </ng-template>
+
+        <p *ngIf="resumen?.periodoActivo; else sinPeriodoDetalle">
+          {{ formatFecha(resumen!.periodoActivo!.fechaInicio) }}
+          —
+          {{ formatFecha(resumen!.periodoActivo!.fechaFin) }}
+          · {{ resumen!.materiasPeriodoActivo }} materias cargadas
+        </p>
+        <ng-template #sinPeriodoDetalle>
+          <p>
+            Crea un periodo o activa uno existente para importar la programacion de materias.
+          </p>
+        </ng-template>
+
+        <button type="button" [routerLink]="acciones.periodos.route">
+          <i class="bi bi-calendar2-week"></i>
+          {{ resumen?.periodoActivo ? 'Gestionar periodos' : 'Ir a Periodos' }}
+        </button>
+
+      </div>
+
+      <i class="bi bi-calendar2-week period-bg"></i>
+
+    </section>
+
+    <section class="quick-links">
+
+      <article class="teacher-card">
+
+        <div class="teacher-icon">
+          <i class="bi bi-journal-bookmark"></i>
+        </div>
+
+        <h3>Materias</h3>
+
+        <p *ngIf="resumen?.periodoActivo; else materiasSinPeriodo">
+          {{ resumen!.materiasPeriodoActivo }} materias en
+          <strong>{{ resumen!.periodoActivo!.nombre }}</strong>.
+          Importa o consulta el catalogo.
+        </p>
+        <ng-template #materiasSinPeriodo>
+          <p>Activa un periodo para ver e importar materias desde PDF.</p>
+        </ng-template>
+
+        <button type="button" [routerLink]="acciones.materias.route">
+          {{ acciones.materias.label }}
+        </button>
+
+      </article>
+
+      <article class="teacher-card">
+
+        <div class="teacher-icon">
+          <i class="bi bi-person-badge"></i>
+        </div>
+
+        <h3>Docentes</h3>
+
+        <p>
+          {{ resumen?.totalDocentes ?? 0 }} docentes registrados.
+          Importa la nomina o administra el catalogo.
+        </p>
+
+        <button type="button" [routerLink]="acciones.docentes.route">
+          {{ acciones.docentes.label }}
+        </button>
+
+      </article>
+
+    </section>
+
+  </main>
+
+  <app-bottom-navbar-admin></app-bottom-navbar-admin>
+
+</div>

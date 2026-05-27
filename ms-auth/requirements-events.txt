@@ -1,0 +1,2 @@
+# Instalacion local de agm_events junto a ms-auth (desarrollo fuera de Docker)
+-e ../packages/agm_events

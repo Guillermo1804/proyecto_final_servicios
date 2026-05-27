@@ -1,0 +1,549 @@
+{
+	"info": {
+		"_postman_id": "18f9e0a0-0000-4000-8000-000000000001",
+		"name": "AGM API Collection",
+		"description": "Colección de APIs para el proyecto AGM (Periodos y Alumnos)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "MS Periodos",
+			"item": [
+				{
+					"name": "Listar Periodos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", ""]
+						},
+						"description": "Retorna todos los periodos académicos con paginación AGM."
+					}
+				},
+				{
+					"name": "Crear Periodo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Primavera 2026\",\n    \"fecha_inicio\": \"2026-01-05\",\n    \"fecha_fin\": \"2026-05-30\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", ""]
+						},
+						"description": "Crea un nuevo periodo académico. Solo uno puede estar activo a la vez."
+					}
+				},
+				{
+					"name": "Ver Periodo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/1/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Periodo",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Primavera 2026 (Modificado)\",\n    \"fecha_inicio\": \"2026-01-06\",\n    \"fecha_fin\": \"2026-05-31\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/1/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Periodo",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/1/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Activar Periodo",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/1/activar/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", "1", "activar", ""]
+						},
+						"description": "Activa un periodo y desactiva el anterior atómicamente."
+					}
+				},
+				{
+					"name": "Consultar Periodo Activo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/activo/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", "activo", ""]
+						}
+					}
+				},
+				{
+					"name": "Listar Materias",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/materias/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "materias", ""]
+						}
+					}
+				},
+				{
+					"name": "Crear Materia",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nrc\": \"12345\",\n    \"nombre\": \"Programación Avanzada\",\n    \"docente_usuario_id\": 101,\n    \"periodo\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url_periodos}}/api/materias/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "materias", ""]
+						}
+					}
+				},
+				{
+					"name": "Ver Materia",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/materias/1/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "materias", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Materia",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nrc\": \"12345\",\n    \"nombre\": \"Programación Avanzada II\",\n    \"docente_usuario_id\": 101,\n    \"periodo\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url_periodos}}/api/materias/1/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "materias", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Materia",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_periodos}}/api/materias/1/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "materias", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Importar Materias",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "archivo", "type": "file", "src": [] }
+							]
+						},
+						"url": {
+							"raw": "{{base_url_periodos}}/api/periodos/1/importar-materias/",
+							"host": ["{{base_url_periodos}}"],
+							"path": ["api", "periodos", "1", "importar-materias", ""]
+						},
+						"description": "Importación masiva de materias desde un archivo Excel."
+					}
+				}
+			]
+		},
+		{
+			"name": "MS Alumnos",
+			"item": [
+				{
+					"name": "Listar Docentes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/docentes/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "docentes", ""]
+						}
+					}
+				},
+				{
+					"name": "Crear Docente",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"usuario_id\": 101,\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Perez\",\n    \"email\": \"juan.perez@buap.mx\",\n    \"departamento\": \"Computación\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/docentes/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "docentes", ""]
+						}
+					}
+				},
+				{
+					"name": "Ver Docente",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/docentes/1/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "docentes", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Docente",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"usuario_id\": 101,\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Perez Sosa\",\n    \"email\": \"juan.perez@buap.mx\",\n    \"departamento\": \"Computación\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/docentes/1/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "docentes", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Docente",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/docentes/1/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "docentes", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Importar Alumnos (Preview)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "archivo", "type": "file", "src": [] }
+							]
+						},
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/alumnos/importar/preview/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "alumnos", "importar", "preview", ""]
+						}
+					}
+				},
+				{
+					"name": "Importar Alumnos (Confirmar)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"matricula\": \"202012345\",\n        \"nombre\": \"Alumno Test\",\n        \"apellido\": \"Postman\",\n        \"email\": \"test@alumno.buap.mx\",\n        \"carrera\": \"ICC\",\n        \"semestre\": 1\n    }\n]"
+						},
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/alumnos/importar/confirmar/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "alumnos", "importar", "confirmar", ""]
+						}
+					}
+				},
+				{
+					"name": "Alumnos por Materia",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/alumnos/por-materia/?materia_id=1",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "alumnos", "por-materia", ""],
+							"query": [
+								{ "key": "materia_id", "value": "1" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Baja de Materia",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"materia_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url_alumnos}}/api/alumnos/1/baja-materia/",
+							"host": ["{{base_url_alumnos}}"],
+							"path": ["api", "alumnos", "1", "baja-materia", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "MS-6 Notificaciones",
+			"description": "REST vía gateway (8080) o directo (8006). Requiere X-Internal-Api-Key.",
+			"item": [
+				{
+					"name": "Health MS-6",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url_notificaciones}}/health/",
+							"host": ["{{base_url_notificaciones}}"],
+							"path": ["health", ""]
+						}
+					}
+				},
+				{
+					"name": "Bienvenida",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "X-Internal-Api-Key", "value": "{{internal_api_key}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"alumno_id\": 1,\n    \"materia_id\": 10,\n    \"clave_acceso\": \"uuid-clave-temporal-ms1\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_gateway}}/notificaciones/bienvenida",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["notificaciones", "bienvenida"]
+						}
+					}
+				},
+				{
+					"name": "Baja (notificar docente)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "X-Internal-Api-Key", "value": "{{internal_api_key}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"alumno_id\": 1,\n    \"docente_id\": 5,\n    \"materia_id\": 10\n}"
+						},
+						"url": {
+							"raw": "{{base_url_gateway}}/notificaciones/baja",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["notificaciones", "baja"]
+						}
+					}
+				},
+				{
+					"name": "Cierre materia",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "X-Internal-Api-Key", "value": "{{internal_api_key}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"materia_id\": 5\n}"
+						},
+						"url": {
+							"raw": "{{base_url_gateway}}/notificaciones/cierre-materia",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["notificaciones", "cierre-materia"]
+						}
+					}
+				},
+				{
+					"name": "Reset password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "X-Internal-Api-Key", "value": "{{internal_api_key}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"usuario@buap.mx\",\n    \"token\": \"token-uuid-ejemplo\",\n    \"reset_url\": \"http://localhost:4200/reset-password?token=token-uuid-ejemplo\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url_gateway}}/notificaciones/reset-password",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["notificaciones", "reset-password"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "MS-7 Reportes y Estadísticas",
+			"description": "REST vía gateway (:8080) o directo (:8007). Requiere **Authorization: Bearer {{jwt_token}}** (MS-1). `internal_api_key` no aplica a MS-7 (solo MS-6). IDs: `materia_id` = PK MS-2; `docente_usuario_id` = usuario_id MS-1; `alumno_id` = PK Alumno MS-3.",
+			"item": [
+				{
+					"name": "Calificaciones — Excel (xlsx)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{base_url_gateway}}/reportes/calificaciones/{{materia_id}}?formato=xlsx",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["reportes", "calificaciones", "{{materia_id}}"],
+							"query": [{ "key": "formato", "value": "xlsx" }]
+						},
+						"description": "Descarga binaria Excel del concentrado de calificaciones (ISSUE-902). Alias: formato=xls."
+					}
+				},
+				{
+					"name": "Calificaciones — PDF",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{base_url_gateway}}/reportes/calificaciones/{{materia_id}}?formato=pdf",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["reportes", "calificaciones", "{{materia_id}}"],
+							"query": [{ "key": "formato", "value": "pdf" }]
+						},
+						"description": "Descarga binaria PDF con soporte UTF-8 (ISSUE-903)."
+					}
+				},
+				{
+					"name": "Asistencias — Excel (xlsx)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{base_url_gateway}}/reportes/asistencias/{{materia_id}}?formato=xlsx",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["reportes", "asistencias", "{{materia_id}}"],
+							"query": [{ "key": "formato", "value": "xlsx" }]
+						},
+						"description": "Concentrado de asistencias en Excel (ISSUE-904)."
+					}
+				},
+				{
+					"name": "Asistencias — PDF",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{base_url_gateway}}/reportes/asistencias/{{materia_id}}?formato=pdf",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["reportes", "asistencias", "{{materia_id}}"],
+							"query": [{ "key": "formato", "value": "pdf" }]
+						},
+						"description": "Concentrado de asistencias en PDF (ISSUE-904)."
+					}
+				},
+				{
+					"name": "Estadísticas docente (JSON)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{base_url_gateway}}/estadisticas/docente/{{docente_usuario_id}}?page=1&limit=20",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["estadisticas", "docente", "{{docente_usuario_id}}"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "20" }
+							]
+						},
+						"description": "Historial comparativo del docente. `:id` = **usuario_id** MS-1 (no PK Docente MS-3). ISSUE-905."
+					}
+				},
+				{
+					"name": "Estadísticas alumno (JSON)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{base_url_gateway}}/estadisticas/alumno/{{alumno_id}}",
+							"host": ["{{base_url_gateway}}"],
+							"path": ["estadisticas", "alumno", "{{alumno_id}}"]
+						},
+						"description": "Estadísticas personales del alumno. `:id` = PK Alumno MS-3. ISSUE-906."
+					}
+				}
+			]
+		}
+	]
+}
