@@ -126,6 +126,19 @@ class UserProjection(models.Model):
         db_table = 'user_projection'
 
 
+class DocenteProjection(models.Model):
+    """Docente MS-3 vinculado a usuario MS-1 (para autorización REST)."""
+
+    docente_id = models.IntegerField(primary_key=True)
+    usuario_id = models.IntegerField(null=True, blank=True, db_index=True)
+    email = models.EmailField(db_index=True)
+    nombre = models.CharField(max_length=255, blank=True, default='')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'docente_projection'
+
+
 class MateriaProjection(models.Model):
     """Read model local de materias (MS-2 / eventos)."""
 

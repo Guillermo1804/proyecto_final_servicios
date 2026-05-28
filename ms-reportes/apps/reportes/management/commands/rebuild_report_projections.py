@@ -315,8 +315,36 @@ class Command(BaseCommand):
             conn.close()
             self.stdout.write(f'Backfill inscripciones: {ins}')
             self._resolve_docente_usuario_ids()
+            self._backfill_docentes_from_alumnos()
         else:
             self.stdout.write('BACKFILL_ALUMNOS_DB_* no configurado')
+
+    def _backfill_docentes_from_alumnos(self) -> None:
+        from apps.reportes.models import ReporteDocenteProjection
+
+        conn = _mysql_conn('BACKFILL_ALUMNOS_DB')
+        if not conn:
+            return
+        count = 0
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                'SELECT id, usuario_id, email, nombre, apellido FROM core_docente'
+            )
+            for row in cur.fetchall():
+                nombre = f'{row[3] or ""} {row[4] or ""}'.strip()
+                ReporteDocenteProjection.objects.update_or_create(
+                    docente_id=row[0],
+                    defaults={
+                        'usuario_id': row[1],
+                        'email': row[2] or '',
+                        'nombre': nombre,
+                    },
+                )
+                count += 1
+        finally:
+            conn.close()
+        self.stdout.write(f'Backfill docentes MS-7: {count}')
 
     def _resolve_docente_usuario_ids(self) -> None:
         """Asigna docente_id=usuario_id (MS-1) cuando periodos solo trae docente_nombre."""

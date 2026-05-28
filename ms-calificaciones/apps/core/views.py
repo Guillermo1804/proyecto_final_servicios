@@ -28,9 +28,12 @@ from apps.core.event_bus.publishers import (
 )
 from apps.core.services import calcular_promedio_ponderado, obtener_concentrado_materia, redondear_institucional
 from apps.core.projection_access import (
+    alumno_puede_ver_materia,
+    ensure_alumno_en_materia_projection,
     get_materia_local,
     is_alumno_en_materia_local,
     list_alumnos_materia_local,
+    usuario_puede_gestionar_materia,
 )
 from utils.jwt_local import validate_access_token
 from utils.responses import error_response, success_response
@@ -61,18 +64,71 @@ def _authorize_materia_management(request, materia_id):
         return error_response(f'No se pudo validar el token: {exc}', status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
     role = (auth_response.rol or '').lower()
-    if role == 'admin':
-        return None
+    if role not in ('admin', 'docente'):
+        return error_response('No tienes permisos para gestionar esta materia.', status=status.HTTP_403_FORBIDDEN)
 
     try:
         materia = get_materia_local(materia_id)
     except LookupError:
         return error_response('La materia no existe en proyección local.', status=status.HTTP_404_NOT_FOUND)
 
-    if auth_response.user_id != materia.docente_id:
+    if not usuario_puede_gestionar_materia(
+        usuario_id=auth_response.user_id,
+        usuario_email=getattr(auth_response, 'email', '') or '',
+        usuario_rol=auth_response.rol,
+        materia=materia,
+    ):
         return error_response('No tienes permisos para gestionar esta materia.', status=status.HTTP_403_FORBIDDEN)
 
     return None
+
+
+def _authorize_materia_read(request, materia_id):
+    """GET: admin, docente de la materia o alumno inscrito (proyección local)."""
+    token = _extract_bearer_token(request)
+    if not token:
+        return error_response('No se proporcionó token de autorización.', status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+        auth_response = validate_access_token(token)
+    except ValueError:
+        return error_response('Token inválido o expirado.', status=status.HTTP_401_UNAUTHORIZED)
+    except Exception as exc:
+        logger.exception('Error validando token para lectura materia %s', materia_id)
+        return error_response(f'No se pudo validar el token: {exc}', status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    role = (auth_response.rol or '').lower()
+    if role == 'admin':
+        return None
+
+    try:
+        get_materia_local(materia_id)
+    except LookupError:
+        return error_response('La materia no existe en proyección local.', status=status.HTTP_404_NOT_FOUND)
+
+    if role == 'docente':
+        try:
+            materia = get_materia_local(materia_id)
+        except LookupError:
+            return error_response('La materia no existe en proyección local.', status=status.HTTP_404_NOT_FOUND)
+        if usuario_puede_gestionar_materia(
+            usuario_id=auth_response.user_id,
+            usuario_email=getattr(auth_response, 'email', '') or '',
+            usuario_rol=auth_response.rol,
+            materia=materia,
+        ):
+            return None
+        return error_response('No tienes permisos para ver esta materia.', status=status.HTTP_403_FORBIDDEN)
+
+    if role == 'alumno':
+        if alumno_puede_ver_materia(
+            materia_id,
+            usuario_email=getattr(auth_response, 'email', '') or '',
+        ):
+            return None
+        return error_response('No estás inscrito en esta materia.', status=status.HTTP_403_FORBIDDEN)
+
+    return error_response('No tienes permisos para ver esta materia.', status=status.HTTP_403_FORBIDDEN)
 
 
 def _parse_ponderaciones_payload(request):
@@ -250,11 +306,10 @@ def ponderaciones(request, materia_id: int):
     if materia_id <= 0:
         return error_response('materia_id inválido', status=status.HTTP_400_BAD_REQUEST)
 
-    auth_error = _authorize_materia_management(request, materia_id)
-    if auth_error is not None:
-        return auth_error
-
     if request.method == 'GET':
+        auth_error = _authorize_materia_read(request, materia_id)
+        if auth_error is not None:
+            return auth_error
         ponderaciones_qs = Ponderacion.objects.filter(materia_id=materia_id).order_by('id')
         serializer = PonderacionOutputSerializer(ponderaciones_qs, many=True)
         total = sum((item.porcentaje for item in ponderaciones_qs), 0)
@@ -267,6 +322,10 @@ def ponderaciones(request, materia_id: int):
             message='Ponderaciones obtenidas correctamente',
             status=status.HTTP_200_OK,
         )
+
+    auth_error = _authorize_materia_management(request, materia_id)
+    if auth_error is not None:
+        return auth_error
 
     payload = _parse_ponderaciones_payload(request)
     if not isinstance(payload, dict) or 'ponderaciones' not in payload:
@@ -379,7 +438,7 @@ def actividades(request):
         except ValueError:
             return error_response('El parámetro "materia" debe ser un entero.', status=status.HTTP_400_BAD_REQUEST)
 
-        auth_error = _authorize_materia_management(request, materia_id)
+        auth_error = _authorize_materia_read(request, materia_id)
         if auth_error is not None:
             return auth_error
 
@@ -507,7 +566,16 @@ def crear_calificacion(request):
         # Primera vez, no hay restricción
         pass
 
-    if not is_alumno_en_materia_local(alumno_id, materia_id):
+    matricula = serializer.validated_data.get('matricula', '') or ''
+    nombre = serializer.validated_data.get('nombre', '') or ''
+    email = serializer.validated_data.get('email', '') or ''
+    if not ensure_alumno_en_materia_projection(
+        materia_id,
+        alumno_id,
+        matricula=matricula,
+        nombre=nombre,
+        email=email,
+    ):
         return error_response(
             'El alumno no está inscrito activo en la materia (proyección local).',
             status=status.HTTP_400_BAD_REQUEST,
@@ -647,7 +715,7 @@ def concentrado(request, materia_id: int):
     if materia_id <= 0:
         return error_response('materia_id inválido', status=status.HTTP_400_BAD_REQUEST)
 
-    auth_error = _authorize_materia_management(request, materia_id)
+    auth_error = _authorize_materia_read(request, materia_id)
     if auth_error is not None:
         return auth_error
 

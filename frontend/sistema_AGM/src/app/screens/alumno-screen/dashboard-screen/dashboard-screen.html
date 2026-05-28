@@ -4,165 +4,233 @@
 
   <main class="content">
 
-    <!-- HERO -->
-
     <section class="hero-card">
-
       <p>Bienvenido de nuevo, {{ rolLabel }}</p>
-
       <h2>{{ perfilLoading ? 'Cargando…' : alumno.nombre }}</h2>
 
       <div class="hero-meta">
         <span>Matrícula: <strong>{{ alumno.matricula }}</strong></span>
         <span *ngIf="emailUsuario">Correo: <strong>{{ emailUsuario }}</strong></span>
-        <span *ngIf="alumno.tipoFormacion && alumno.tipoFormacion !== '—'">Carrera: <strong>{{ alumno.tipoFormacion }}</strong></span>
+        <span *ngIf="alumno.tipoFormacion && alumno.tipoFormacion !== '—'">
+          Carrera: <strong>{{ alumno.tipoFormacion }}</strong>
+        </span>
+        <span *ngIf="alumno.periodoActivo && alumno.periodoActivo !== '—'">
+          Periodo: <strong>{{ alumno.periodoActivo }}</strong>
+        </span>
       </div>
 
-      <span *ngIf="materiasLoading">Cargando materias inscritas…</span>
-      <span *ngIf="!materiasLoading && materiasError">{{ materiasError }}</span>
-      <span *ngIf="!materiasLoading && !materiasError && materiasActuales.length">
-        Tienes {{ materiasActuales.length }} materia(s) inscrita(s) en el periodo activo.
-      </span>
-      <span *ngIf="!materiasLoading && !materiasError && !materiasActuales.length">
-        No tienes inscripciones activas. El docente debe importarte en su materia (MS-3).
-      </span>
+      <p class="hero-status" *ngIf="materiasLoading">Cargando materias inscritas…</p>
+      <p class="hero-status hero-error" *ngIf="!materiasLoading && materiasError">{{ materiasError }}</p>
+      <p class="hero-status" *ngIf="!materiasLoading && !materiasError && materiasActuales.length">
+        Tienes {{ materiasActuales.length }} materia(s) inscrita(s).
+      </p>
+      <p class="hero-status" *ngIf="!materiasLoading && !materiasError && !materiasActuales.length">
+        No tienes inscripciones activas.
+      </p>
 
       <div class="hero-bg"></div>
-
     </section>
-
-    <!-- PROMEDIO -->
 
     <section class="average-card">
-
       <p>MATERIAS INSCRITAS</p>
-
       <h3>{{ materiasLoading ? '…' : materiasActuales.length }}</h3>
-
-      <span>Datos desde MS-3 (alumnos/me/materias)</span>
-
+      <span>Periodo {{ alumno.periodoActivo || 'activo' }}</span>
     </section>
 
-    <!-- MATERIAS ACTUALES (TABLA) -->
-
+    <!-- MATERIAS INSCRITAS -->
     <section class="section-title">
-
       <div>
-        <h2>Materias Actuales</h2>
-        <p>Plan de materias inscritas en el periodo activo</p>
+        <h2>Mis materias</h2>
+        <p>Toca una materia para ver horario, docente y más</p>
       </div>
-
+      <a routerLink="/alumno/notas" class="section-link">
+        Ver calificaciones <i class="bi bi-arrow-right"></i>
+      </a>
     </section>
 
-    <section class="table-card subjects-table">
-
-      <div class="table-head">
-        <span>NRC</span>
-        <span>MATERIA</span>
-        <span>DOCENTE</span>
-        <span>SECCIÓN</span>
-      </div>
-
-      <div
-        class="table-row"
-        *ngFor="let m of materiasActuales"
-      >
-
-        <span>{{ m.nrc }}</span>
-        <span>{{ m.nombre }}</span>
-        <span>{{ m.docente }}</span>
-        <span>{{ m.seccion }}</span>
-
-      </div>
-
-      <p class="table-empty" *ngIf="!materiasLoading && !materiasActuales.length">
-        Sin materias para mostrar.
-      </p>
-
-    </section>
-
-    <!-- MATERIAS -->
-
-    <section class="section-title">
-
-      <div>
-        <h2>Materias de Hoy</h2>
-        <p>{{ fechaHoyLabel }}</p>
-      </div>
-
-    </section>
-
-    <section class="subjects-list">
-
+    <section class="interactive-list" *ngIf="materiasActuales.length">
       <article
-        class="subject-card"
-        *ngFor="let materia of materiasHoy"
+        class="interactive-card materia-card"
+        *ngFor="let m of materiasActuales"
+        [class.expanded]="esMateriaExpandida(m.materiaId)"
+        (click)="toggleMateria(m.materiaId)"
       >
-
-        <div class="card-top">
-
-          <div
-            class="icon-box"
-            [ngClass]="materia.color"
-          >
-            <i class="bi" [ngClass]="materia.icono"></i>
+        <div class="interactive-card-head">
+          <div class="icon-box" [ngClass]="m.color">
+            <i class="bi" [ngClass]="m.icono"></i>
           </div>
-
-          <span class="time-badge">
-            {{ materia.horario }}
-          </span>
-
+          <div class="interactive-card-titles">
+            <h3>{{ m.nombre }}</h3>
+            <p>NRC {{ m.nrc }} · Sección {{ m.seccion }}</p>
+          </div>
+          <i
+            class="bi chevron-toggle"
+            [ngClass]="esMateriaExpandida(m.materiaId) ? 'bi-chevron-up' : 'bi-chevron-down'"
+          ></i>
         </div>
 
-        <h3>{{ materia.materia }}</h3>
+        <div class="interactive-card-preview" *ngIf="!esMateriaExpandida(m.materiaId)">
+          <span><i class="bi bi-person"></i> {{ m.docente }}</span>
+        </div>
 
-        <p>
-          <i class="bi bi-geo-alt"></i>
-          {{ materia.aula }}
-        </p>
-
+        <div
+          class="interactive-card-detail"
+          *ngIf="esMateriaExpandida(m.materiaId)"
+          (click)="$event.stopPropagation()"
+        >
+          <dl class="detail-grid">
+            <div>
+              <dt>Docente</dt>
+              <dd>{{ m.docente }}</dd>
+            </div>
+            <div>
+              <dt>Horario</dt>
+              <dd>{{ m.horario }}</dd>
+            </div>
+            <div>
+              <dt>Aula / salón</dt>
+              <dd>{{ m.aula }}</dd>
+            </div>
+            <div>
+              <dt>NRC</dt>
+              <dd>{{ m.nrc }}</dd>
+            </div>
+          </dl>
+          <a routerLink="/alumno/notas" class="detail-action-btn">
+            <i class="bi bi-bar-chart"></i> Ver mis calificaciones
+          </a>
+        </div>
       </article>
-
     </section>
 
-    <!-- EVALUACIONES -->
-
-    <section class="section-heading">
-      <h2>Próximas Evaluaciones</h2>
-    </section>
-
-    <section class="table-card">
-
-      <div class="table-head">
-        <span>MATERIA</span>
-        <span>FECHA</span>
-        <span>VALOR</span>
-      </div>
-
-      <div
-        class="table-row"
-        *ngFor="let item of evaluaciones"
-      >
-
-        <span>{{ item.materia }}</span>
-        <span>{{ item.fecha }}</span>
-
-        <div class="badge">
-          {{ item.valor }}
-        </div>
-
-      </div>
-
-      <p class="table-empty" *ngIf="!materiasLoading && !evaluaciones.length">
-        Sin actividades con fecha futura en tus materias (MS-4 /actividades).
-      </p>
-
-    </section>
-
-    <p class="table-empty" *ngIf="!materiasLoading && !materiasError && !materiasHoy.length && materiasActuales.length">
-      No tienes clases programadas para hoy segun el horario de tus materias.
+    <p class="list-empty" *ngIf="!materiasLoading && !materiasActuales.length">
+      Sin materias para mostrar.
     </p>
 
+    <!-- CLASES HOY -->
+    <section class="section-title">
+      <div>
+        <h2>Clases de hoy</h2>
+        <p>{{ fechaHoyLabel }}</p>
+      </div>
+    </section>
+
+    <section class="interactive-list" *ngIf="materiasHoy.length">
+      <article
+        class="interactive-card clase-hoy-card"
+        *ngFor="let materia of materiasHoy"
+        [class.expanded]="esClaseHoyExpandida(materia.materiaId)"
+        (click)="toggleClaseHoy(materia.materiaId)"
+      >
+        <div class="interactive-card-head">
+          <div class="icon-box" [ngClass]="materia.color">
+            <i class="bi" [ngClass]="materia.icono"></i>
+          </div>
+          <div class="interactive-card-titles">
+            <h3>{{ materia.materia }}</h3>
+            <p class="time-line">
+              <i class="bi bi-clock"></i> {{ materia.horario }}
+            </p>
+          </div>
+          <span class="time-badge">Hoy</span>
+        </div>
+
+        <div class="interactive-card-preview" *ngIf="!esClaseHoyExpandida(materia.materiaId)">
+          <span><i class="bi bi-geo-alt"></i> {{ materia.aula }}</span>
+        </div>
+
+        <div
+          class="interactive-card-detail"
+          *ngIf="esClaseHoyExpandida(materia.materiaId)"
+          (click)="$event.stopPropagation()"
+        >
+          <dl class="detail-grid">
+            <div>
+              <dt>Docente</dt>
+              <dd>{{ materia.docente }}</dd>
+            </div>
+            <div>
+              <dt>Horario completo</dt>
+              <dd>{{ materia.horario }}</dd>
+            </div>
+            <div>
+              <dt>Ubicación</dt>
+              <dd>{{ materia.aula }}</dd>
+            </div>
+            <div>
+              <dt>NRC</dt>
+              <dd>{{ materia.nrc }}</dd>
+            </div>
+          </dl>
+        </div>
+      </article>
+    </section>
+
+    <p class="list-empty" *ngIf="!materiasLoading && !materiasHoy.length && materiasActuales.length">
+      No tienes clases programadas para hoy según el horario de tus materias.
+    </p>
+
+    <!-- EVALUACIONES -->
+    <section class="section-heading">
+      <h2>Próximas evaluaciones</h2>
+      <p class="section-sub">Toca una actividad para ver rubro, descripción y fecha</p>
+    </section>
+
+    <section class="interactive-list" *ngIf="evaluaciones.length">
+      <article
+        class="interactive-card eval-card"
+        *ngFor="let item of evaluaciones"
+        [class.expanded]="esEvaluacionExpandida(item.actividadId)"
+        (click)="toggleEvaluacion(item.actividadId)"
+      >
+        <div class="interactive-card-head">
+          <div class="icon-box azul">
+            <i class="bi bi-calendar-event"></i>
+          </div>
+          <div class="interactive-card-titles">
+            <h3>{{ item.nombreActividad }}</h3>
+            <p>{{ item.materia }}</p>
+          </div>
+          <span class="eval-date-pill">{{ item.fecha }}</span>
+        </div>
+
+        <div class="interactive-card-preview" *ngIf="!esEvaluacionExpandida(item.actividadId)">
+          <span class="eval-rubro-badge">{{ item.categoria }} · {{ item.categoriaPorcentaje }}%</span>
+        </div>
+
+        <div
+          class="interactive-card-detail"
+          *ngIf="esEvaluacionExpandida(item.actividadId)"
+          (click)="$event.stopPropagation()"
+        >
+          <dl class="detail-grid detail-grid-single">
+            <div>
+              <dt>Materia</dt>
+              <dd>{{ item.materia }}</dd>
+            </div>
+            <div>
+              <dt>Rubro del plan</dt>
+              <dd>{{ item.categoria }} ({{ item.categoriaPorcentaje }}% del curso)</dd>
+            </div>
+            <div>
+              <dt>Fecha de entrega / evaluación</dt>
+              <dd>{{ item.fecha }}</dd>
+            </div>
+            <div>
+              <dt>Descripción</dt>
+              <dd class="detail-descripcion">{{ item.descripcion }}</dd>
+            </div>
+          </dl>
+          <a routerLink="/alumno/notas" class="detail-action-btn secondary">
+            <i class="bi bi-journal-text"></i> Ver calificaciones de esta materia
+          </a>
+        </div>
+      </article>
+    </section>
+
+    <p class="list-empty" *ngIf="!materiasLoading && !evaluaciones.length && materiasActuales.length">
+      No hay actividades con fecha futura en tus materias. El docente puede crear tareas en MS-4.
+    </p>
 
   </main>
 

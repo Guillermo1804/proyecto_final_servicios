@@ -11,6 +11,7 @@ import { StatsAlumnoMateriaResponse } from '../../../models/asistencias-api.mode
 import { AsistenciasService } from '../../../services/asistencias.service';
 import { QrAsistenciaService, QrAsistenciaSnapshot } from '../../../services/alumno-services/qr-asistencia.service';
 import { PerfilService } from '../../../services/alumno-services/perfil.service';
+import { FotoPerfilService } from '../../../services/alumno-services/foto-perfil.service';
 
 @Component({
   selector: 'app-perfil-screen',
@@ -31,6 +32,13 @@ export class PerfilScreen implements OnInit, OnDestroy {
   private readonly perfilService = inject(PerfilService);
   private readonly alumnosService = inject(AlumnosService);
   private readonly asistenciasService = inject(AsistenciasService);
+  private readonly fotoPerfilService = inject(FotoPerfilService);
+
+  fotoUrl: string | null = null;
+  fotoIniciales = 'AG';
+  fotoSubiendo = false;
+  fotoError = '';
+  private fotoUserKey = '';
 
   qrActivo = false;
   asistenciaStats: StatsAlumnoMateriaResponse | null = null;
@@ -58,12 +66,23 @@ export class PerfilScreen implements OnInit, OnDestroy {
       next: (p) => {
         this.nombre = p.nombre || '';
         this.matricula = p.matricula || null;
+        this.fotoIniciales = this.fotoPerfilService.iniciales(this.nombre);
+        if (!this.fotoUserKey) {
+          this.fotoUserKey = this.fotoPerfilService.buildUserKey({ email: p.email });
+          this.refrescarFoto();
+        }
       },
     });
 
     this.alumnosService.getMe().subscribe({
       next: (alumno) => {
         this.alumnoId = alumno.id;
+        this.fotoUserKey = this.fotoPerfilService.buildUserKey({
+          alumnoId: alumno.id,
+          usuarioId: alumno.usuario_id,
+          email: alumno.email,
+        });
+        this.refrescarFoto();
         void this.cargarResumenAsistencia();
       },
     });
@@ -197,5 +216,45 @@ export class PerfilScreen implements OnInit, OnDestroy {
     this.qrActivo = true;
     void this.regenerarQr();
     this.iniciarTemporizadores();
+  }
+
+  private refrescarFoto(): void {
+    this.fotoUrl = this.fotoPerfilService.getFotoDataUrl(this.fotoUserKey);
+  }
+
+  abrirSelectorFoto(): void {
+    const input = document.getElementById('foto-perfil-input') as HTMLInputElement | null;
+    input?.click();
+  }
+
+  onFotoSeleccionada(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || !this.fotoUserKey) {
+      return;
+    }
+
+    this.fotoSubiendo = true;
+    this.fotoError = '';
+    this.fotoPerfilService.guardarDesdeArchivo(this.fotoUserKey, file).subscribe({
+      next: (dataUrl) => {
+        this.fotoUrl = dataUrl;
+        this.fotoSubiendo = false;
+      },
+      error: (err) => {
+        this.fotoSubiendo = false;
+        this.fotoError = err instanceof Error ? err.message : 'No se pudo guardar la foto.';
+      },
+    });
+  }
+
+  quitarFoto(): void {
+    if (!this.fotoUserKey) {
+      return;
+    }
+    this.fotoPerfilService.eliminarFoto(this.fotoUserKey);
+    this.fotoUrl = null;
+    this.fotoError = '';
   }
 }

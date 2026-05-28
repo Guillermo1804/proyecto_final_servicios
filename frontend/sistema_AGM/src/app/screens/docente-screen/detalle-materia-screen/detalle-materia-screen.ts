@@ -27,12 +27,12 @@ export class DetalleMateriaScreen implements OnInit {
 
   busquedaAlumno = '';
   paginaActualAlumnos = 1;
-  alumnosPorPagina = 5;
+  alumnosPorPagina = 10;
   paginaActualConcentrado = 1;
-  alumnosPorPaginaConcentrado = 4;
+  alumnosPorPaginaConcentrado = 10;
   paginaActualActividades = 1;
   actividadesPorPagina = 2;
-  alumnosPorPaginaActividad = 4;
+  alumnosPorPaginaActividad = 10;
   paginasAlumnosPorActividad: Record<number, number> = {};
 
   resumenMateria = { grupo: '', materia: '', horario: '' };
@@ -43,6 +43,12 @@ export class DetalleMateriaScreen implements OnInit {
   listaImpresa = false;
   guardandoPlan = false;
   guardandoCalificacion = false;
+  /** Tras guardar en MS-4: resumen colapsado; edición solo con "Editar plan". */
+  planModo: 'edicion' | 'guardado' = 'edicion';
+  planExpandido = true;
+  private planSnapshot: DetalleMateriaRubroItem[] | null = null;
+  calificacionesPendientes = new Set<string>();
+  guardandoCalificacionesActividadId: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -127,6 +133,7 @@ export class DetalleMateriaScreen implements OnInit {
         this.rubrosEvaluacion = bundle.rubros;
         this.actividades = bundle.actividades;
         this.recalcularValoresInternosTodosRubros();
+        this.sincronizarPlanModo();
         this.evaluacionLoading = false;
       },
       error: () => {
@@ -351,18 +358,58 @@ obtenerCalificacionActividad(actividad: { calificaciones?: Record<string, number
 
 setCalificacionActividad(actividad: DetalleMateriaActividadItem, matricula: string, valor: number | string): void {
   this.detalleMateriaService.setCalificacionActividad(actividad, matricula, valor);
+  this.calificacionesPendientes.add(this.claveCalificacion(actividad, matricula));
 }
 
-guardarCalificacionEnServidor(actividad: DetalleMateriaActividadItem, alumno: DetalleMateriaAlumnoItem, valor: number | string): void {
+claveCalificacion(actividad: DetalleMateriaActividadItem, matricula: string): string {
+  return `${actividad.actividadId ?? 0}-${matricula}`;
+}
+
+tieneCalificacionPendiente(actividad: DetalleMateriaActividadItem, matricula: string): boolean {
+  return this.calificacionesPendientes.has(this.claveCalificacion(actividad, matricula));
+}
+
+tieneCalificacionesPendientesActividad(actividad: DetalleMateriaActividadItem): boolean {
+  return this.alumnos.some((alumno) => this.tieneCalificacionPendiente(actividad, alumno.matricula));
+}
+
+estaGuardandoCalificacionesActividad(actividad: DetalleMateriaActividadItem): boolean {
+  return this.guardandoCalificacionesActividadId === actividad.actividadId;
+}
+
+guardarCalificacionesActividad(actividad: DetalleMateriaActividadItem): void {
   if (this.listaImpresa) {
     alert('La lista ya fue impresa: no se pueden editar calificaciones.');
     return;
   }
+  if (!actividad.actividadId) {
+    alert('La actividad no está registrada en MS-4.');
+    return;
+  }
+
   this.guardandoCalificacion = true;
-  this.detalleMateriaService.persistirCalificacion(actividad, alumno, valor).subscribe({
-    next: () => {
+  this.guardandoCalificacionesActividadId = actividad.actividadId;
+  this.detalleMateriaService.persistirCalificacionesActividad(actividad, this.alumnos).subscribe({
+    next: (resumen) => {
       this.guardandoCalificacion = false;
-      if (this.materiaId) {
+      this.guardandoCalificacionesActividadId = null;
+
+      for (const alumno of this.alumnos) {
+        this.calificacionesPendientes.delete(this.claveCalificacion(actividad, alumno.matricula));
+      }
+
+      if (resumen.fallos > 0) {
+        alert(
+          `Guardadas: ${resumen.guardadas}. Fallos: ${resumen.fallos}.` +
+            (resumen.detalleError ? `\n${resumen.detalleError}` : ''),
+        );
+      } else if (resumen.guardadas > 0) {
+        alert(`Se guardaron ${resumen.guardadas} calificaciones en MS-4.`);
+      } else {
+        alert(resumen.detalleError || 'No se guardó ninguna calificación.');
+      }
+
+      if (this.materiaId && resumen.guardadas > 0) {
         this.detalleMateriaService.recargarConcentrado(this.materiaId).subscribe({
           next: (alumnos) => {
             this.alumnos = alumnos;
@@ -372,7 +419,8 @@ guardarCalificacionEnServidor(actividad: DetalleMateriaActividadItem, alumno: De
     },
     error: (err) => {
       this.guardandoCalificacion = false;
-      alert(this.calificacionesService.mapApiError(err, 'No se pudo guardar la calificacion.'));
+      this.guardandoCalificacionesActividadId = null;
+      alert(this.calificacionesService.mapApiError(err, 'No se pudieron guardar las calificaciones.'));
     },
   });
 }
@@ -515,6 +563,64 @@ get planEvaluacionValido(): boolean {
   return this.detalleMateriaService.getPlanEvaluacionValido(this.rubrosEvaluacion);
 }
 
+/** Solo rubros persistidos en MS-4 (tienen ponderacion_id). */
+get rubrosParaActividades(): DetalleMateriaRubroItem[] {
+  return this.rubrosEvaluacion.filter((rubro) => rubro.ponderacionId);
+}
+
+get planEnModoGuardado(): boolean {
+  return this.planModo === 'guardado';
+}
+
+get planEnModoEdicion(): boolean {
+  return this.planModo === 'edicion';
+}
+
+/** Visible en plantilla para mostrar "Cancelar edición". */
+get puedeCancelarEdicionPlan(): boolean {
+  return this.planSnapshot !== null;
+}
+
+private planEstaPersistido(): boolean {
+  return (
+    this.rubrosEvaluacion.length > 0 &&
+    this.rubrosEvaluacion.every((rubro) => !!rubro.ponderacionId)
+  );
+}
+
+private sincronizarPlanModo(): void {
+  if (this.planEstaPersistido()) {
+    this.planModo = 'guardado';
+    this.planExpandido = false;
+    this.planSnapshot = null;
+  } else {
+    this.planModo = 'edicion';
+    this.planExpandido = true;
+  }
+}
+
+editarPlanEvaluacion(): void {
+  this.planSnapshot = JSON.parse(JSON.stringify(this.rubrosEvaluacion)) as DetalleMateriaRubroItem[];
+  this.planModo = 'edicion';
+  this.planExpandido = true;
+}
+
+cancelarEdicionPlan(): void {
+  if (this.planSnapshot) {
+    this.rubrosEvaluacion = this.planSnapshot;
+  }
+  this.planModo = 'guardado';
+  this.planExpandido = false;
+  this.planSnapshot = null;
+}
+
+alternarPlanExpandido(): void {
+  if (!this.planEnModoGuardado) {
+    return;
+  }
+  this.planExpandido = !this.planExpandido;
+}
+
 agregarRubro(): void {
 
   this.rubrosEvaluacion.push({
@@ -552,11 +658,20 @@ guardarPlanEvaluacion(): void {
     next: (rubros) => {
       this.rubrosEvaluacion = rubros;
       this.guardandoPlan = false;
+      this.planModo = 'guardado';
+      this.planExpandido = false;
+      this.planSnapshot = null;
       alert('Plan de evaluacion guardado en MS-4.');
     },
     error: (err) => {
       this.guardandoPlan = false;
-      alert(this.calificacionesService.mapApiError(err, 'No se pudo guardar el plan de evaluacion.'));
+      const msg = this.calificacionesService.mapApiError(
+        err,
+        'No se pudo guardar el plan de evaluacion.',
+      );
+      alert(
+        `${msg}\n\nLos rubros en pantalla no estan guardados hasta que veas la confirmacion de exito. Usa "Guardar Plan" antes de asignar actividades.`,
+      );
     },
   });
 }
@@ -576,6 +691,7 @@ onExcelSeleccionado(event: Event): void {
   this.detalleMateriaService.importarPlanEvaluacionExcel(this.materiaId, file).subscribe({
     next: (rubros) => {
       this.rubrosEvaluacion = rubros;
+      this.sincronizarPlanModo();
       alert('Plan de evaluacion importado desde Excel (MS-4).');
       input.value = '';
     },

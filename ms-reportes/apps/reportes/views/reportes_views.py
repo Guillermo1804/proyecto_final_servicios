@@ -8,6 +8,8 @@ from apps.reportes.dto.report_dto import AsistenciasReportDTO, CalificacionesRep
 from apps.reportes.services.report_data_service import ReportDataService
 from apps.reportes.services.report_export import build_report_bytes, normalize_formato
 from apps.reportes.exceptions import MateriaNotFound, ReportesDomainError
+from apps.reportes.docente_auth import usuario_puede_gestionar_materia
+from apps.reportes.models import ReporteMateriaProjection
 from utils.auth import validate_token
 from utils.responses import error_response, format_data_as_of
 
@@ -36,12 +38,23 @@ def _authenticate(request):
     return auth, None
 
 
-def _check_reporte_access(request, materia_docente_id: int):
+def _check_reporte_access(request, materia_id: int):
     if request.user_rol == 'admin':
         return None
     if request.user_rol != 'docente':
         return error_response('Sin permisos para generar reportes', status=403)
-    if materia_docente_id != request.user_id:
+
+    materia = ReporteMateriaProjection.objects.filter(materia_id=materia_id).first()
+    if materia is None:
+        return error_response('Materia no encontrada', status=404)
+
+    if not usuario_puede_gestionar_materia(
+        usuario_id=request.user_id,
+        usuario_email=getattr(request, 'user_email', ''),
+        usuario_rol=request.user_rol,
+        docente_id_materia=materia.docente_id,
+        docente_nombre_materia=materia.docente_nombre,
+    ):
         return error_response('No es el docente titular de la materia', status=403)
     return None
 
@@ -96,7 +109,7 @@ def reporte_calificaciones(request, materia_id: int):
     except ReportesDomainError as exc:
         return error_response(str(exc), status=500)
 
-    denied = _check_reporte_access(request, dto.materia.docente_id)
+    denied = _check_reporte_access(request, materia_id)
     if denied:
         return denied
 
@@ -125,7 +138,7 @@ def reporte_asistencias(request, materia_id: int):
     except ReportesDomainError as exc:
         return error_response(str(exc), status=500)
 
-    denied = _check_reporte_access(request, dto.materia.docente_id)
+    denied = _check_reporte_access(request, materia_id)
     if denied:
         return denied
 

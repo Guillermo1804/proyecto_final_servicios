@@ -1,0 +1,94 @@
+"""Autorización docente ↔ materia en MS-7."""
+
+from __future__ import annotations
+
+import unicodedata
+
+from apps.reportes.models import ReporteDocenteProjection
+
+
+def _normalize_docente_nombre(value: str) -> str:
+    normalized = unicodedata.normalize('NFKD', value or '')
+    ascii_text = normalized.encode('ascii', 'ignore').decode('ascii')
+    return ' '.join(ascii_text.lower().replace('-', ' ').split())
+
+
+def docente_nombres_coinciden(nombre_materia: str, nombre_docente: str) -> bool:
+    en_materia = _normalize_docente_nombre(nombre_materia)
+    if not en_materia:
+        return False
+
+    tokens = [
+        token
+        for token in _normalize_docente_nombre(nombre_docente).split()
+        if len(token) >= 2
+    ]
+    if not tokens:
+        return False
+
+    coincidencias = sum(1 for token in tokens if token in en_materia)
+    minimo = len(tokens) if len(tokens) <= 2 else 2
+    return coincidencias >= minimo
+
+
+def load_docente_records_for_auth(
+    usuario_id: int,
+    docente_id_materia: int | None,
+) -> tuple[ReporteDocenteProjection | None, ReporteDocenteProjection | None]:
+    docente_titular = (
+        ReporteDocenteProjection.objects.filter(docente_id=docente_id_materia).first()
+        if docente_id_materia is not None
+        else None
+    )
+    docente_usuario = ReporteDocenteProjection.objects.filter(usuario_id=usuario_id).first()
+    return docente_titular, docente_usuario
+
+
+def usuario_puede_gestionar_materia(
+    *,
+    usuario_id: int,
+    usuario_email: str,
+    usuario_rol: str,
+    docente_id_materia: int | None,
+    docente_nombre_materia: str,
+    docente_email_materia: str = '',
+) -> bool:
+    rol = (usuario_rol or '').lower()
+    if rol == 'admin':
+        return True
+    if rol != 'docente':
+        return False
+
+    if docente_id_materia is None and not (docente_nombre_materia or '').strip():
+        return False
+
+    if docente_id_materia is not None and usuario_id == docente_id_materia:
+        return True
+
+    docente_titular, docente_usuario = load_docente_records_for_auth(usuario_id, docente_id_materia)
+    if docente_titular and docente_titular.usuario_id == usuario_id:
+        return True
+
+    if docente_usuario:
+        if docente_id_materia is not None and docente_usuario.docente_id == docente_id_materia:
+            return True
+        if docente_nombres_coinciden(docente_nombre_materia, docente_usuario.nombre):
+            return True
+
+    email = (usuario_email or '').strip().lower()
+    if email:
+        if docente_titular and (docente_titular.email or '').strip().lower() == email:
+            return True
+        if docente_usuario and (docente_usuario.email or '').strip().lower() == email:
+            return True
+        materia_email = (docente_email_materia or '').strip().lower()
+        if materia_email and materia_email == email:
+            return True
+
+    if docente_titular and docente_nombres_coinciden(
+        docente_nombre_materia,
+        docente_titular.nombre,
+    ):
+        return True
+
+    return False

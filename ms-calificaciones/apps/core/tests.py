@@ -9,12 +9,15 @@ from django.test import TestCase, override_settings
 
 from apps.core.models import (
     AlumnoMateriaProjection,
+    DocenteProjection,
     EstadoMateria,
     MateriaProjection,
     Ponderacion,
     Actividad,
     Calificacion,
 )
+from apps.core.docente_auth import docente_nombres_coinciden, usuario_puede_gestionar_materia
+from apps.core.projection_access import MateriaLocal
 from apps.core.services import calcular_promedio_ponderado, obtener_estadisticas_materia, redondear_institucional
 
 
@@ -161,8 +164,62 @@ class PonderacionesTests(TestCase):
         self.assertFalse(body['success'])
         self.assertIn('100.00', str(body['errors']))
 
-    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=99, rol='docente'))
+    def test_docente_nombres_coinciden_formato_pdf_vs_ms3(self):
+        self.assertTrue(
+            docente_nombres_coinciden(
+                'MENDEZ - SANCHEZ LUIS YAEL',
+                'Yael Méndez Sánchez Luis',
+            )
+        )
+
+    def test_usuario_puede_gestionar_materia_docente_id_incorrecto_en_periodos(self):
+        """MS-2 puede traer docente_id del PDF (176) distinto al PK MS-3 (75)."""
+        DocenteProjection.objects.create(
+            docente_id=75,
+            usuario_id=36,
+            email='luis.mendezsanchez@correo.buap.mx',
+            nombre='Yael Méndez Sánchez Luis',
+        )
+        self.assertTrue(
+            usuario_puede_gestionar_materia(
+                usuario_id=36,
+                usuario_email='luis.mendezsanchez@correo.buap.mx',
+                usuario_rol='docente',
+                docente_id_materia=176,
+                docente_nombre_materia='MENDEZ - SANCHEZ LUIS YAEL',
+            )
+        )
+
+    def test_usuario_puede_gestionar_materia_por_proyeccion_docente(self):
+        DocenteProjection.objects.create(
+            docente_id=7,
+            usuario_id=99,
+            email='luis.jael@buap.mx',
+            nombre='Luis Jael Sanchez',
+        )
+        self.assertTrue(
+            usuario_puede_gestionar_materia(
+                usuario_id=99,
+                usuario_email='luis.jael@buap.mx',
+                usuario_rol='docente',
+                docente_id_materia=7,
+                docente_nombre_materia='Luis Jael Sanchez',
+            )
+        )
+
+    def test_alumno_no_puede_gestionar_materia(self):
+        self.assertFalse(
+            usuario_puede_gestionar_materia(
+                usuario_id=1,
+                usuario_email='alumno@test.local',
+                usuario_rol='alumno',
+                docente_id_materia=7,
+                docente_nombre_materia='Materia',
+            )
+        )
+
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7, docente_email=''))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=99, email='', rol='docente'))
     def test_guardar_ponderaciones_rechaza_docente_distinto(self, mock_validate, mock_materia):
         response = self.client.post(
             '/ponderaciones/10',
@@ -178,23 +235,72 @@ class PonderacionesTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    @patch(
+        'apps.core.views.get_materia_local',
+        return_value=SimpleNamespace(
+            docente_id=176,
+            docente_nombre='MENDEZ - SANCHEZ LUIS YAEL',
+            docente_email='',
+        ),
+    )
+    @patch(
+        'apps.core.views.validate_access_token',
+        return_value=SimpleNamespace(
+            user_id=36,
+            email='luis.mendezsanchez@correo.buap.mx',
+            rol='docente',
+        ),
+    )
+    def test_guardar_ponderaciones_luis_yael_mendez(self, mock_validate, mock_materia):
+        DocenteProjection.objects.create(
+            docente_id=75,
+            usuario_id=36,
+            email='luis.mendezsanchez@correo.buap.mx',
+            nombre='Yael Méndez Sánchez Luis',
+        )
+        response = self.client.post(
+            '/ponderaciones/69',
+            data={
+                'ponderaciones': [
+                    {'nombre_categoria': 'Pase de lista', 'porcentaje': '95.00'},
+                    {'nombre_categoria': 'Examen', 'porcentaje': '5.00'},
+                ]
+            },
+            content_type='application/json',
+            **self.auth_headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
 
-        class CierreImpresionTests(TestCase):
-            def setUp(self):
-                self.auth_headers = {'HTTP_AUTHORIZATION': 'Bearer token-valido'}
-
-            @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
-            @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
-            def test_marcar_imprimir_lista(self, mock_validate, mock_materia):
-                response = self.client.post('/materias/10/imprimir-lista', **self.auth_headers)
-                self.assertEqual(response.status_code, 200)
-                body = response.json()
-                self.assertTrue(body['success'])
-                estado = EstadoMateria.objects.get(materia_id=10)
-                self.assertTrue(estado.lista_impresa)
-                mock_validate.assert_called_once_with('token-valido')
-                mock_materia.assert_called_once_with(10)
-        self.assertFalse(response.json()['success'])
+    @patch(
+        'apps.core.views.get_materia_local',
+        return_value=SimpleNamespace(docente_id=7, docente_email='prof@buap.mx'),
+    )
+    @patch(
+        'apps.core.views.validate_access_token',
+        return_value=SimpleNamespace(user_id=99, email='prof@buap.mx', rol='docente'),
+    )
+    def test_guardar_ponderaciones_docente_vinculado_por_usuario_id(self, mock_validate, mock_materia):
+        DocenteProjection.objects.create(
+            docente_id=7,
+            usuario_id=99,
+            email='prof@buap.mx',
+            nombre='Profesor',
+        )
+        response = self.client.post(
+            '/ponderaciones/10',
+            data={
+                'ponderaciones': [
+                    {'nombre_categoria': 'Pase de lista', 'porcentaje': '95.00'},
+                    {'nombre_categoria': 'Examen', 'porcentaje': '5.00'},
+                ]
+            },
+            content_type='application/json',
+            **self.auth_headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body['success'])
 
     @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
     @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
@@ -242,6 +348,23 @@ class PonderacionesTests(TestCase):
         body = response.json()
         self.assertTrue(body['success'])
         self.assertEqual(body['data']['importadas'], 3)
+
+
+class CierreImpresionTests(TestCase):
+    def setUp(self):
+        self.auth_headers = {'HTTP_AUTHORIZATION': 'Bearer token-valido'}
+
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    def test_marcar_imprimir_lista(self, mock_validate, mock_materia):
+        response = self.client.post('/materias/10/imprimir-lista', **self.auth_headers)
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertTrue(body['success'])
+        estado = EstadoMateria.objects.get(materia_id=10)
+        self.assertTrue(estado.lista_impresa)
+        mock_validate.assert_called_once_with('token-valido')
+        mock_materia.assert_called_once_with(10)
 
 
 class CalificacionTests(TestCase):
@@ -556,6 +679,119 @@ class ConcentradoRestTests(TestCase):
         self.assertEqual(alumno_6['nombre'], 'Luis Perez')
         self.assertEqual(alumno_6['promedio_real'], '0.00')
         self.assertEqual(alumno_6['promedio_redondeado'], 0)
+
+
+class CalificacionProjectionSyncTests(TestCase):
+    def setUp(self):
+        MateriaProjection.objects.create(
+            materia_id=10,
+            periodo_id=2,
+            nrc='12345',
+            nombre='Servicios Web',
+            docente_id=7,
+            docente_nombre='Docente',
+            periodo_nombre='2026-1',
+        )
+        self.pond = Ponderacion.objects.create(
+            materia_id=10,
+            nombre_categoria='Exámenes',
+            porcentaje='100.00',
+        )
+        self.actividad = Actividad.objects.create(ponderacion=self.pond, nombre='Tarea 1')
+
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.usuario_puede_gestionar_materia', return_value=True)
+    def test_crear_calificacion_sincroniza_proyeccion_si_falta(self, _mock_gestion, _mock_auth):
+        response = self.client.post(
+            '/calificaciones',
+            {
+                'actividad_id': self.actividad.id,
+                'alumno_id': 42,
+                'calificacion': '8.50',
+                'matricula': '20249999',
+                'nombre': 'Alumno Nuevo',
+                'email': 'nuevo@test.local',
+            },
+            format='json',
+            HTTP_AUTHORIZATION='Bearer token-valido',
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(
+            AlumnoMateriaProjection.objects.filter(
+                alumno_id=42,
+                materia_id=10,
+                matricula='20249999',
+                activa=True,
+            ).exists(),
+        )
+
+
+class AlumnoLecturaMateriaTests(TestCase):
+    def setUp(self):
+        MateriaProjection.objects.create(
+            materia_id=10,
+            periodo_id=2,
+            nrc='12345',
+            nombre='Servicios Web',
+            docente_id=7,
+            docente_nombre='Docente',
+            periodo_nombre='2026-1',
+        )
+        AlumnoMateriaProjection.objects.create(
+            alumno_id=5,
+            materia_id=10,
+            matricula='20240001',
+            nombre='Ana Lopez',
+            email='ana@test.local',
+            activa=True,
+        )
+        self.pond = Ponderacion.objects.create(
+            materia_id=10,
+            nombre_categoria='Exámenes',
+            porcentaje='100.00',
+        )
+        Actividad.objects.create(ponderacion=self.pond, nombre='Examen 1')
+
+    @patch('apps.core.views.validate_access_token')
+    def test_alumno_inscrito_puede_listar_actividades(self, mock_validate):
+        mock_validate.return_value = SimpleNamespace(
+            user_id=99,
+            rol='alumno',
+            email='ana@test.local',
+        )
+        response = self.client.get(
+            '/actividades?materia=10',
+            HTTP_AUTHORIZATION='Bearer token-valido',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+
+    @patch('apps.core.views.validate_access_token')
+    def test_alumno_inscrito_puede_ver_concentrado(self, mock_validate):
+        mock_validate.return_value = SimpleNamespace(
+            user_id=99,
+            rol='alumno',
+            email='ana@test.local',
+        )
+        response = self.client.get(
+            '/concentrado/10',
+            HTTP_AUTHORIZATION='Bearer token-valido',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+
+    @patch('apps.core.views.validate_access_token')
+    def test_alumno_no_inscrito_recibe_403(self, mock_validate):
+        mock_validate.return_value = SimpleNamespace(
+            user_id=100,
+            rol='alumno',
+            email='otro@test.local',
+        )
+        response = self.client.get(
+            '/actividades?materia=10',
+            HTTP_AUTHORIZATION='Bearer token-valido',
+        )
+        self.assertEqual(response.status_code, 403)
 
 
 class CerrarMateriaTests(TestCase):

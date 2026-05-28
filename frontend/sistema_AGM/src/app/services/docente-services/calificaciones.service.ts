@@ -81,13 +81,24 @@ export class CalificacionesService {
     actividadId: number,
     alumnoId: number,
     calificacion: number,
+    extras?: { matricula?: string; nombre?: string; email?: string },
   ): Observable<CalificacionOutputDto> {
+    const body: Record<string, unknown> = {
+      actividad_id: actividadId,
+      alumno_id: alumnoId,
+      calificacion,
+    };
+    if (extras?.matricula) {
+      body['matricula'] = extras.matricula;
+    }
+    if (extras?.nombre) {
+      body['nombre'] = extras.nombre;
+    }
+    if (extras?.email && extras.email !== '—') {
+      body['email'] = extras.email;
+    }
     return this.http
-      .post<unknown>(buildApiUrl('calificaciones/'), {
-        actividad_id: actividadId,
-        alumno_id: alumnoId,
-        calificacion,
-      })
+      .post<unknown>(buildApiUrl('calificaciones'), body)
       .pipe(map((response) => this.requireData<CalificacionOutputDto>(response, 'calificacion')));
   }
 

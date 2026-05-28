@@ -1133,12 +1133,158 @@ textarea {
   padding: .8rem 0 0;
 }
 
+.plan-status-ok {
+  margin: .35rem 0 0;
+  color: #15803d;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.evaluation-top-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: .5rem;
+}
+
+.plan-toggle-btn,
+.edit-plan-btn {
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  color: #0f172a;
+  border-radius: 10px;
+  padding: .45rem .75rem;
+  font-weight: 700;
+  font-size: .85rem;
+  cursor: pointer;
+}
+
+.edit-plan-btn {
+  border-color: #0a67d8;
+  color: #0a67d8;
+  background: #eff6ff;
+}
+
+.plan-saved-summary {
+  margin-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+.plan-saved-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .75rem 0;
+  border-bottom: 1px solid #f1f5f9;
+
+  strong {
+    font-size: 1.05rem;
+  }
+
+  p {
+    margin: .25rem 0 0;
+    color: #6b7280;
+    font-size: .9rem;
+  }
+}
+
+.plan-saved-pct {
+  color: #0a67d8;
+  font-weight: 900;
+  font-size: 1.15rem;
+  white-space: nowrap;
+}
+
+.plan-saved-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.plan-cancel-edit-btn {
+  min-width: 140px;
+}
+
+.grades-hint {
+  margin: 0 0 .65rem;
+  font-size: .86rem;
+  color: #64748b;
+}
+
 .activity-grades-head,
 .activity-grade-row {
   display: grid;
-  grid-template-columns: 1.5fr 120px;
+  grid-template-columns: minmax(0, 1fr) 110px;
   gap: .85rem;
   align-items: center;
+}
+
+.grade-student-name {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.grade-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+
+.grade-mobile-label {
+  display: none;
+  font-size: .75rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.grade-row-pending input {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.activity-grades-save-row {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+}
+
+.grade-save-all-btn {
+  min-height: 44px;
+  padding: 0 1.1rem;
+  border: none;
+  border-radius: 10px;
+  background: #0a67d8;
+  color: white;
+  font-weight: 800;
+  font-size: .92rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+
+  &:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+  }
+}
+
+.grades-pending-badge {
+  font-size: .82rem;
+  font-weight: 700;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 999px;
+  padding: .35rem .7rem;
 }
 
 .activity-grades-head {
@@ -1183,9 +1329,53 @@ textarea {
     flex-direction: column;
   }
 
-  .activity-grades-head,
+  .activity-box {
+    padding: 1rem;
+  }
+
+  .activity-grades-head {
+    display: none;
+  }
+
   .activity-grade-row {
     grid-template-columns: 1fr;
+    gap: .5rem;
+    padding: .75rem 0;
+  }
+
+  .grade-mobile-label {
+    display: block;
+  }
+
+  .grade-input-wrap input {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .activity-grades-save-row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .grade-save-all-btn {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .grades-pending-badge {
+    text-align: center;
+    width: 100%;
+  }
+
+  .activity-students-pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .5rem;
+  }
+
+  .activity-students-pagination .pagination-pages {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .grades-summary-top {

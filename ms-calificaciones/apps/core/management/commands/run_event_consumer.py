@@ -30,6 +30,7 @@ ROUTING_KEYS = [
     'alumno.imported.v1',
     'alumno.updated.v1',
     'alumno.withdrawn.v1',
+    'docente.imported.v1',
 ]
 
 

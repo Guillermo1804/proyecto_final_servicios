@@ -10,16 +10,36 @@
 
       <div class="avatar-wrapper">
 
-        <img
-          src="perfil.jpg"
-          alt="Perfil"
-        >
+        <div class="avatar-frame" [class.has-photo]="fotoUrl">
+          <img *ngIf="fotoUrl" [src]="fotoUrl" alt="Tu foto de perfil">
+          <span *ngIf="!fotoUrl" class="avatar-iniciales">{{ fotoIniciales }}</span>
+        </div>
 
-        <button class="edit-btn">
-          <i class="bi bi-pencil"></i>
+        <button
+          type="button"
+          class="edit-btn"
+          (click)="abrirSelectorFoto()"
+          [disabled]="fotoSubiendo"
+          title="Subir tu foto"
+        >
+          <i class="bi" [ngClass]="fotoSubiendo ? 'bi-hourglass-split' : 'bi-camera'"></i>
         </button>
 
+        <input
+          id="foto-perfil-input"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          hidden
+          (change)="onFotoSeleccionada($event)"
+        >
+
       </div>
+
+      <p class="foto-hint" *ngIf="!fotoUrl">Sube tu propia foto de perfil (solo en este dispositivo).</p>
+      <p class="foto-hint foto-error" *ngIf="fotoError">{{ fotoError }}</p>
+      <button type="button" class="foto-remove-btn" *ngIf="fotoUrl" (click)="quitarFoto()">
+        Quitar foto
+      </button>
 
       <h1>{{ nombre || 'Alumno' }}</h1>
 
