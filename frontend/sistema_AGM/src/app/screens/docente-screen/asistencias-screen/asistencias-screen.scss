@@ -20,6 +20,8 @@
   max-width: 760px;
   margin: 0 auto;
   padding: 1rem;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 /* CARD PRINCIPAL */
@@ -37,6 +39,9 @@
 
 .attendance-card {
   padding: 1.4rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 /* HERO */
@@ -109,6 +114,11 @@
   background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
   display: grid;
   gap: .9rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  text-align: left;
+  box-sizing: border-box;
 }
 
 .session-setup-copy {
@@ -128,22 +138,64 @@
 .materia-select-field {
   display: grid;
   gap: .45rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 
-  span {
+  .field-label {
     font-size: .82rem;
     font-weight: 800;
     color: #334155;
   }
 
+  .field-helper {
+    font-size: .76rem;
+    color: #64748b;
+    padding-left: .2rem;
+  }
+
+  .select-shell {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .select-icon {
+    position: absolute;
+    left: .85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-size: .95rem;
+    pointer-events: none;
+  }
+
   select {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     height: 46px;
     border: 1px solid #cbd5e1;
     border-radius: 12px;
-    padding: 0 .85rem;
-    background: white;
+    padding: 0 2rem 0 2.35rem;
+    background-color: white;
+    background-image:
+      linear-gradient(180deg, #ffffff 0%, #f8fafc 100%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23475569' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat, no-repeat;
+    background-position: center, right .85rem center;
+    background-size: cover, 12px 8px;
     color: #0f172a;
     font-weight: 700;
+    font-size: .9rem;
     outline: none;
+    box-sizing: border-box;
+    appearance: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(2, 6, 23, .06);
 
     &:focus {
       border-color: #075fc6;
@@ -151,7 +203,7 @@
     }
 
     &:disabled {
-      background: #f8fafc;
+      background-color: #f8fafc;
       color: #64748b;
       cursor: not-allowed;
     }
@@ -361,6 +413,15 @@
   align-items: flex-start;
   gap: 1rem;
   margin-bottom: 1rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  text-align: left;
+
+  > div:first-child {
+    flex: 1;
+    min-width: 0;
+  }
 
   h3 {
     margin: 0 0 .35rem;
@@ -957,6 +1018,30 @@
     justify-content: center;
   }
 
+  .scanner-section {
+    padding: 1rem 0.75rem;
+  }
+
+  .session-setup-card {
+    padding: 0.85rem;
+  }
+
+  .materia-select-field select {
+    font-size: 0.86rem;
+    padding-left: 2rem;
+    padding-right: 1.75rem;
+  }
+
+  .materia-select-field .select-icon {
+    left: .65rem;
+    font-size: .88rem;
+  }
+
+  .scanner-badge {
+    align-self: flex-start;
+    max-width: 100%;
+  }
+
   .session-summary-grid article,
   .session-metrics-grid article {
     padding: .85rem;
@@ -994,6 +1079,11 @@
   padding: 1.5rem;
   margin-bottom: 1.8rem;
 
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
   text-align: center;
 
   h3 {
@@ -1004,6 +1094,16 @@
   p {
     margin: 0 0 1rem;
     color: #374151;
+  }
+
+  .session-setup-card,
+  .scanner-top,
+  .session-metrics-grid,
+  .session-actions-row,
+  .scanner-callout,
+  .session-status-note,
+  .qr-result {
+    text-align: left;
   }
 }
 
