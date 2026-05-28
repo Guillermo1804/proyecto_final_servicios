@@ -23,9 +23,11 @@ python manage.py ensure_jwt_keys
 echo "Aplicando migraciones..."
 python manage.py migrate --noinput
 
-# Crear usuario administrador inicial
-echo "Inicializando administrador..."
-python manage.py create_admin
+# Crear usuario administrador inicial solo en API principal (no workers)
+if [ -z "${AGM_RUN_MODE}" ]; then
+  echo "Inicializando administrador..."
+  python manage.py create_admin
+fi
 
 # Modos worker (Fase 2+) — docker-compose define AGM_RUN_MODE
 if [ "${AGM_RUN_MODE}" = "outbox-worker" ]; then
