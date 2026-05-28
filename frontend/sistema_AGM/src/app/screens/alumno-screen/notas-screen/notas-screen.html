@@ -64,43 +64,74 @@
         <div class="average-row" (click)="toggleExpand(materia)">
 
           <div>
-            <span class="label">Promedio</span>
+            <span class="label">Promedio redondeado</span>
 
             <div
               class="grade-pill"
               [ngClass]="materia.promedioColor"
             >
-              {{ materia.promedio }}
+              {{ materia.promedio > 0 ? materia.promedio : '—' }}
             </div>
+
+            <span class="grades-count" *ngIf="cantidadNotasRegistradas(materia)">
+              {{ cantidadNotasRegistradas(materia) }} calificación(es) publicada(s)
+            </span>
           </div>
 
           <i class="bi" [ngClass]="materia.expandido ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
 
         </div>
 
-        <section
-          class="partials-grid"
-          *ngIf="materia.expandido"
-        >
+        <section class="grades-detail" *ngIf="materia.expandido">
+
+          <h4 class="grades-detail-title">Calificaciones registradas por tu docente</h4>
+          <p class="grades-detail-hint" *ngIf="materia.actividades.length">
+            Cada valor es la nota exacta capturada en el sistema (escala 0 a 10).
+          </p>
+
+          <p class="grades-empty" *ngIf="!materia.actividades.length">
+            Aún no hay actividades en el plan de evaluación de esta materia.
+          </p>
 
           <article
-            class="partial-card"
-            *ngFor="let parcial of materia.parciales"
-            [ngClass]="{ active: parcial.activo }"
+            class="grade-activity-row"
+            *ngFor="let act of materia.actividades"
+            [class.has-grade]="act.calificacion !== null"
           >
-
-            <div class="partial-title">
-              <span>{{ parcial.titulo }}</span>
-              <small class="partial-percent"> · {{ parcial.porcentaje }}%</small>
+            <div class="grade-activity-info">
+              <strong>{{ act.nombre }}</strong>
+              <span class="grade-rubro">
+                {{ act.categoria }} · {{ act.categoriaPorcentaje }}% del curso
+              </span>
             </div>
 
-            <div>
-              <h4>
-                {{ parcial.valor !== null && parcial.valor !== undefined ? (parcial.valor | number:'1.1-2') : '--' }}
-              </h4>
+            <div class="grade-activity-score" [ngClass]="colorNota(act.calificacion)">
+              <span class="grade-label">Tu calificación</span>
+              <div class="grade-value-line">
+                <strong *ngIf="act.calificacion !== null">{{ act.calificacion | number:'1.1-2' }}</strong>
+                <strong *ngIf="act.calificacion === null" class="grade-pending">Sin calificar</strong>
+                <span class="grade-scale" *ngIf="act.calificacion !== null">/ 10</span>
+              </div>
             </div>
-
           </article>
+
+          <div class="grades-summary-block" *ngIf="materia.parciales.length">
+            <h4 class="grades-detail-title">Resumen de la materia</h4>
+            <div class="partials-grid summary-grid">
+              <article
+                class="partial-card summary-card"
+                *ngFor="let parcial of materia.parciales"
+                [ngClass]="{ active: parcial.activo }"
+              >
+                <div class="partial-title">
+                  <span>{{ parcial.titulo }}</span>
+                </div>
+                <div>
+                  <h4>{{ parcial.valor | number:'1.1-2' }}</h4>
+                </div>
+              </article>
+            </div>
+          </div>
 
         </section>
 
