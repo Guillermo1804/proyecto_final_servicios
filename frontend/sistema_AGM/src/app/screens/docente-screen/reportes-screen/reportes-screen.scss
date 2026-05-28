@@ -412,8 +412,10 @@
 /* EXPORTACIÓN */
 
 .export-card {
-  background: #00234f;
-  color: white;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #dbe4f0;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, .05);
 
   border-radius: 10px;
 
@@ -432,7 +434,7 @@
 
   p {
     margin: 0 0 1.2rem;
-    color: #9fb3d5;
+    color: #64748b;
     font-size: .85rem;
     line-height: 1.45;
   }
@@ -441,7 +443,7 @@
     display: block;
     margin-bottom: .35rem;
 
-    color: #9fb3d5;
+    color: #64748b;
     font-size: .78rem;
   }
 
@@ -451,11 +453,11 @@
 
     margin-bottom: 1rem;
 
-    border: 1px solid #31557d;
+    border: 1px solid #cbd5e1;
     border-radius: 6px;
 
-    background: #001935;
-    color: white;
+    background: #ffffff;
+    color: #0f172a;
 
     padding: 0 .8rem;
   }
@@ -470,11 +472,11 @@
   button {
     height: 38px;
 
-    border: 1px solid #31557d;
+    border: 1px solid #cbd5e1;
     border-radius: 6px;
 
-    background: #001935;
-    color: white;
+    background: #ffffff;
+    color: #0f172a;
 
     display: flex;
     align-items: center;
@@ -492,7 +494,7 @@
   border: none;
   border-radius: 7px;
 
-  background: #0875e8;
+  background: #0f74e6;
   color: white;
 
   display: flex;
@@ -507,7 +509,7 @@
 .note {
   margin-top: 1rem;
 
-  color: #9fb3d5;
+  color: #64748b;
   font-size: .75rem;
 
   display: flex;
