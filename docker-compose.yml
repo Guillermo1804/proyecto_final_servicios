@@ -57,8 +57,6 @@ services:
       MYSQL_DATABASE: agm_auth_db
     ports:
       - "13307:3306"
-    volumes:
-      - db_auth_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
       interval: 10s
@@ -76,8 +74,6 @@ services:
       MYSQL_DATABASE: agm_periodos_db
     ports:
       - "13308:3306"
-    volumes:
-      - db_periodos_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
       interval: 10s
@@ -95,8 +91,6 @@ services:
       MYSQL_DATABASE: agm_alumnos_db
     ports:
       - "13309:3306"
-    volumes:
-      - db_alumnos_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
       interval: 10s
@@ -114,8 +108,6 @@ services:
       MYSQL_DATABASE: agm_calificaciones_db
     ports:
       - "13310:3306"
-    volumes:
-      - db_calificaciones_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
       interval: 10s
@@ -133,8 +125,6 @@ services:
       MYSQL_DATABASE: agm_asistencias_db
     ports:
       - "13311:3306"
-    volumes:
-      - db_asistencias_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
       interval: 10s
@@ -152,8 +142,6 @@ services:
       MYSQL_DATABASE: agm_notificaciones_db
     ports:
       - "13312:3306"
-    volumes:
-      - db_notificaciones_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
       interval: 10s
@@ -171,8 +159,6 @@ services:
       MYSQL_DATABASE: agm_reportes_db
     ports:
       - "13313:3306"
-    volumes:
-      - db_reportes_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
       interval: 10s
@@ -190,8 +176,6 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-agm_bus}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-agm_bus_dev_change_me}
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-agm}
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
     ports:
       # 5672: clientes AMQP (smoke test en host). 15672: consola management (solo dev).
       - "5672:5672"
@@ -211,8 +195,6 @@ services:
     container_name: agm-redis
     ports:
       - "6379:6379"
-    volumes:
-      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -788,15 +770,6 @@ services:
 # ============================================
 
 volumes:
-  db_auth_data:
-  db_periodos_data:
-  db_alumnos_data:
-  db_calificaciones_data:
-  db_asistencias_data:
-  db_notificaciones_data:
-  db_reportes_data:
-  redis_data:
-  rabbitmq_data:
   caddy_data:
   caddy_config:
 
