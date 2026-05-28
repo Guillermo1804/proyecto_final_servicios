@@ -106,6 +106,10 @@ EVENT_PUBLISH_RETRIES = config("EVENT_PUBLISH_RETRIES", default=5, cast=int)
 EVENT_PUBLISH_BACKOFF_SECONDS = config("EVENT_PUBLISH_BACKOFF_SECONDS", default=2, cast=float)
 EVENT_QUEUE_NAME = config("EVENT_QUEUE_NAME", default="ms-alumnos.events")
 
+# Demo toggle: permite importar lista de alumnos aunque el NRC del PDF no coincida
+# con la materia seleccionada. En operación real debe mantenerse en False.
+ALLOW_NRC_MISMATCH_DEMO = config("ALLOW_NRC_MISMATCH_DEMO", default=True, cast=bool)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

@@ -55,15 +55,19 @@ def _parse_pdf_alumnos_upload(pdf_file, materia_id: int) -> tuple[list, list, di
 
         materia_ctx = resolve_materia_context(materia_id)
         pdf_nrc = (meta.get("nrc") or "").strip()
+        allow_nrc_mismatch_demo = bool(getattr(settings, "ALLOW_NRC_MISMATCH_DEMO", False))
         if pdf_nrc and materia_ctx.get("nrc") and pdf_nrc != materia_ctx["nrc"]:
-            errores.append(
-                {
-                    "error": (
-                        f"NRC del PDF ({pdf_nrc}) no coincide con la materia "
-                        f"({materia_ctx['nrc']}). Revise que subio el PDF correcto."
-                    )
-                }
-            )
+            # Esto NO deberia permitirse en operación real: el NRC del PDF y de la materia
+            # deben coincidir. Se habilita solo para demostraciones controladas.
+            if not allow_nrc_mismatch_demo:
+                errores.append(
+                    {
+                        "error": (
+                            f"NRC del PDF ({pdf_nrc}) no coincide con la materia "
+                            f"({materia_ctx['nrc']}). Revise que subio el PDF correcto."
+                        )
+                    }
+                )
     except Exception:
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)

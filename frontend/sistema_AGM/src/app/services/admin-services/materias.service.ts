@@ -11,6 +11,7 @@ import {
   extractApiErrorMessage,
   unwrapAgmData,
 } from '../tools/agm-api.helpers';
+import { formatFranjaHorario, parseDiasDesdeHorario } from '../alumno-services/horario-dias.util';
 
 export interface MateriaHorario {
   dia: string;
@@ -135,24 +136,58 @@ export class MateriasService {
       return { horarios: [], salon: '—' };
     }
 
-    const segments = raw.split(/[,;|]/).map((part) => part.trim()).filter(Boolean);
-    const horarios: MateriaHorario[] = [];
+    const segments = raw.split('/').map((part) => part.trim()).filter(Boolean);
+    const groupedByHour = new Map<string, string[]>();
     let salon = '—';
+    const dayCodeByUi: Record<string, string> = {
+      LUN: 'L',
+      MAR: 'A',
+      'MIÉ': 'M',
+      JUE: 'J',
+      VIE: 'V',
+      'SÁB': 'S',
+      DOM: 'D',
+    };
 
     for (const segment of segments) {
-      const salonMatch = segment.match(/\b(\d[A-Z]{2,}\d?\/\d{2,}|[A-Z]-\d{2,}|Lab\.?\s*\d+)\b/i);
+      const normalized = segment.replace(/\s+/g, ' ').trim();
+
+      const salonMatch = normalized.match(
+        /\b(CCO\d+-\d+[A-Z]?|[A-Z]\s*\d{2,4}|LAB\.?\s*\d+)\b/i,
+      );
       if (salonMatch && salon === '—') {
-        salon = salonMatch[1];
+        salon = salonMatch[1].replace(/\s+/g, ' ').trim();
       }
 
-      const dayHour = segment.match(/^([LMAJVSD]+)\s+(.+)$/i);
-      if (dayHour) {
-        horarios.push({ dia: dayHour[1].toUpperCase(), hora: dayHour[2].trim() });
+      const timeMatch = normalized.match(/(\d{3,4}\s*-\s*\d{3,4}|\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})/);
+      if (!timeMatch) {
         continue;
       }
 
-      horarios.push({ dia: '—', hora: segment });
+      const hora = formatFranjaHorario(timeMatch[1]);
+      const dayPart = normalized.slice(0, timeMatch.index).trim();
+      const diasUi = parseDiasDesdeHorario(dayPart, ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']);
+      const dias = diasUi.map((diaUi) => dayCodeByUi[diaUi]).filter(Boolean);
+
+      if (!groupedByHour.has(hora)) {
+        groupedByHour.set(hora, []);
+      }
+      const current = groupedByHour.get(hora)!;
+      for (const dia of dias) {
+        if (!current.includes(dia)) {
+          current.push(dia);
+        }
+      }
+
+      if (!dias.length && !current.includes('—')) {
+        current.push('—');
+      }
     }
+
+    const horarios: MateriaHorario[] = Array.from(groupedByHour.entries()).map(([hora, dias]) => ({
+      dia: dias.join(', '),
+      hora,
+    }));
 
     if (!horarios.length) {
       horarios.push({ dia: '—', hora: raw });
