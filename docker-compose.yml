@@ -773,9 +773,6 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"
-    environment:
-      AGM_DOMAIN: ${AGM_DOMAIN:-agm.aurelyte.iokoia.com}
-      ACME_EMAIL: ${ACME_EMAIL:-}
     volumes:
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
