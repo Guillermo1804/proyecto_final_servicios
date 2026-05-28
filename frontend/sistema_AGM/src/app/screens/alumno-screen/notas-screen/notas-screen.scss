@@ -254,6 +254,131 @@
   }
 }
 
+.grades-count {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.grades-detail {
+  margin-top: 1.2rem;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+.grades-detail-title {
+  margin: 0 0 0.45rem;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.grades-detail-hint,
+.grades-empty {
+  margin: 0 0 0.8rem;
+  font-size: 0.86rem;
+  color: #64748b;
+}
+
+.grade-activity-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.grade-activity-info {
+  min-width: 0;
+
+  strong {
+    display: block;
+    margin: 0;
+    font-size: 0.96rem;
+  }
+}
+
+.grade-rubro {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.grade-activity-score {
+  min-width: 130px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.45rem 0.65rem;
+  text-align: center;
+  background: #f8fafc;
+
+  &.verde {
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #166534;
+  }
+
+  &.naranja {
+    border-color: #fcd34d;
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  &.rojo {
+    border-color: #fecaca;
+    background: #fff1f2;
+    color: #b91c1c;
+  }
+
+  &.gris {
+    color: #475569;
+  }
+}
+
+.grade-label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+.grade-value-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+
+  strong {
+    font-size: 1.25rem;
+    line-height: 1.1;
+  }
+}
+
+.grade-scale {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.grade-pending {
+  font-size: 0.9rem !important;
+}
+
+.grades-summary-block {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.summary-grid {
+  margin-top: 0.7rem;
+}
+
+.summary-card h4 {
+  font-size: 1.45rem;
+}
+
 /* HISTORY */
 
 .history-header {
@@ -355,6 +480,17 @@
     transform var(--transition-base),
     box-shadow var(--transition-base),
     border-color var(--transition-base);
+}
+
+@media (max-width: 640px) {
+  .grade-activity-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .grade-activity-score {
+    width: 100%;
+  }
 }
 
 .hero {

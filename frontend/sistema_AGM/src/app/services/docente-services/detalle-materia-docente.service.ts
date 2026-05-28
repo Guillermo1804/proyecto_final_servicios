@@ -7,7 +7,7 @@ import { ConcentradoMateriaDto } from '../../models/calificaciones-api.model';
 import { MateriaApiDto } from '../../models/periodos-api.model';
 import { AlumnosService } from '../alumno-services/alumnos.service';
 import { CalificacionesService } from './calificaciones.service';
-import { buildApiUrl, extractAgmListData, unwrapAgmData } from '../tools/agm-api.helpers';
+import { buildApiUrl, extractAgmListData, extractApiErrorMessage, unwrapAgmData } from '../tools/agm-api.helpers';
 
 export interface DetalleMateriaAlumnoItem {
   iniciales: string;
@@ -303,8 +303,52 @@ export class DetalleMateriaDocenteService {
     }
     const calificacion = this.setCalificacionActividad(actividad, alumno.matricula, valor);
     return this.calificaciones
-      .upsertCalificacion(actividad.actividadId, alumno.alumnoId, calificacion)
+      .upsertCalificacion(actividad.actividadId, alumno.alumnoId, calificacion, {
+        matricula: alumno.matricula,
+        nombre: alumno.nombre,
+        email: alumno.email,
+      })
       .pipe(map(() => calificacion));
+  }
+
+  persistirCalificacionesActividad(
+    actividad: DetalleMateriaActividadItem,
+    alumnos: DetalleMateriaAlumnoItem[],
+  ): Observable<{ guardadas: number; fallos: number; detalleError: string }> {
+    if (!actividad.actividadId) {
+      return of({ guardadas: 0, fallos: 0, detalleError: 'La actividad no tiene id en MS-4.' });
+    }
+
+    const inscribibles = alumnos.filter((alumno) => alumno.alumnoId);
+    if (!inscribibles.length) {
+      return of({ guardadas: 0, fallos: 0, detalleError: 'No hay alumnos con id para guardar.' });
+    }
+
+    const peticiones = inscribibles.map((alumno) => {
+      const valor = this.obtenerCalificacionActividad(actividad, alumno.matricula);
+      return this.persistirCalificacion(actividad, alumno, valor).pipe(
+        map(() => ({ ok: true as const })),
+        catchError((err) =>
+          of({
+            ok: false as const,
+            mensaje: extractApiErrorMessage(err, 'Error al guardar'),
+          }),
+        ),
+      );
+    });
+
+    return forkJoin(peticiones).pipe(
+      map((resultados) => {
+        const guardadas = resultados.filter((item) => item.ok).length;
+        const fallos = resultados.length - guardadas;
+        const primerError = resultados.find((item) => !item.ok && 'mensaje' in item);
+        return {
+          guardadas,
+          fallos,
+          detalleError: primerError && 'mensaje' in primerError ? primerError.mensaje : '',
+        };
+      }),
+    );
   }
 
   importarCalificacionesExcel(materiaId: number, archivo: File) {

@@ -125,4 +125,21 @@ export class NotasScreen implements OnInit {
   calcularPromedioGeneral(): void {
     this.promedioGeneral = this.notasService.calcularPromedioGeneral(this.materias);
   }
+
+  colorNota(calificacion: number | null): string {
+    if (calificacion === null || calificacion === undefined) {
+      return 'gris';
+    }
+    if (calificacion >= 8) {
+      return 'verde';
+    }
+    if (calificacion >= 6) {
+      return 'naranja';
+    }
+    return 'rojo';
+  }
+
+  cantidadNotasRegistradas(materia: MateriaAlumno): number {
+    return materia.actividades.filter((a) => a.calificacion !== null).length;
+  }
 }

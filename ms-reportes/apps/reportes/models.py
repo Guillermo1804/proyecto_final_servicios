@@ -65,6 +65,17 @@ class ReportePeriodoProjection(models.Model):
         db_table = 'reporte_periodo_projection'
 
 
+class ReporteDocenteProjection(models.Model):
+    docente_id = models.IntegerField(primary_key=True)
+    usuario_id = models.IntegerField(null=True, blank=True, db_index=True)
+    email = models.EmailField(db_index=True)
+    nombre = models.CharField(max_length=255, blank=True, default='')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'reporte_docente_projection'
+
+
 class ReporteMateriaProjection(models.Model):
     materia_id = models.IntegerField(primary_key=True)
     periodo_id = models.IntegerField(db_index=True)

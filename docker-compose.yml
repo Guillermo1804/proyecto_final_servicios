@@ -1,9 +1,52 @@
+# =============================================
+# AGM — docker-compose.yml (perfil completo / produccion local)
+#
+# Stack coordinado (docker compose up --build):
+#   Infra: rabbitmq, redis, 7x MySQL (db-auth ... db-reportes)
+#   API: ms-auth, ms-periodos, ms-alumnos, ms-calificaciones, ms-asistencias,
+#        ms-notificaciones, ms-reportes, nginx (gateway :8080)
+#   Outbox workers (5): ms-auth-outbox-worker, ms-periodos-outbox-worker,
+#        ms-alumnos-outbox-worker, ms-calificaciones-worker-outbox,
+#        ms-asistencias-worker-outbox
+#   Consumer workers (7): ms-auth-event-consumer, ms-periodos-worker-consumer,
+#        ms-alumnos-worker-consumer, ms-calificaciones-worker-consumer,
+#        ms-asistencias-worker-consumer, ms-notificaciones-worker-consumer,
+#        ms-reportes-worker-consumer
+#
+# Comando (Compose V2 plugin, recomendado):
+#   docker compose up --build
+# Alternativa (binario legacy):
+#   docker-compose up --build
+#
+# Variables en cada ms-*/.env (desde .env.example):
+#   DB_HOST = nombre del servicio de BD (ej. db-auth), puerto 3306 *interno*
+#   MS_*_GRPC_HOST = nombre del contenedor del otro MS (ej. ms-auth)
+#
+# MySQL expuesto al host (depuración; dentro de Docker usar DB_HOST y puerto 3306):
+#   db-auth → localhost:13307 … db-reportes → localhost:13313
+#
+# API Gateway + Frontend Angular en servicio `nginx` (imagen multi-stage).
+# Sin puertos en el host aquí: desarrollo → docker-compose.dev.yml (:8080); Coolify/prod → docker-compose.prod.yml.
+#
+# Requisito: cada ./ms-* incluye Dockerfile + entrypoint.sh; copiar ms-*/.env desde .env.example.
+# Healthcheck REST: GET /health/ en cada MS (Epic 1).
+#
+# Bus de eventos (Fase 1): servicio rabbitmq en agm-network.
+# Smoke test desde host: docker compose up -d rabbitmq && python packages/agm_events/smoke_test.py
+# =============================================
+
 x-ms-healthcheck: &ms-healthcheck
   interval: 15s
   timeout: 5s
   retries: 5
   start_period: 60s
+
 services:
+
+  # ============================================
+  # BASES DE DATOS
+  # ============================================
+
   db-auth:
     image: mysql:8.0
     container_name: agm-db-auth
@@ -22,6 +65,7 @@ services:
       retries: 5
     networks:
       - agm-network
+
   db-periodos:
     image: mysql:8.0
     container_name: agm-db-periodos
@@ -40,6 +84,7 @@ services:
       retries: 5
     networks:
       - agm-network
+
   db-alumnos:
     image: mysql:8.0
     container_name: agm-db-alumnos
@@ -58,6 +103,7 @@ services:
       retries: 5
     networks:
       - agm-network
+
   db-calificaciones:
     image: mysql:8.0
     container_name: agm-db-calificaciones
@@ -76,6 +122,7 @@ services:
       retries: 5
     networks:
       - agm-network
+
   db-asistencias:
     image: mysql:8.0
     container_name: agm-db-asistencias
@@ -94,6 +141,7 @@ services:
       retries: 5
     networks:
       - agm-network
+
   db-notificaciones:
     image: mysql:8.0
     container_name: agm-db-notificaciones
@@ -112,6 +160,7 @@ services:
       retries: 5
     networks:
       - agm-network
+
   db-reportes:
     image: mysql:8.0
     container_name: agm-db-reportes
@@ -130,6 +179,8 @@ services:
       retries: 5
     networks:
       - agm-network
+
+  # Bus de eventos — RabbitMQ (Fase 1+)
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: agm-rabbitmq
@@ -152,6 +203,8 @@ services:
       start_period: 30s
     networks:
       - agm-network
+
+  # Redis para MS-5 (sesiones QR en vivo)
   redis:
     image: redis:7-alpine
     container_name: agm-redis
@@ -166,11 +219,17 @@ services:
       retries: 5
     networks:
       - agm-network
+
+  # ============================================
+  # MICROSERVICIOS
+  # ============================================
+
   ms-auth:
     build:
       context: .
       dockerfile: ms-auth/Dockerfile
     container_name: agm-ms-auth
+    env_file: ./ms-auth/.env
     ports:
       - "8001:8001"
       - "50051:50051"
@@ -179,11 +238,6 @@ services:
       USE_EVENT_BUS: "true"
       JWT_ALGORITHM: RS256
       EVENT_CONTRACTS_DIR: /contracts/events
-      DB_HOST: db-auth
-      DB_PORT: '3306'
-      DB_NAME: agm_auth_db
-      DB_USER: root
-      DB_PASSWORD: root_password
     depends_on:
       db-auth:
         condition: service_healthy
@@ -195,20 +249,56 @@ services:
     networks:
       - agm-network
 
+  # Fase 2 — relay outbox MS-1 → RabbitMQ
+  ms-auth-outbox-worker:
+    build:
+      context: .
+      dockerfile: ms-auth/Dockerfile
+    container_name: agm-ms-auth-outbox
+    env_file: ./ms-auth/.env
+    environment:
+      AGM_RUN_MODE: outbox-worker
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-auth:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-auth:
+        condition: service_healthy
+    networks:
+      - agm-network
+
+  # Fase 2 — consumidor MS-1 (user.create_requested.v1)
+  ms-auth-event-consumer:
+    build:
+      context: .
+      dockerfile: ms-auth/Dockerfile
+    container_name: agm-ms-auth-consumer
+    env_file: ./ms-auth/.env
+    environment:
+      AGM_RUN_MODE: event-consumer
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-auth:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - agm-network
+
   ms-periodos:
     build:
       context: .
       dockerfile: ms-periodos/Dockerfile
     container_name: agm-ms-periodos
+    env_file: ./ms-periodos/.env
     environment:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
       JWT_JWKS_URL: http://ms-auth:8001/.well-known/jwks.json
-      DB_HOST: db-periodos
-      DB_PORT: '3306'
-      DB_NAME: agm_periodos_db
-      DB_USER: root
-      DB_PASSWORD: root_password
     ports:
       - "8002:8002"
       - "50052:50052"
@@ -224,11 +314,53 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8002/health/')\""]
     networks:
       - agm-network
+
+  ms-periodos-outbox-worker:
+    build:
+      context: .
+      dockerfile: ms-periodos/Dockerfile
+    container_name: agm-ms-periodos-outbox
+    env_file: ./ms-periodos/.env
+    environment:
+      AGM_RUN_MODE: outbox-worker
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-periodos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-periodos:
+        condition: service_healthy
+    networks:
+      - agm-network
+
+  ms-periodos-worker-consumer:
+    build:
+      context: .
+      dockerfile: ms-periodos/Dockerfile
+    container_name: agm-ms-periodos-consumer
+    env_file: ./ms-periodos/.env
+    environment:
+      AGM_RUN_MODE: event-consumer
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-periodos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-periodos:
+        condition: service_healthy
+    networks:
+      - agm-network
+
   ms-alumnos:
     build:
       context: .
       dockerfile: ms-alumnos/Dockerfile
     container_name: agm-ms-alumnos
+    env_file: ./ms-alumnos/.env
     environment:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
@@ -236,11 +368,6 @@ services:
       MS_AUTH_HTTP_URL: http://ms-auth:8001
       MS_AUTH_HTTP_TIMEOUT: "10"
       INTERNAL_API_KEY: cambiar-en-produccion
-      DB_HOST: db-alumnos
-      DB_PORT: '3306'
-      DB_NAME: agm_alumnos_db
-      DB_USER: root
-      DB_PASSWORD: root_password
     ports:
       - "8003:8003"
       - "50053:50053"
@@ -256,20 +383,57 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8003/health/')\""]
     networks:
       - agm-network
+
+  ms-alumnos-outbox-worker:
+    build:
+      context: .
+      dockerfile: ms-alumnos/Dockerfile
+    container_name: agm-ms-alumnos-outbox
+    env_file: ./ms-alumnos/.env
+    environment:
+      AGM_RUN_MODE: outbox-worker
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-alumnos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-alumnos:
+        condition: service_healthy
+    networks:
+      - agm-network
+
+  ms-alumnos-worker-consumer:
+    build:
+      context: .
+      dockerfile: ms-alumnos/Dockerfile
+    container_name: agm-ms-alumnos-consumer
+    env_file: ./ms-alumnos/.env
+    environment:
+      AGM_RUN_MODE: event-consumer
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-alumnos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-alumnos:
+        condition: service_healthy
+    networks:
+      - agm-network
+
   ms-calificaciones:
     build:
       context: .
       dockerfile: ms-calificaciones/Dockerfile
     container_name: agm-ms-calificaciones
+    env_file: ./ms-calificaciones/.env
     environment:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
       JWT_JWKS_URL: http://ms-auth:8001/.well-known/jwks.json
-      DB_HOST: db-calificaciones
-      DB_PORT: '3306'
-      DB_NAME: agm_calificaciones_db
-      DB_USER: root
-      DB_PASSWORD: root_password
     ports:
       - "8004:8004"
     depends_on:
@@ -284,20 +448,57 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8004/health/')\""]
     networks:
       - agm-network
+
+  ms-calificaciones-worker-outbox:
+    build:
+      context: .
+      dockerfile: ms-calificaciones/Dockerfile
+    container_name: agm-ms-calificaciones-outbox
+    env_file: ./ms-calificaciones/.env
+    environment:
+      AGM_RUN_MODE: event-outbox
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-calificaciones:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-calificaciones:
+        condition: service_healthy
+    networks:
+      - agm-network
+
+  ms-calificaciones-worker-consumer:
+    build:
+      context: .
+      dockerfile: ms-calificaciones/Dockerfile
+    container_name: agm-ms-calificaciones-consumer
+    env_file: ./ms-calificaciones/.env
+    environment:
+      AGM_RUN_MODE: event-consumer
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-calificaciones:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-calificaciones:
+        condition: service_healthy
+    networks:
+      - agm-network
+
   ms-asistencias:
     build:
       context: .
       dockerfile: ms-asistencias/Dockerfile
     container_name: agm-ms-asistencias
+    env_file: ./ms-asistencias/.env
     environment:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
       JWT_JWKS_URL: http://ms-auth:8001/.well-known/jwks.json
-      DB_HOST: db-asistencias
-      DB_PORT: '3306'
-      DB_NAME: agm_asistencias_db
-      DB_USER: root
-      DB_PASSWORD: root_password
     ports:
       - "8005:8005"
     depends_on:
@@ -314,19 +515,56 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8005/health/')\""]
     networks:
       - agm-network
+
+  ms-asistencias-worker-outbox:
+    build:
+      context: .
+      dockerfile: ms-asistencias/Dockerfile
+    container_name: agm-ms-asistencias-outbox
+    env_file: ./ms-asistencias/.env
+    environment:
+      AGM_RUN_MODE: event-outbox
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-asistencias:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-asistencias:
+        condition: service_healthy
+    networks:
+      - agm-network
+
+  ms-asistencias-worker-consumer:
+    build:
+      context: .
+      dockerfile: ms-asistencias/Dockerfile
+    container_name: agm-ms-asistencias-consumer
+    env_file: ./ms-asistencias/.env
+    environment:
+      AGM_RUN_MODE: event-consumer
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-asistencias:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-asistencias:
+        condition: service_healthy
+    networks:
+      - agm-network
+
   ms-notificaciones:
     build:
       context: .
       dockerfile: ms-notificaciones/Dockerfile
     container_name: agm-ms-notificaciones
+    env_file: ./ms-notificaciones/.env
     environment:
       USE_EVENT_BUS: "true"
       EVENT_CONTRACTS_DIR: /contracts/events
-      DB_HOST: db-notificaciones
-      DB_PORT: '3306'
-      DB_NAME: agm_notificaciones_db
-      DB_USER: root
-      DB_PASSWORD: root_password
     ports:
       - "8006:8006"
     depends_on:
@@ -339,11 +577,33 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8006/health/')\""]
     networks:
       - agm-network
+
+  ms-notificaciones-worker-consumer:
+    build:
+      context: .
+      dockerfile: ms-notificaciones/Dockerfile
+    container_name: agm-ms-notificaciones-consumer
+    env_file: ./ms-notificaciones/.env
+    environment:
+      AGM_RUN_MODE: event-consumer
+      USE_EVENT_BUS: "true"
+      EVENT_CONTRACTS_DIR: /contracts/events
+    depends_on:
+      db-notificaciones:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-notificaciones:
+        condition: service_healthy
+    networks:
+      - agm-network
+
   ms-reportes:
     build:
       context: .
       dockerfile: ms-reportes/Dockerfile
     container_name: agm-ms-reportes
+    env_file: ./ms-reportes/.env
     environment:
       USE_EVENT_BUS: "true"
       JWT_JWKS_URL: http://ms-auth:8001/.well-known/jwks.json
@@ -354,11 +614,6 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-agm_bus_dev_change_me}
       RABBITMQ_VHOST: ${RABBITMQ_VHOST:-agm}
       EVENT_EXCHANGE: agm.domain
-      DB_HOST: db-reportes
-      DB_PORT: '3306'
-      DB_NAME: agm_reportes_db
-      DB_USER: root
-      DB_PASSWORD: root_password
     ports:
       - "8007:8007"
       - "50057:50057"
@@ -374,13 +629,41 @@ services:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8007/health/')\""]
     networks:
       - agm-network
+
+  # Fase 8 — consumidor analítico MS-7 (proyecciones locales db-reportes)
+  ms-reportes-worker-consumer:
+    build:
+      context: .
+      dockerfile: ms-reportes/Dockerfile
+    container_name: agm-ms-reportes-consumer
+    env_file: ./ms-reportes/.env
+    environment:
+      AGM_RUN_MODE: event-consumer
+      USE_EVENT_BUS: "true"
+      JWT_JWKS_URL: http://ms-auth:8001/.well-known/jwks.json
+      EVENT_CONTRACTS_DIR: /contracts/events
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-agm_bus}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-agm_bus_dev_change_me}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-agm}
+      EVENT_EXCHANGE: agm.domain
+    depends_on:
+      db-reportes:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-reportes:
+        condition: service_healthy
+    networks:
+      - agm-network
+
   nginx:
-    image: nginx:1.25-alpine
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
     container_name: agm-nginx-gateway
-    ports:
-      - "8080:80"
-    volumes:
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    # No publicar 80/8080 en el host desde el compose base (Coolify/Caddy usa 80/443 del host).
     depends_on:
       ms-auth:
         condition: service_healthy
@@ -404,6 +687,11 @@ services:
       start_period: 5s
     networks:
       - agm-network
+
+# ============================================
+# VOLUMES & NETWORKS
+# ============================================
+
 volumes:
   db_auth_data:
   db_periodos_data:
@@ -414,6 +702,7 @@ volumes:
   db_reportes_data:
   redis_data:
   rabbitmq_data:
+
 networks:
   agm-network:
     driver: bridge

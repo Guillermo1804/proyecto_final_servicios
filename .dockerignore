@@ -1,0 +1,16 @@
+**/.git
+**/.cursor
+**/node_modules
+**/.angular
+**/dist
+**/__pycache__
+**/*.pyc
+**/.venv
+**/venv
+**/.env
+!**/.env.example
+**/terminals
+**/*.md
+!docs/DEPLOY_COOLIFY.md
+**/.idea
+**/.vscode

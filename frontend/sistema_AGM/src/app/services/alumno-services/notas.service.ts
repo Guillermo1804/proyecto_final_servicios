@@ -3,6 +3,7 @@ import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import {
+  ActividadesMateriaDto,
   AlumnoConcentradoDto,
   ConcentradoMateriaDto,
 } from '../../models/calificaciones-api.model';
@@ -18,6 +19,16 @@ export interface ParcialMateria {
   activo?: boolean;
 }
 
+/** Calificación explícita de una actividad (la que capturó el docente en MS-4). */
+export interface CalificacionActividadAlumno {
+  actividadId: number;
+  nombre: string;
+  categoria: string;
+  categoriaPorcentaje: number;
+  /** null = el docente aún no registra nota en esa actividad */
+  calificacion: number | null;
+}
+
 export interface MateriaAlumno {
   materiaId: number;
   alumnoId: number;
@@ -28,7 +39,11 @@ export interface MateriaAlumno {
   profesor: string;
   promedio: number;
   promedioColor: string;
+  promedioReal: number | null;
+  promedioRedondeado: number | null;
   expandido: boolean;
+  /** Actividades del plan con la nota recibida (o pendiente). */
+  actividades: CalificacionActividadAlumno[];
   parciales: ParcialMateria[];
   dropped?: boolean;
 }
@@ -73,12 +88,17 @@ export class NotasService {
           });
         }
 
-        const requests = activas.map((inscripcion, index) =>
-          this.calificaciones.getConcentrado(Number(inscripcion.materia_id)).pipe(
-            map((concentrado) => this.mapMateria(inscripcion, concentrado, index)),
-            catchError(() => of(this.mapMateria(inscripcion, null, index))),
-          ),
-        );
+        const requests = activas.map((inscripcion, index) => {
+          const materiaId = Number(inscripcion.materia_id);
+          return forkJoin({
+            concentrado: this.calificaciones.getConcentrado(materiaId).pipe(catchError(() => of(null))),
+            actividades: this.calificaciones.getActividades(materiaId).pipe(catchError(() => of(null))),
+          }).pipe(
+            map(({ concentrado, actividades }) =>
+              this.mapMateria(inscripcion, concentrado, actividades, index),
+            ),
+          );
+        });
 
         return forkJoin(requests).pipe(
           map((materias) => {
@@ -116,7 +136,10 @@ export class NotasService {
     }
 
     const activos = materia.parciales.filter(
-      (p) => p.valor !== null && p.valor !== undefined && p.titulo !== 'Promedio real',
+      (p) =>
+        p.valor !== null &&
+        p.valor !== undefined &&
+        !p.titulo.toLowerCase().includes('promedio'),
     );
     if (!activos.length) {
       materia.promedio = 0;
@@ -166,13 +189,7 @@ export class NotasService {
       return 0;
     }
     const conCalificacion = activas.filter((m) =>
-      m.parciales.some(
-        (p) =>
-          p.valor !== null &&
-          p.valor !== undefined &&
-          p.titulo !== 'Sin calificaciones' &&
-          !p.titulo.startsWith('Sin '),
-      ),
+      m.actividades.some((a) => a.calificacion !== null && a.calificacion !== undefined),
     ).length;
     return Math.round((conCalificacion / activas.length) * 100);
   }
@@ -180,13 +197,18 @@ export class NotasService {
   private mapMateria(
     inscripcion: InscripcionMateriaApiDto,
     concentrado: ConcentradoMateriaDto | null,
+    actividadesDto: ActividadesMateriaDto | null,
     index: number,
   ): MateriaAlumno {
     const alumno = inscripcion.alumno;
     const matricula = String(alumno?.matricula ?? '');
     const row = concentrado?.alumnos?.find((item) => item.matricula === matricula);
-    const parciales = this.mapParciales(row, concentrado);
-    const promedio = Number(row?.promedio_redondeado) || 0;
+    const actividades = this.mapActividadesConNotas(row, concentrado, actividadesDto);
+    const parciales = this.mapParcialesResumen(row);
+    const promedioRedondeado =
+      row?.promedio_redondeado != null ? Number(row.promedio_redondeado) : null;
+    const promedioReal = row?.promedio_real != null ? Number(row.promedio_real) : null;
+    const promedio = promedioRedondeado ?? 0;
 
     return {
       materiaId: Number(inscripcion.materia_id),
@@ -198,43 +220,77 @@ export class NotasService {
       profesor: String(inscripcion.docente_nombre ?? '—'),
       promedio,
       promedioColor: promedio >= 8 ? 'verde' : promedio >= 6 ? 'naranja' : 'rojo',
+      promedioReal,
+      promedioRedondeado,
       expandido: false,
+      actividades,
       parciales,
       dropped: !inscripcion.activa,
     };
   }
 
-  private mapParciales(
+  private mapActividadesConNotas(
     row: AlumnoConcentradoDto | undefined,
     concentrado: ConcentradoMateriaDto | null,
-  ): ParcialMateria[] {
-    if (!row) {
-      return [{ titulo: 'Sin calificaciones', valor: null, porcentaje: 100, activo: true }];
-    }
-
-    const parciales: ParcialMateria[] = [];
-    const calificaciones = row.calificaciones ?? [];
-    const actividadNombre = new Map<number, string>();
-
-    for (const categoria of concentrado?.categorias ?? []) {
-      for (const actividad of categoria.actividades ?? []) {
-        actividadNombre.set(actividad.id, actividad.nombre);
+    actividadesDto: ActividadesMateriaDto | null,
+  ): CalificacionActividadAlumno[] {
+    const notasPorActividad = new Map<number, number>();
+    for (const item of row?.calificaciones ?? []) {
+      const id = Number(item.actividad_id);
+      if (!Number.isNaN(id)) {
+        notasPorActividad.set(id, Number(item.calificacion));
       }
     }
 
-    for (const item of calificaciones) {
-      const titulo =
-        item.actividad_nombre ||
-        actividadNombre.get(Number(item.actividad_id)) ||
-        item.categoria ||
-        `Actividad ${item.actividad_id}`;
-      parciales.push({
-        titulo,
-        valor: Number(item.calificacion),
-        porcentaje: 100,
-        activo: true,
+    const lista: CalificacionActividadAlumno[] = [];
+    const categorias = concentrado?.categorias?.length
+      ? concentrado.categorias
+      : (actividadesDto?.categorias ?? []).map((c) => ({
+          nombre: c.categoria_nombre,
+          porcentaje: c.categoria_porcentaje,
+          actividades: (c.actividades ?? []).map((a) => ({ id: a.id, nombre: a.nombre })),
+        }));
+
+    for (const categoria of categorias) {
+      const catNombre = String(categoria.nombre ?? 'Rubro');
+      const catPct = Number(categoria.porcentaje) || 0;
+      for (const actividad of categoria.actividades ?? []) {
+        const actividadId = Number(actividad.id);
+        lista.push({
+          actividadId,
+          nombre: String(actividad.nombre ?? `Actividad ${actividadId}`),
+          categoria: catNombre,
+          categoriaPorcentaje: catPct,
+          calificacion: notasPorActividad.has(actividadId)
+            ? notasPorActividad.get(actividadId)!
+            : null,
+        });
+      }
+    }
+
+    for (const item of row?.calificaciones ?? []) {
+      const actividadId = Number(item.actividad_id);
+      if (lista.some((entry) => entry.actividadId === actividadId)) {
+        continue;
+      }
+      lista.push({
+        actividadId,
+        nombre: String(item.actividad_nombre ?? `Actividad ${actividadId}`),
+        categoria: String(item.categoria ?? '—'),
+        categoriaPorcentaje: 0,
+        calificacion: Number(item.calificacion),
       });
     }
+
+    return lista;
+  }
+
+  private mapParcialesResumen(row: AlumnoConcentradoDto | undefined): ParcialMateria[] {
+    if (!row) {
+      return [];
+    }
+
+    const parciales: ParcialMateria[] = [];
 
     if (row.promedio_redondeado != null) {
       parciales.push({
@@ -247,15 +303,11 @@ export class NotasService {
 
     if (row.promedio_real != null) {
       parciales.push({
-        titulo: 'Promedio real',
+        titulo: 'Promedio ponderado real',
         valor: Number(row.promedio_real),
         porcentaje: 100,
         activo: false,
       });
-    }
-
-    if (!parciales.length) {
-      return [{ titulo: 'Sin calificaciones', valor: null, porcentaje: 100, activo: true }];
     }
 
     return parciales;

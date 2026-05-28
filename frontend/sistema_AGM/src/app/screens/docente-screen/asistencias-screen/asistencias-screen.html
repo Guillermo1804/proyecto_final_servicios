@@ -49,21 +49,28 @@
           </div>
 
           <label class="materia-select-field">
-            <span>Materia impartida</span>
+            <span class="field-label">Materia impartida</span>
 
-            <select
-              [ngModel]="materiaSeleccionadaId"
-              (ngModelChange)="seleccionarMateria($event)"
-              [disabled]="materiasDocente.length === 0"
-            >
-              <option [ngValue]="null" disabled>
-                Selecciona una materia
-              </option>
+            <div class="select-shell">
+              <i class="bi bi-journal-bookmark select-icon"></i>
+              <select
+                [ngModel]="materiaSeleccionadaId"
+                (ngModelChange)="seleccionarMateria($event)"
+                [disabled]="materiasDocente.length === 0"
+              >
+                <option [ngValue]="null" disabled>
+                  Selecciona una materia
+                </option>
 
-              <option *ngFor="let materia of materiasDocente" [ngValue]="materia.id">
-                {{ materia.clave }} - {{ materia.materia }} (Grupo {{ materia.seccion }})
-              </option>
-            </select>
+                <option *ngFor="let materia of materiasDocente" [ngValue]="materia.id">
+                  {{ materia.clave }} - {{ materia.materia }} (Grupo {{ materia.seccion }})
+                </option>
+              </select>
+            </div>
+
+            <small class="field-helper" *ngIf="materiasDocente.length > 0">
+              {{ materiasDocente.length }} materia(s) disponible(s) para pase de lista
+            </small>
           </label>
 
           <div class="session-setup-helper" *ngIf="materiaSeleccionada">

@@ -9,7 +9,13 @@ from decouple import config
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.core.models import AlumnoMateriaProjection, Calificacion, MateriaProjection, Ponderacion
+from apps.core.models import (
+    AlumnoMateriaProjection,
+    Calificacion,
+    DocenteProjection,
+    MateriaProjection,
+    Ponderacion,
+)
 from apps.core.event_bus import projection_service as proj
 
 logger = logging.getLogger(__name__)
@@ -43,16 +49,18 @@ class Command(BaseCommand):
         materias = 0
         inscripciones = 0
 
+        docentes = 0
         if not options['from_local_only']:
             materias += self._backfill_from_periodos()
             inscripciones += self._backfill_from_alumnos()
+            docentes = self._backfill_docentes_from_alumnos()
 
         materias += self._backfill_from_local_calificaciones()
         inscripciones += self._backfill_inscripciones_from_local_grades()
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'Backfill completado: materias={materias}, inscripciones={inscripciones}'
+                f'Backfill completado: materias={materias}, inscripciones={inscripciones}, docentes={docentes}'
             )
         )
 
@@ -120,6 +128,35 @@ class Command(BaseCommand):
                         activa=bool(row[5]),
                     )
                     count += 1
+        finally:
+            conn.close()
+        return count
+
+    def _backfill_docentes_from_alumnos(self) -> int:
+        conn = _mysql_conn('BACKFILL_ALUMNOS_DB')
+        if conn is None:
+            self.stdout.write('BACKFILL_ALUMNOS_DB_* no configurado — omitiendo docentes MS-3')
+            return 0
+        count = 0
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, usuario_id, email, nombre, apellido
+                FROM core_docente
+                """
+            )
+            for row in cur.fetchall():
+                nombre = f"{row[3] or ''} {row[4] or ''}".strip()
+                DocenteProjection.objects.update_or_create(
+                    docente_id=row[0],
+                    defaults={
+                        'usuario_id': row[1],
+                        'email': row[2] or '',
+                        'nombre': nombre,
+                    },
+                )
+                count += 1
         finally:
             conn.close()
         return count

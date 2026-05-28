@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from apps.core.models import AlumnoMateriaProjection, MateriaProjection, UserProjection
+from apps.core.models import AlumnoMateriaProjection, DocenteProjection, MateriaProjection, UserProjection
+
+
+def _link_docente_usuario_by_email(*, usuario_id: int, email: str) -> None:
+    normalized = (email or '').strip().lower()
+    if not normalized:
+        return
+    DocenteProjection.objects.filter(email__iexact=normalized).update(usuario_id=usuario_id)
 
 
 def upsert_user(payload: dict[str, Any]) -> None:
@@ -15,6 +22,25 @@ def upsert_user(payload: dict[str, Any]) -> None:
             'nombre': payload.get('nombre', ''),
             'rol': payload.get('rol', ''),
             'activo': bool(payload.get('activo', True)),
+        },
+    )
+    if (payload.get('rol') or '').lower() == 'docente':
+        _link_docente_usuario_by_email(
+            usuario_id=int(payload['user_id']),
+            email=str(payload.get('email', '')),
+        )
+
+
+def upsert_docente(payload: dict[str, Any]) -> None:
+    docente_id = payload.get('docente_id')
+    if docente_id is None:
+        return
+    nombre = f"{payload.get('nombre', '')} {payload.get('apellido', '')}".strip()
+    DocenteProjection.objects.update_or_create(
+        docente_id=int(docente_id),
+        defaults={
+            'email': payload.get('email', '') or '',
+            'nombre': nombre,
         },
     )
 

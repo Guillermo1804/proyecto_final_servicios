@@ -88,6 +88,9 @@ class CalificacionInputSerializer(serializers.Serializer):
     actividad_id = serializers.IntegerField()
     alumno_id = serializers.IntegerField()
     calificacion = serializers.DecimalField(max_digits=4, decimal_places=2, min_value=Decimal('0.00'), max_value=Decimal('10.00'))
+    matricula = serializers.CharField(required=False, allow_blank=True, max_length=32)
+    nombre = serializers.CharField(required=False, allow_blank=True, max_length=255)
+    email = serializers.EmailField(required=False, allow_blank=True)
 
     def validate_actividad_id(self, value):
         if not Actividad.objects.filter(id=value).exists():

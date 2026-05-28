@@ -41,14 +41,17 @@ export function buildApiUrl(path: string): string {
   const normalizedPath = path.replace(/^\//, '');
   const baseUrl = resolveApiBaseUrl();
 
-  if (!baseUrl || isLocalhostBaseUrl(baseUrl)) {
+  // Sin base URL: ng serve + proxy.conf.json (mismo comportamiento en cualquier máquina).
+  if (!baseUrl) {
     const localBaseUrl = resolveLocalServiceBaseUrl(normalizedPath);
     if (localBaseUrl) {
       return `${localBaseUrl}/${normalizedPath}`;
     }
+    return `/${normalizedPath}`;
   }
 
-  return baseUrl ? `${baseUrl}/${normalizedPath}` : `/${normalizedPath}`;
+  // Base explícita (p. ej. http://127.0.0.1:8080 o '' en prod tras Nginx): siempre gateway.
+  return `${baseUrl}/${normalizedPath}`;
 }
 
 function isLocalhostBaseUrl(baseUrl: string): boolean {
@@ -161,7 +164,7 @@ export function extractApiErrorMessage(error: unknown, fallback: string): string
       return String((body as { message: string }).message || fallback);
     }
     if (error.status === 0) {
-      return 'No se pudo conectar con el servidor. Verifica que Nginx y ms-periodos esten activos.';
+      return 'No se pudo conectar con el servidor. Verifica que Nginx (:8080) y los microservicios esten activos (docker compose ps).';
     }
   }
   return fallback;

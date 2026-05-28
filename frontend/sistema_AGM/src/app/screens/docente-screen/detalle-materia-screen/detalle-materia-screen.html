@@ -251,14 +251,49 @@
 
     <div>
       <h3>Plan de Evaluación</h3>
-      <p>Configure los rubros y ponderaciones.</p>
+      <p *ngIf="planEnModoEdicion">Configure los rubros y ponderaciones, luego guarde el plan.</p>
+      <p *ngIf="planEnModoGuardado" class="plan-status-ok">
+        <i class="bi bi-check-circle-fill"></i>
+        Plan guardado en MS-4 ({{ rubrosEvaluacion.length }} rubros · {{ totalEvaluacion }}%)
+      </p>
     </div>
 
-    <div class="total-box">
-      {{ totalEvaluacion }}%
+    <div class="evaluation-top-actions">
+      <div class="total-box">
+        {{ totalEvaluacion }}%
+      </div>
+
+      <button
+        *ngIf="planEnModoGuardado"
+        type="button"
+        class="plan-toggle-btn"
+        (click)="alternarPlanExpandido()"
+      >
+        <i class="bi" [ngClass]="planExpandido ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+        {{ planExpandido ? 'Ocultar' : 'Ver detalle' }}
+      </button>
     </div>
 
   </div>
+
+  <div class="plan-saved-summary" *ngIf="planEnModoGuardado">
+    <article class="plan-saved-item" *ngFor="let rubro of rubrosEvaluacion">
+      <div>
+        <strong>{{ rubro.nombre }}</strong>
+        <p *ngIf="planExpandido">{{ rubro.descripcion || 'Sin descripción' }}</p>
+      </div>
+      <span class="plan-saved-pct">{{ rubro.porcentaje }}%</span>
+    </article>
+
+    <div class="plan-saved-actions">
+      <button type="button" class="edit-plan-btn" (click)="editarPlanEvaluacion()">
+        <i class="bi bi-pencil"></i>
+        Editar plan
+      </button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="planEnModoEdicion">
 
   <article
     class="evaluation-item"
@@ -320,9 +355,22 @@
       Agregar Rubro
     </button>
 
-    <button class="save-btn" (click)="guardarPlanEvaluacion()" [disabled]="!planEvaluacionValido">
+    <button
+      class="save-btn"
+      (click)="guardarPlanEvaluacion()"
+      [disabled]="!planEvaluacionValido || guardandoPlan"
+    >
       <i class="bi bi-check-circle"></i>
-      Guardar Plan
+      {{ guardandoPlan ? 'Guardando…' : 'Guardar Plan' }}
+    </button>
+
+    <button
+      *ngIf="puedeCancelarEdicionPlan"
+      type="button"
+      class="cancel-btn plan-cancel-edit-btn"
+      (click)="cancelarEdicionPlan()"
+    >
+      Cancelar edición
     </button>
 
     <button class="import-excel-btn" (click)="abrirImportacionExcel()">
@@ -350,6 +398,8 @@
     El total de ponderación debe ser exactamente 100%.
 
   </div>
+
+  </ng-container>
 
 </section>
 
@@ -465,7 +515,7 @@
       <option value="">Seleccione rubro</option>
 
       <option
-        *ngFor="let rubro of rubrosEvaluacion"
+        *ngFor="let rubro of rubrosParaActividades"
         [value]="rubro.nombre"
       >
         {{ rubro.nombre }}
@@ -542,25 +592,59 @@
       </div>
 
       <div class="activity-grades">
+        <p class="grades-hint">
+          Califique a todos los alumnos de la lista (todas las páginas) y pulse
+          <strong>Guardar calificaciones</strong> una sola vez.
+        </p>
+
         <div class="activity-grades-head">
           <span>Alumno</span>
           <span>Calificación</span>
         </div>
 
-        <div class="activity-grade-row" *ngFor="let alumno of getAlumnosActividadPaginados(actividades.indexOf(actividad))">
-          <span>{{ alumno.nombre }}</span>
+        <div
+          class="activity-grade-row"
+          *ngFor="let alumno of getAlumnosActividadPaginados(actividades.indexOf(actividad))"
+          [class.grade-row-pending]="tieneCalificacionPendiente(actividad, alumno.matricula)"
+        >
+          <span class="grade-student-name">{{ alumno.nombre }}</span>
 
-          <input
-            type="number"
-            min="0"
-            max="10"
-            step="0.01"
-            [disabled]="listaImpresa"
-            [ngModel]="obtenerCalificacionActividad(actividad, alumno.matricula)"
-            (ngModelChange)="setCalificacionActividad(actividad, alumno.matricula, $event)"
-            (blur)="guardarCalificacionEnServidor(actividad, alumno, obtenerCalificacionActividad(actividad, alumno.matricula))"
-            (input)="onCalificacionInput($event, actividad, alumno.matricula)"
+          <div class="grade-input-wrap">
+            <label class="grade-mobile-label">Calificación</label>
+            <input
+              type="number"
+              min="0"
+              max="10"
+              step="0.01"
+              inputmode="decimal"
+              [disabled]="listaImpresa"
+              [ngModel]="obtenerCalificacionActividad(actividad, alumno.matricula)"
+              (ngModelChange)="setCalificacionActividad(actividad, alumno.matricula, $event)"
+              (input)="onCalificacionInput($event, actividad, alumno.matricula)"
+            >
+          </div>
+        </div>
+
+        <div class="activity-grades-save-row">
+          <button
+            type="button"
+            class="grade-save-all-btn"
+            [disabled]="listaImpresa || !actividad.actividadId || estaGuardandoCalificacionesActividad(actividad)"
+            (click)="guardarCalificacionesActividad(actividad)"
           >
+            <i class="bi bi-save"></i>
+            {{
+              estaGuardandoCalificacionesActividad(actividad)
+                ? 'Guardando…'
+                : 'Guardar calificaciones'
+            }}
+          </button>
+          <span
+            class="grades-pending-badge"
+            *ngIf="tieneCalificacionesPendientesActividad(actividad)"
+          >
+            Cambios sin guardar
+          </span>
         </div>
 
         <div class="students-pagination activity-students-pagination" *ngIf="getTotalPaginasAlumnosActividad() > 1">

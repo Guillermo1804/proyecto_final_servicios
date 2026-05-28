@@ -1,0 +1,44 @@
+# Perfil producción (Ubuntu / Coolify / VPS).
+# Uso:
+#   cp .env.example .env
+#   # Copiar ms-*/.env desde .env.example y ajustar secretos SMTP/JWT
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Sin puertos publicados en el host: Coolify/Caddy ocupan 80/443; el proxy enruta a nginx:80 en la red Docker.
+# Desarrollo local: docker-compose.yml + docker-compose.dev.yml (gateway en localhost:8080).
+
+services:
+  db-auth:
+    ports: []
+  db-periodos:
+    ports: []
+  db-alumnos:
+    ports: []
+  db-calificaciones:
+    ports: []
+  db-asistencias:
+    ports: []
+  db-notificaciones:
+    ports: []
+  db-reportes:
+    ports: []
+  redis:
+    ports: []
+  rabbitmq:
+    ports: []
+  ms-auth:
+    ports: []
+  ms-periodos:
+    ports: []
+  ms-alumnos:
+    ports: []
+  ms-calificaciones:
+    ports: []
+  ms-asistencias:
+    ports: []
+  ms-notificaciones:
+    ports: []
+  ms-reportes:
+    ports: []
+  nginx:
+    ports: []
