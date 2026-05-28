@@ -129,12 +129,10 @@ curl http://localhost:8003/health/
 
 ## 🌐 URLs de Producción
 
-> 
-
 | Servicio | URL |
 |---|---|
-| Gateway | _pendiente_ |
-| Frontend Angular | _pendiente_ |
+| Gateway API | https://agm.iokoia.com/api/ |
+| Frontend Angular | https://agm.iokoia.com/ |
 
 ---
 
