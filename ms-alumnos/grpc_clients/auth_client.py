@@ -9,8 +9,12 @@ sys.path.insert(0, os.path.join(BASE_DIR, "proto_generated"))
 
 from proto_generated import auth_pb2_grpc
 
+"""DEPRECATED (Fase 9): cliente gRPC de negocio. Bloqueado con USE_EVENT_BUS=true."""
+from agm_events.grpc_legacy import block_business_grpc
+
 
 def get_auth_stub():
+    block_business_grpc('auth_client.py.get_auth_stub')
     """
     Crea y retorna un stub de AuthService para comunicación gRPC con MS-1.
     Host/port configurados vía variables de entorno.

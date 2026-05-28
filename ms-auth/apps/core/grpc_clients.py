@@ -1,5 +1,15 @@
+"""
+Cliente gRPC legacy MS-1 -> MS-6 (password reset).
+
+DEPRECATED (Fase 9): con USE_EVENT_BUS=true use password.reset_requested.v1
+via outbox. Este modulo solo se usa si USE_EVENT_BUS=false (rollback local).
+"""
+
+from __future__ import annotations
+
 import logging
 import sys
+import warnings
 from pathlib import Path
 
 import grpc
@@ -13,8 +23,14 @@ if str(PROTO_GENERATED_DIR) not in sys.path:
 
 
 def send_reset_password_notification(email, token, reset_url, timeout_seconds=5):
-    """Envía la notificación de reseteo de contraseña vía gRPC a MS-6."""
+    """Envia notificacion de reseteo via gRPC a MS-6 (ruta legacy)."""
+    warnings.warn(
+        'send_reset_password_notification gRPC esta deprecado; use el bus de eventos.',
+        DeprecationWarning,
+        stacklevel=2,
+    )
     try:
+        import agm_common_pb2
         import notificaciones_pb2
         import notificaciones_pb2_grpc
     except ImportError:
@@ -31,26 +47,16 @@ def send_reset_password_notification(email, token, reset_url, timeout_seconds=5)
             stub = notificaciones_pb2_grpc.NotificacionesServiceStub(channel)
             response = stub.SendResetPassword(
                 notificaciones_pb2.SendResetPasswordRequest(
-                    email=email,
-                    token=token,
-                    reset_url=reset_url,
+                    delivery=agm_common_pb2.PasswordResetDelivery(
+                        email=email,
+                        reset_url=reset_url,
+                    ),
                 ),
                 timeout=timeout,
             )
             if not response.success:
-                logger.warning(
-                    'MS-6 SendResetPassword respondió success=false para %s: %s',
-                    email,
-                    response.message,
-                )
-            return bool(response.success), response.message
+                return False, response.message or 'Error MS-6'
+            return True, response.message or 'OK'
     except grpc.RpcError as exc:
-        logger.warning(
-            'MS-6 no disponible al enviar reset password (%s): %s',
-            email,
-            exc.code(),
-        )
-        return False, exc.details() or 'Error enviando notificación'
-    except Exception as exc:
-        logger.warning('Error inesperado al notificar reset a MS-6: %s', exc)
-        return False, 'Error enviando notificación'
+        logger.warning('MS-6 gRPC reset password: %s', exc.details())
+        return False, exc.details() or 'MS-6 no disponible'

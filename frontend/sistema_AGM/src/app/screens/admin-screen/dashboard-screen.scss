@@ -43,6 +43,22 @@
   }
 }
 
+/* RESUMEN */
+
+.resumen-status,
+.resumen-error {
+  margin: 0 0 1rem;
+  font-size: .88rem;
+}
+
+.resumen-status {
+  color: #4b5563;
+}
+
+.resumen-error {
+  color: #b91c1c;
+}
+
 /* STATS */
 
 .stats-grid {
@@ -131,6 +147,15 @@
   h3 {
     margin: 0;
     font-size: 1.8rem;
+  }
+
+  h3.stat-text {
+    font-size: 1.05rem;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 
@@ -265,6 +290,13 @@
   }
 }
 
+/* QUICK LINKS */
+
+.quick-links {
+  display: grid;
+  gap: 1.2rem;
+}
+
 /* TEACHER */
 
 .teacher-card {
@@ -274,7 +306,7 @@
   border-radius: 12px;
 
   padding: 1rem;
-  margin-bottom: 1.2rem;
+  margin-bottom: 0;
 
   .teacher-icon {
     width: 42px;
@@ -385,6 +417,10 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .quick-links {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .campus-card {
     height: 220px;
   }
@@ -421,6 +457,11 @@
 
   .stats-grid {
     grid-template-columns: repeat(4, 1fr);
+  }
+
+  .quick-links {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
   }
 
   // .bottom-nav {

@@ -1,9 +1,9 @@
 <header class="topbar card-glass">
   <div class="brand-chip">
     <img src="/logoAGM.png" alt="AGM Portal" class="avatar">
-    <div>
-      <p>AGM Portal</p>
-      <!-- <span>Administrador</span> -->
+    <div *ngIf="session$ | async as session">
+      <p>{{ session.nombre }}</p>
+      <span>{{ session.rol }} · {{ session.email }}</span>
     </div>
   </div>
 

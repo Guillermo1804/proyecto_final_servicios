@@ -7,7 +7,7 @@ from apps.reportes.dto.report_dto import (
     MateriaEncabezadoDTO,
 )
 from apps.reportes.views import reportes_views
-from grpc_clients.exceptions import MateriaNotFound
+from apps.reportes.exceptions import MateriaNotFound
 from io import BytesIO
 
 

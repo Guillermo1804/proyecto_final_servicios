@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken, TokenError
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from .models import PasswordResetToken
 
@@ -70,14 +70,33 @@ class LoginSerializer(serializers.Serializer):
 
 
 class CustomTokenRefreshSerializer(TokenRefreshSerializer):
-    """Serializer para refresh token que valida y retorna nuevo access."""
-    
+    """
+    Renueva access (y refresh si ROTATE_REFRESH_TOKENS) con los mismos claims
+    que el login (user_id, email, rol, nombre) para MS-2..MS-7.
+    """
+
     def validate(self, attrs):
         try:
-            refresh = RefreshToken(attrs['refresh'])
-            return {'access': str(refresh.access_token)}
-        except TokenError:
+            data = super().validate(attrs)
+        except TokenError as exc:
+            raise serializers.ValidationError('Token de refresco inválido o expirado') from exc
+
+        access = AccessToken(data['access'])
+        user_id = access.get('user_id')
+        if user_id is None:
             raise serializers.ValidationError('Token de refresco inválido o expirado')
+
+        try:
+            user = User.objects.get(pk=int(user_id))
+        except (User.DoesNotExist, TypeError, ValueError) as exc:
+            raise serializers.ValidationError('Usuario no encontrado') from exc
+
+        access['user_id'] = user.id
+        access['email'] = user.email
+        access['rol'] = user.rol
+        access['nombre'] = user.nombre
+        data['access'] = str(access)
+        return data
 
 
 class ForgotPasswordSerializer(serializers.Serializer):

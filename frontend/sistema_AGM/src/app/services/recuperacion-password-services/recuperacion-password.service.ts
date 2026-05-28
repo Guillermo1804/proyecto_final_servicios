@@ -1,18 +1,19 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { AgmApiResponse } from '../../models/auth-api.model';
+import { AuthService } from '../auth.service';
+
+/** Recuperacion de contraseña — delega en MS-1 Auth. */
 @Injectable({ providedIn: 'root' })
 export class RecuperacionPasswordService {
-  private readonly base = '/api/auth';
+  constructor(private auth: AuthService) {}
 
-  constructor(private http: HttpClient) {}
-
-  sendResetLink(email: string): Observable<any> {
-    return this.http.post(`${this.base}/forgot-password`, { email });
+  sendResetLink(email: string): Observable<AgmApiResponse<null>> {
+    return this.auth.forgotPassword(email);
   }
 
-  resetPassword(token: string, password: string): Observable<any> {
-    return this.http.post(`${this.base}/reset-password`, { token, password });
+  resetPassword(token: string, password: string): Observable<AgmApiResponse<null>> {
+    return this.auth.resetPassword(token, password);
   }
 }

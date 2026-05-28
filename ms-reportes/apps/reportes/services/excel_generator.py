@@ -7,6 +7,7 @@ from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 
 from apps.reportes.dto.report_dto import AsistenciasReportDTO, CalificacionesReportDTO
+from utils.responses import format_data_as_of
 
 
 def _auto_width(ws, max_col: int, min_width: int = 10, max_width: int = 40) -> None:
@@ -37,7 +38,9 @@ def build_calificaciones_xlsx(dto: CalificacionesReportDTO) -> BytesIO:
     ws['A2'] = f'Materia: {m.nombre}'
     ws['A3'] = f'NRC: {m.nrc} | Sección: {m.seccion} | Clave: {m.clave}'
     ws['A4'] = f'Periodo: {m.periodo_nombre} | Docente: {m.docente_nombre} | Horario: {m.horario}'
-    for row in range(1, 5):
+    if dto.data_as_of:
+        ws['A5'] = f'Datos al (consistencia eventual): {format_data_as_of(dto.data_as_of)}'
+    for row in range(1, 6 if dto.data_as_of else 5):
         ws[f'A{row}'].font = Font(bold=True)
 
     columnas_act = _actividad_columnas(dto)
@@ -45,7 +48,7 @@ def build_calificaciones_xlsx(dto: CalificacionesReportDTO) -> BytesIO:
         'Promedio Real',
         'Promedio Redondeado',
     ]
-    header_row = 6
+    header_row = 7 if dto.data_as_of else 6
     ws.append([])
     ws.append(header)
     for cell in ws[header_row]:
@@ -84,10 +87,12 @@ def build_asistencias_xlsx(dto: AsistenciasReportDTO) -> BytesIO:
         f'Periodo: {m.periodo_nombre} | Docente: {m.docente_nombre} | '
         f'Total sesiones: {dto.total_sesiones} | Asistencia grupal: {dto.porcentaje_asistencia_grupal:.1f}%'
     )
-    for row in range(1, 5):
+    if dto.data_as_of:
+        ws['A5'] = f'Datos al (consistencia eventual): {format_data_as_of(dto.data_as_of)}'
+    for row in range(1, 6 if dto.data_as_of else 5):
         ws[f'A{row}'].font = Font(bold=True)
 
-    header_row = 6
+    header_row = 7 if dto.data_as_of else 6
     ws.append([])
     header = [
         'Matrícula',

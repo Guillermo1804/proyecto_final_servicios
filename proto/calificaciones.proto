@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package calificaciones;
+package agm.calificaciones;
 
 option java_multiple_files = true;
 option java_package = "com.agm.calificaciones";
 
 // =============================================
-// MS-4: Calificaciones & Ponderaciones — Servicio gRPC
+// MS-4: Calificaciones & Ponderaciones — EXPOSICIÓN gRPC
 // Puerto: 50054
 // =============================================
 // Consumido por MS-7 para generar reportes y estadísticas.

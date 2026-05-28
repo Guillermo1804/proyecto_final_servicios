@@ -12,7 +12,7 @@
 | **Puerto REST** | 8003 |
 | **Puerto gRPC** | 50053 |
 | **BD** | MySQL – `agm_alumnos_db` |
-| **Responsabilidad** | Importación PDF directorio docente, CRUD docentes, importación Excel alumnos, inscripciones, baja de materia |
+| **Responsabilidad** | Importación PDF directorio docente, CRUD docentes, importación PDF lista de clase alumnos, inscripciones, baja de materia |
 
 ## Dependencias extras
 ```
@@ -83,7 +83,7 @@ mysql -u root -p agm_alumnos_db < test-data/seed_docentes_mysql.sql
 mysql -u root -p agm_alumnos_db < test-data/seed_alumnos_mysql.sql
 ```
 
-> **Nota**: Los endpoints de importación (PDF para docentes, Excel para alumnos) siguen siendo
+> **Nota**: Los endpoints de importación (PDF docentes y PDF lista de clase alumnos) siguen siendo
 > necesarios para la evaluación. Los datos pre-cargados sirven para tener datos desde el día 1.
 
 ---
@@ -108,9 +108,8 @@ mysql -u root -p agm_alumnos_db < test-data/seed_alumnos_mysql.sql
 - `POST /docentes/:id/reset-password` — Auth: admin → gRPC a MS-1
 
 ### Alumnos
-- `POST /alumnos/importar/:materiaId` — Auth: docente de la materia. Upload Excel/CSV.
-  - Si `?preview=true`: retornar vista previa sin guardar
-  - Confirmar: parsear, crear usuario (gRPC MS-1), guardar alumno, inscribir, enviar correo (gRPC MS-6 SendBienvenida)
+- `POST /alumnos/importar/` — Auth: admin o docente. Multipart: `file` (PDF lista de clase BUAP), `materia_id`.
+  - Parsear matrícula y nombre; crear/actualizar alumno; inscribir en materia; usuario MS-1 vía event bus o gRPC
   - Manejar duplicados por matrícula
 
 - `GET /alumnos/materia/:materiaId` — Auth: docente de la materia. Solo alumnos activos (no dados de baja).

@@ -49,19 +49,76 @@ export class DocentesScreen implements OnInit {
     }
   }
 
-  toggleEstado(docente: DocenteItem): void {
-    const nuevoEstado = docente.estado === 'Activo' ? 'Inactivo' : 'Activo';
+  onImportarDocentes(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
 
-    this.docentesService.updateDocenteEstado(docente.id, nuevoEstado).subscribe({
-      next: () => this.loadDocentes(),
-      error: () => this.loadDocentes()
+    this.docentesService.importarDocentesPdf(file).subscribe({
+      next: (result) => {
+        const leidas = result.filas_leidas ?? 0;
+        let msg = `Filas leidas del PDF: ${leidas}\nCreados: ${result.creados}\nOmitidos: ${result.omitidos}\nErrores: ${result.errores}`;
+
+        if (leidas === 0 && result.creados === 0) {
+          msg +=
+            '\n\nEl PDF no trajo docentes en el formato esperado ' +
+            '(tabla BUAP: Nombre | Correo | Ubicacion | Extension).\n' +
+            'Si es programacion de materias (NRC), importala en Periodos (MS-2), no aqui.';
+          const detalle = result.detalle_errores?.slice(0, 3) ?? [];
+          if (detalle.length) {
+            msg += '\n\nDetalle:\n' + detalle.map((d) => d.error ?? JSON.stringify(d)).join('\n');
+          }
+        }
+
+        alert(msg);
+        this.loadDocentes();
+      },
+      error: (err) => {
+        alert(DocentesService.extractError(err, 'No se pudo importar el PDF de docentes.'));
+      },
+    });
+    input.value = '';
+  }
+
+  activarDocente(docente: DocenteItem): void {
+    if (docente.estado === 'Activo') {
+      return;
+    }
+
+    const confirmado = confirm(
+      `¿Activar acceso de ${docente.nombre}?\n\nSe creara o vinculara su usuario en MS-1 con el correo ${docente.correo}.`,
+    );
+    if (!confirmado) {
+      return;
+    }
+
+    this.docentesService.activarDocente(docente.id).subscribe({
+      next: () => {
+        alert(
+          `Docente activado. Puede iniciar sesion con ${docente.correo} ` +
+            'y contraseña inicial = parte del correo antes de @.',
+        );
+        this.loadDocentes();
+      },
+      error: (err) => {
+        alert(DocentesService.extractError(err, 'No se pudo activar el docente.'));
+      },
     });
   }
 
   eliminarDocente(docente: DocenteItem): void {
+    const confirmado = confirm(`¿Eliminar al docente ${docente.nombre}?`);
+    if (!confirmado) {
+      return;
+    }
+
     this.docentesService.deleteDocente(docente.id).subscribe({
       next: () => this.afterMutation(),
-      error: () => this.afterMutation()
+      error: (err) => {
+        alert(DocentesService.extractError(err, 'No se pudo eliminar el docente.'));
+      },
     });
   }
 
@@ -107,12 +164,15 @@ export class DocentesScreen implements OnInit {
         this.currentPage = response.page;
         this.pageSize = response.pageSize;
       },
-      error: () => {
-        this.errorMessage = 'No se pudo cargar el catálogo de docentes.';
+      error: (err) => {
+        this.errorMessage = DocentesService.extractError(
+          err,
+          'No se pudo cargar el catalogo de docentes.',
+        );
         this.docentes = [];
         this.totalItems = 0;
         this.totalPages = 1;
-      }
+      },
     });
   }
 

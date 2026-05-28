@@ -8,18 +8,23 @@
 
     <section class="hero-card">
 
-      <p>Bienvenido de nuevo,</p>
+      <p>Bienvenido de nuevo, {{ rolLabel }}</p>
 
-      <h2>{{ alumno.nombre }}</h2>
+      <h2>{{ perfilLoading ? 'Cargando…' : alumno.nombre }}</h2>
 
       <div class="hero-meta">
         <span>Matrícula: <strong>{{ alumno.matricula }}</strong></span>
-        <span>Formación: <strong>{{ alumno.tipoFormacion }}</strong></span>
-        <span>Periodo: <strong>{{ alumno.periodoActivo }}</strong></span>
+        <span *ngIf="emailUsuario">Correo: <strong>{{ emailUsuario }}</strong></span>
+        <span *ngIf="alumno.tipoFormacion && alumno.tipoFormacion !== '—'">Carrera: <strong>{{ alumno.tipoFormacion }}</strong></span>
       </div>
 
-      <span>
-        Tienes {{ materiasHoy.length }} clases programadas para hoy y {{ evaluaciones.length }} evaluaciones próximas.
+      <span *ngIf="materiasLoading">Cargando materias inscritas…</span>
+      <span *ngIf="!materiasLoading && materiasError">{{ materiasError }}</span>
+      <span *ngIf="!materiasLoading && !materiasError && materiasActuales.length">
+        Tienes {{ materiasActuales.length }} materia(s) inscrita(s) en el periodo activo.
+      </span>
+      <span *ngIf="!materiasLoading && !materiasError && !materiasActuales.length">
+        No tienes inscripciones activas. El docente debe importarte en su materia (MS-3).
       </span>
 
       <div class="hero-bg"></div>
@@ -30,14 +35,11 @@
 
     <section class="average-card">
 
-      <p>PROMEDIO GENERAL</p>
+      <p>MATERIAS INSCRITAS</p>
 
-      <h3>9.4</h3>
+      <h3>{{ materiasLoading ? '…' : materiasActuales.length }}</h3>
 
-      <span>
-        <i class="bi bi-graph-up-arrow"></i>
-        Superior al ciclo anterior
-      </span>
+      <span>Datos desde MS-3 (alumnos/me/materias)</span>
 
     </section>
 
@@ -73,6 +75,10 @@
 
       </div>
 
+      <p class="table-empty" *ngIf="!materiasLoading && !materiasActuales.length">
+        Sin materias para mostrar.
+      </p>
+
     </section>
 
     <!-- MATERIAS -->
@@ -81,7 +87,7 @@
 
       <div>
         <h2>Materias de Hoy</h2>
-        <p>Viernes, 24 de Mayo</p>
+        <p>{{ fechaHoyLabel }}</p>
       </div>
 
     </section>
@@ -147,7 +153,15 @@
 
       </div>
 
+      <p class="table-empty" *ngIf="!materiasLoading && !evaluaciones.length">
+        Sin actividades con fecha futura en tus materias (MS-4 /actividades).
+      </p>
+
     </section>
+
+    <p class="table-empty" *ngIf="!materiasLoading && !materiasError && !materiasHoy.length && materiasActuales.length">
+      No tienes clases programadas para hoy segun el horario de tus materias.
+    </p>
 
 
   </main>

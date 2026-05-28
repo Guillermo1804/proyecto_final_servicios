@@ -4,12 +4,17 @@
 
   <main class="content">
 
-<section class="filters-card">
+<p *ngIf="isLoading" class="load-hint">Cargando reportes desde MS-7…</p>
+<p *ngIf="loadError" class="load-error">{{ loadError }}</p>
+<p *ngIf="!isLoading && !loadError" class="load-hint">Fuente: {{ fuenteEtiqueta() }}</p>
+
+<section class="filters-card" *ngIf="!isLoading">
 
   <div class="filter-field">
     <label>Periodo Académico</label>
-    <select>
-      <option *ngFor="let periodo of periodosEscolares">
+    <select [(ngModel)]="filtroPeriodo" (ngModelChange)="aplicarFiltros()">
+      <option value="">Todos los periodos</option>
+      <option *ngFor="let periodo of periodosEscolares" [value]="periodo.nombre">
         {{ periodo.nombre }}{{ periodo.activo ? ' (Actual)' : '' }}
       </option>
     </select>
@@ -17,42 +22,43 @@
 
   <div class="filter-field">
     <label>Materia</label>
-    <select>
-      <option>Todas las materias</option>
+    <select [(ngModel)]="filtroMateriaId" (ngModelChange)="aplicarFiltros()">
+      <option [ngValue]="null">Todas las materias</option>
+      <option *ngFor="let m of materiasOpciones" [ngValue]="m.id">{{ m.label }}</option>
     </select>
   </div>
 
-  <button>
+  <button type="button" (click)="aplicarFiltros()">
     <i class="bi bi-filter"></i>
     Aplicar Filtros
   </button>
 
 </section>
 
-    <section class="metrics-grid">
+    <section class="metrics-grid" *ngIf="!isLoading">
 
       <article class="metric-card azul">
         <p>Promedio General</p>
-        <h3>8.42</h3>
-        <span class="positivo">↗ +0.3 vs periodo anterior</span>
+        <h3>{{ resumen.promedioGeneral }}</h3>
+        <span class="positivo">Periodo activo (MS-7)</span>
       </article>
 
       <article class="metric-card azul">
         <p>Índice de Aprobación</p>
-        <h3>91.5%</h3>
-        <span class="positivo">↗ 542 alumnos aprobados</span>
+        <h3>{{ resumen.indiceAprobacion }}%</h3>
+        <span class="positivo">{{ resumen.alumnosAprobados }} alumnos aprobados</span>
       </article>
 
       <article class="metric-card rojo">
-        <p>Índice de Deserción</p>
-        <h3>2.4%</h3>
-        <span class="negativo">⚠ 12 alumnos en riesgo</span>
+        <p>Alumnos en riesgo</p>
+        <h3>{{ resumen.alumnosEnRiesgo }}</h3>
+        <span class="negativo">Según proyección MS-7</span>
       </article>
 
       <article class="metric-card oscuro">
         <p>Materias Activas</p>
-        <h3>4</h3>
-        <span>○ 148 horas lectivas totales</span>
+        <h3>{{ resumen.materiasActivas }}</h3>
+        <span>Periodo activo</span>
       </article>
 
     </section>
@@ -68,46 +74,26 @@
         </div>
       </div>
 
-      <div class="chart-bars">
-        <div>
-          <span style="height: 64%"></span>
-          <span style="height: 64%"></span>
-          <p>IA I</p>
-        </div>
-
-        <div>
-          <span style="height: 45%"></span>
-          <span style="height: 45%"></span>
-          <p>Estructuras</p>
-        </div>
-
-        <div>
-          <span style="height: 78%"></span>
-          <span style="height: 78%"></span>
-          <p>Sistemas Op.</p>
-        </div>
-
-        <div>
-          <span style="height: 56%"></span>
-          <span style="height: 56%"></span>
-          <p>Redes</p>
+      <div class="chart-bars" *ngIf="chartMaterias.length">
+        <div *ngFor="let bar of chartMaterias">
+          <span [style.height.%]="bar.promedioPct"></span>
+          <span [style.height.%]="bar.aprobacionPct"></span>
+          <p>{{ bar.nombre }}</p>
         </div>
       </div>
 
-      <div class="insight-card">
+      <p *ngIf="!chartMaterias.length && !isLoading" class="table-empty">
+        Sin datos de MS-7 para graficar. Ejecute rebuild_report_projections --from-backfill si el periodo ya tiene calificaciones.
+      </p>
+
+      <div class="insight-card" *ngIf="insightObservacion">
         <strong>Observación Clave</strong>
-        <p>
-          Inteligencia Artificial I presenta el mayor índice de aprobación (94%)
-          pero un promedio de calificaciones conservador (7.8).
-        </p>
+        <p>{{ insightObservacion }}</p>
       </div>
 
-      <div class="insight-card">
+      <div class="insight-card" *ngIf="insightAccion">
         <strong>Acción Sugerida</strong>
-        <p>
-          Revisar criterios de evaluación en Estructuras de Datos, el promedio
-          descendió 0.5 puntos este mes.
-        </p>
+        <p>{{ insightAccion }}</p>
       </div>
 
     </section>
@@ -117,14 +103,14 @@
       <div class="history-header compact">
         <h3>Historial académico</h3>
 
-        <span class="history-helper">Materias impartidas por periodo</span>
+        <span class="history-helper">Materias impartidas por periodo (MS-7)</span>
       </div>
 
       <div class="academic-period-list">
 
         <article
           class="academic-period-card"
-          *ngFor="let periodo of historialAcademico"
+          *ngFor="let periodo of historialAcademicoVista"
           [ngClass]="{ inactive: !periodo.activo }"
         >
 
@@ -190,6 +176,10 @@
 
       <div class="comparison-list">
 
+        <p *ngIf="!materiasComparadas.length" class="table-empty">
+          No hay materias repetidas en varios periodos con datos cargados.
+        </p>
+
         <article
           class="comparison-item"
           *ngFor="let item of materiasComparadas"
@@ -232,40 +222,50 @@
 
       <h3>
         <i class="bi bi-file-earmark-text"></i>
-        Exportación de Actas
+        Exportación de reportes (MS-7)
       </h3>
 
       <p>
-        Genere las actas oficiales de calificaciones finales para su entrega administrativa.
+        Descargue actas de calificaciones o reportes de asistencias en PDF o Excel.
       </p>
 
+      <label>Tipo de reporte</label>
+      <select [(ngModel)]="tipoExport">
+        <option value="calificaciones">Calificaciones (acta)</option>
+        <option value="asistencias">Asistencias</option>
+      </select>
+
       <label>Seleccione Materia</label>
-      <select>
-        <option>Inteligencia Artificial I - Secc. A</option>
+      <select [(ngModel)]="selectedMateriaId">
+        <option [ngValue]="null" disabled>Seleccione materia</option>
+        <option *ngIf="!materiasOpciones.length" disabled>Sin materias en periodo activo</option>
+        <option *ngFor="let m of materiasOpciones" [ngValue]="m.id">{{ m.label }}</option>
       </select>
 
       <label>Formato de Archivo</label>
 
       <div class="format-row">
-        <button>
+        <button type="button" [disabled]="exportLoading" (click)="exportar('pdf')">
           <i class="bi bi-file-earmark-pdf"></i>
           PDF
         </button>
 
-        <button>
+        <button type="button" [disabled]="exportLoading" (click)="exportar('xlsx')">
           <i class="bi bi-table"></i>
           Excel
         </button>
       </div>
 
-      <button class="generate-btn">
+      <button class="generate-btn" type="button" [disabled]="exportLoading" (click)="exportar(exportFormat)">
         <i class="bi bi-download"></i>
-        Generar Documento Final
+        {{ exportLoading ? 'Generando…' : 'Generar documento' }}
       </button>
+
+      <p *ngIf="exportError" class="load-error">{{ exportError }}</p>
 
       <div class="note">
         <i class="bi bi-link-45deg"></i>
-        Las actas generadas incluyen firma digital docente automática.
+        Los archivos se generan en MS-7 con los datos proyectados del sistema.
       </div>
 
     </section>
@@ -275,10 +275,7 @@
       <div class="history-header">
         <h3>Historial de Exportaciones</h3>
 
-        <a href="#">
-          Ver todo el historial
-          <i class="bi bi-chevron-right"></i>
-        </a>
+        <span class="history-helper">Descargas en esta sesión del navegador</span>
       </div>
 
       <div class="history-table">
@@ -297,6 +294,10 @@
           <span>{{ item.materia }}</span>
           <span>{{ item.fecha }}</span>
         </div>
+
+        <p *ngIf="!historial.length" class="table-empty">
+          Aún no hay exportaciones en esta sesión. Use los botones PDF o Excel arriba.
+        </p>
 
       </div>
 

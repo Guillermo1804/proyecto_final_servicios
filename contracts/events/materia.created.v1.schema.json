@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "materia.created.v1 payload",
+  "type": "object",
+  "required": ["materia_id", "periodo_id", "nrc", "nombre"],
+  "properties": {
+    "materia_id": { "type": "integer" },
+    "periodo_id": { "type": "integer" },
+    "nrc": { "type": "string" },
+    "nombre": { "type": "string" },
+    "seccion": { "type": "string" },
+    "clave": { "type": "string" },
+    "docente_nombre": { "type": "string" },
+    "docente_id": { "type": ["integer", "null"] },
+    "horario": { "type": "string" }
+  }
+}

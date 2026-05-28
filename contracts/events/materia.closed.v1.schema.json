@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "materia.closed.v1 payload",
+  "type": "object",
+  "required": ["materia_id", "periodo_id", "nrc"],
+  "properties": {
+    "materia_id": { "type": "integer" },
+    "periodo_id": { "type": "integer" },
+    "nrc": { "type": "string" },
+    "nombre": { "type": "string" },
+    "seccion": { "type": "string" },
+    "periodo_nombre": { "type": "string" },
+    "alumnos": {
+      "type": "array",
+      "description": "Opcional: lista para cierre masivo sin gRPC a MS-3",
+      "items": {
+        "type": "object",
+        "required": ["email", "nombre"],
+        "properties": {
+          "email": { "type": "string" },
+          "nombre": { "type": "string" },
+          "matricula": { "type": "string" }
+        }
+      }
+    }
+  }
+}

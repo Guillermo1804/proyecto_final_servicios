@@ -27,7 +27,7 @@ if _version_not_supported:
 
 class AlumnosServiceStub(object):
     """=============================================
-    MS-3: Docentes & Alumnos — Servicio gRPC
+    MS-3: Docentes & Alumnos — EXPOSICIÓN gRPC
     Puerto: 50053
     =============================================
     Consumido por MS-4, MS-5, MS-6, MS-7 para obtener
@@ -42,22 +42,22 @@ class AlumnosServiceStub(object):
             channel: A grpc.Channel.
         """
         self.GetAlumnosByMateria = channel.unary_unary(
-                '/alumnos.AlumnosService/GetAlumnosByMateria',
+                '/agm.alumnos.AlumnosService/GetAlumnosByMateria',
                 request_serializer=alumnos__pb2.GetAlumnosByMateriaRequest.SerializeToString,
                 response_deserializer=alumnos__pb2.AlumnosListResponse.FromString,
                 _registered_method=True)
         self.GetAlumnoById = channel.unary_unary(
-                '/alumnos.AlumnosService/GetAlumnoById',
+                '/agm.alumnos.AlumnosService/GetAlumnoById',
                 request_serializer=alumnos__pb2.GetAlumnoByIdRequest.SerializeToString,
                 response_deserializer=alumnos__pb2.AlumnoInfo.FromString,
                 _registered_method=True)
         self.IsAlumnoEnMateria = channel.unary_unary(
-                '/alumnos.AlumnosService/IsAlumnoEnMateria',
+                '/agm.alumnos.AlumnosService/IsAlumnoEnMateria',
                 request_serializer=alumnos__pb2.IsAlumnoEnMateriaRequest.SerializeToString,
                 response_deserializer=alumnos__pb2.IsAlumnoEnMateriaResponse.FromString,
                 _registered_method=True)
         self.GetDocenteByUsuarioId = channel.unary_unary(
-                '/alumnos.AlumnosService/GetDocenteByUsuarioId',
+                '/agm.alumnos.AlumnosService/GetDocenteByUsuarioId',
                 request_serializer=alumnos__pb2.GetDocenteByUsuarioIdRequest.SerializeToString,
                 response_deserializer=alumnos__pb2.DocenteInfo.FromString,
                 _registered_method=True)
@@ -65,7 +65,7 @@ class AlumnosServiceStub(object):
 
 class AlumnosServiceServicer(object):
     """=============================================
-    MS-3: Docentes & Alumnos — Servicio gRPC
+    MS-3: Docentes & Alumnos — EXPOSICIÓN gRPC
     Puerto: 50053
     =============================================
     Consumido por MS-4, MS-5, MS-6, MS-7 para obtener
@@ -126,15 +126,15 @@ def add_AlumnosServiceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'alumnos.AlumnosService', rpc_method_handlers)
+            'agm.alumnos.AlumnosService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('alumnos.AlumnosService', rpc_method_handlers)
+    server.add_registered_method_handlers('agm.alumnos.AlumnosService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class AlumnosService(object):
     """=============================================
-    MS-3: Docentes & Alumnos — Servicio gRPC
+    MS-3: Docentes & Alumnos — EXPOSICIÓN gRPC
     Puerto: 50053
     =============================================
     Consumido por MS-4, MS-5, MS-6, MS-7 para obtener
@@ -156,7 +156,7 @@ class AlumnosService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/alumnos.AlumnosService/GetAlumnosByMateria',
+            '/agm.alumnos.AlumnosService/GetAlumnosByMateria',
             alumnos__pb2.GetAlumnosByMateriaRequest.SerializeToString,
             alumnos__pb2.AlumnosListResponse.FromString,
             options,
@@ -183,7 +183,7 @@ class AlumnosService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/alumnos.AlumnosService/GetAlumnoById',
+            '/agm.alumnos.AlumnosService/GetAlumnoById',
             alumnos__pb2.GetAlumnoByIdRequest.SerializeToString,
             alumnos__pb2.AlumnoInfo.FromString,
             options,
@@ -210,7 +210,7 @@ class AlumnosService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/alumnos.AlumnosService/IsAlumnoEnMateria',
+            '/agm.alumnos.AlumnosService/IsAlumnoEnMateria',
             alumnos__pb2.IsAlumnoEnMateriaRequest.SerializeToString,
             alumnos__pb2.IsAlumnoEnMateriaResponse.FromString,
             options,
@@ -237,7 +237,7 @@ class AlumnosService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/alumnos.AlumnosService/GetDocenteByUsuarioId',
+            '/agm.alumnos.AlumnosService/GetDocenteByUsuarioId',
             alumnos__pb2.GetDocenteByUsuarioIdRequest.SerializeToString,
             alumnos__pb2.DocenteInfo.FromString,
             options,

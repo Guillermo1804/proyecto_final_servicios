@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "materia.calificaciones_cerradas.v1 payload",
+  "type": "object",
+  "required": ["materia_id", "nrc", "nombre"],
+  "properties": {
+    "materia_id": { "type": "integer" },
+    "periodo_id": { "type": "integer" },
+    "nrc": { "type": "string" },
+    "nombre": { "type": "string" },
+    "seccion": { "type": "string" },
+    "periodo_nombre": { "type": "string" },
+    "fecha_cierre": { "type": "string", "format": "date-time" },
+    "alumnos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["alumno_id", "email", "matricula"],
+        "properties": {
+          "alumno_id": { "type": "integer" },
+          "email": { "type": "string", "format": "email" },
+          "matricula": { "type": "string" },
+          "nombre": { "type": "string" },
+          "promedio_real": { "type": "number" },
+          "promedio_redondeado": { "type": "integer" }
+        }
+      }
+    }
+  }
+}

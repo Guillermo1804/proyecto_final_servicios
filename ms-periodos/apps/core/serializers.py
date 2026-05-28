@@ -6,6 +6,8 @@ from apps.core.models import Materia, Periodo
 class PeriodoSerializer(serializers.ModelSerializer):
     """Serializer para Periodo con validación de fechas."""
 
+    materias_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Periodo
         fields = [
@@ -15,10 +17,20 @@ class PeriodoSerializer(serializers.ModelSerializer):
             "fecha_fin",
             "plan_estudios",
             "activo",
+            "materias_count",
             "fecha_creacion",
             "fecha_actualizacion",
         ]
-        read_only_fields = ["id", "activo", "fecha_creacion", "fecha_actualizacion"]
+        read_only_fields = [
+            "id",
+            "activo",
+            "materias_count",
+            "fecha_creacion",
+            "fecha_actualizacion",
+        ]
+
+    def get_materias_count(self, obj: Periodo) -> int:
+        return obj.materias.count()
 
     def validate(self, attrs):
         fecha_inicio = attrs.get("fecha_inicio", getattr(self.instance, "fecha_inicio", None))

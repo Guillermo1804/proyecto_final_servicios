@@ -27,7 +27,7 @@ if _version_not_supported:
 
 class AsistenciasServiceStub(object):
     """=============================================
-    MS-5: Asistencias QR — Servicio gRPC
+    MS-5: Asistencias QR — EXPOSICIÓN gRPC
     Puerto: 50055
     =============================================
     Consumido por MS-7 para generar reportes de asistencia.
@@ -41,12 +41,12 @@ class AsistenciasServiceStub(object):
             channel: A grpc.Channel.
         """
         self.GetAsistenciaAlumno = channel.unary_unary(
-                '/asistencias.AsistenciasService/GetAsistenciaAlumno',
+                '/agm.asistencias.AsistenciasService/GetAsistenciaAlumno',
                 request_serializer=asistencias__pb2.GetAsistenciaAlumnoRequest.SerializeToString,
                 response_deserializer=asistencias__pb2.AsistenciaAlumnoResponse.FromString,
                 _registered_method=True)
         self.GetEstadisticasAsistencia = channel.unary_unary(
-                '/asistencias.AsistenciasService/GetEstadisticasAsistencia',
+                '/agm.asistencias.AsistenciasService/GetEstadisticasAsistencia',
                 request_serializer=asistencias__pb2.GetEstadisticasAsistenciaRequest.SerializeToString,
                 response_deserializer=asistencias__pb2.EstadisticasAsistenciaResponse.FromString,
                 _registered_method=True)
@@ -54,7 +54,7 @@ class AsistenciasServiceStub(object):
 
 class AsistenciasServiceServicer(object):
     """=============================================
-    MS-5: Asistencias QR — Servicio gRPC
+    MS-5: Asistencias QR — EXPOSICIÓN gRPC
     Puerto: 50055
     =============================================
     Consumido por MS-7 para generar reportes de asistencia.
@@ -90,15 +90,15 @@ def add_AsistenciasServiceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'asistencias.AsistenciasService', rpc_method_handlers)
+            'agm.asistencias.AsistenciasService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('asistencias.AsistenciasService', rpc_method_handlers)
+    server.add_registered_method_handlers('agm.asistencias.AsistenciasService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class AsistenciasService(object):
     """=============================================
-    MS-5: Asistencias QR — Servicio gRPC
+    MS-5: Asistencias QR — EXPOSICIÓN gRPC
     Puerto: 50055
     =============================================
     Consumido por MS-7 para generar reportes de asistencia.
@@ -119,7 +119,7 @@ class AsistenciasService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/asistencias.AsistenciasService/GetAsistenciaAlumno',
+            '/agm.asistencias.AsistenciasService/GetAsistenciaAlumno',
             asistencias__pb2.GetAsistenciaAlumnoRequest.SerializeToString,
             asistencias__pb2.AsistenciaAlumnoResponse.FromString,
             options,
@@ -146,7 +146,7 @@ class AsistenciasService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/asistencias.AsistenciasService/GetEstadisticasAsistencia',
+            '/agm.asistencias.AsistenciasService/GetEstadisticasAsistencia',
             asistencias__pb2.GetEstadisticasAsistenciaRequest.SerializeToString,
             asistencias__pb2.EstadisticasAsistenciaResponse.FromString,
             options,

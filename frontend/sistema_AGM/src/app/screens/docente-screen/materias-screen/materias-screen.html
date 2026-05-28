@@ -7,22 +7,27 @@
     <section class="hero">
       <p class="eyebrow">Docente / Materias</p>
       <h2>Mis materias</h2>
-      <p>Consulta los grupos que impartes, sus días de clase y el estado actual de cada materia.</p>
+      <p>Consulta los grupos que impartes en el periodo activo.</p>
     </section>
 
-    <section class="period-selector">
-      <i class="bi bi-calendar"></i>
-      <span>Primavera 2026</span>
-      <i class="bi bi-chevron-down"></i>
+    <section class="period-banner" *ngIf="!isLoading">
+      <i class="bi bi-calendar3"></i>
+      <span>{{ periodoActivoNombre || 'Sin periodo activo' }}</span>
     </section>
 
-    <section class="subjects-list">
+    <p class="state-message" *ngIf="isLoading">Cargando materias...</p>
+
+    <p class="state-message error" *ngIf="!isLoading && emptyMessage && materias.length === 0">
+      {{ emptyMessage }}
+    </p>
+
+    <section class="subjects-list" *ngIf="!isLoading && materias.length > 0">
       <article
         class="subject-card"
         *ngFor="let materia of materias; trackBy: trackByMateria"
       >
         <header class="card-head">
-          <div>
+          <div class="card-head-main">
             <span class="code">NRC {{ materia.nrc }}</span>
             <h3>{{ materia.materia }}</h3>
             <p class="subtitle">Clave {{ materia.clave }} · Sección {{ materia.seccion }}</p>
@@ -33,25 +38,29 @@
           </span>
         </header>
 
-        <div class="schedule-grid">
-          <div class="schedule-grid-head">
-            <span>Día</span>
-            <span>Hora</span>
-          </div>
-
-          <div class="schedule-row" *ngFor="let sesion of materia.sesiones">
-            <span class="day-chip">{{ sesion.dia }}</span>
-            <span class="hour-value">{{ sesion.hora }}</span>
-          </div>
+        <div class="schedule-block">
+          <p class="block-label">Horario</p>
+          <ul class="schedule-list" *ngIf="materia.sesiones.length; else sinHorario">
+            <li class="schedule-item" *ngFor="let sesion of materia.sesiones">
+              <span class="session-day">{{ sesion.dia }}</span>
+              <span class="session-time">{{ sesion.hora }}</span>
+            </li>
+          </ul>
+          <ng-template #sinHorario>
+            <p class="schedule-empty">Sin horario registrado</p>
+          </ng-template>
         </div>
 
-        <div class="card-footer">
-          <span class="location-label">Salón</span>
-          <strong>{{ materia.salon }}</strong>
+        <footer class="card-footer">
+          <div class="salon-block">
+            <span class="block-label">Salón</span>
+            <strong>{{ materia.salon }}</strong>
+          </div>
           <a class="details-button" [routerLink]="['/docente/materias', materia.nrc]">
-            Ver detalles materia
+            Ver detalles
+            <i class="bi bi-arrow-right-short"></i>
           </a>
-        </div>
+        </footer>
       </article>
     </section>
 

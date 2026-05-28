@@ -244,6 +244,15 @@
     box-shadow: inset 0 0 0 1px rgba(21, 128, 61, .12);
   }
 
+  &.inactivo.clickable {
+    cursor: pointer;
+
+    &:hover {
+      background: #fecaca;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, .2);
+    }
+  }
+
   &.inactivo {
     background: #fee2e2;
     color: #dc2626;

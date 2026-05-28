@@ -5,9 +5,16 @@ from decimal import Decimal
 
 from openpyxl import Workbook
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
-from apps.core.models import EstadoMateria, Ponderacion, Actividad, Calificacion
+from apps.core.models import (
+    AlumnoMateriaProjection,
+    EstadoMateria,
+    MateriaProjection,
+    Ponderacion,
+    Actividad,
+    Calificacion,
+)
 from apps.core.services import calcular_promedio_ponderado, obtener_estadisticas_materia, redondear_institucional
 
 
@@ -16,8 +23,8 @@ class ActividadTests(TestCase):
         self.auth_headers = {'HTTP_AUTHORIZATION': 'Bearer token-valido'}
         self.ponderacion = None
 
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_crear_actividad_ok(self, mock_validate, mock_materia):
         ponderacion = Ponderacion.objects.create(
             materia_id=10,
@@ -43,8 +50,8 @@ class ActividadTests(TestCase):
         self.assertEqual(body['data']['nombre'], 'Examen Parcial 1')
         mock_validate.assert_called_once_with('token-valido')
 
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_listar_actividades_agrupadas(self, mock_validate, mock_materia):
         pond1 = Ponderacion.objects.create(
             materia_id=10,
@@ -68,8 +75,8 @@ class ActividadTests(TestCase):
         self.assertEqual(len(body['data']['categorias'][0]['actividades']), 2)
         self.assertEqual(len(body['data']['categorias'][1]['actividades']), 1)
 
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_eliminar_actividad_sin_calificaciones(self, mock_validate, mock_materia):
         pond = Ponderacion.objects.create(
             materia_id=10,
@@ -84,8 +91,8 @@ class ActividadTests(TestCase):
         self.assertTrue(body['success'])
         self.assertFalse(Actividad.objects.filter(id=actividad.id).exists())
 
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_eliminar_actividad_con_calificaciones_rechazada(self, mock_validate, mock_materia):
         from apps.core.models import Calificacion
 
@@ -109,8 +116,8 @@ class PonderacionesTests(TestCase):
     def setUp(self):
         self.auth_headers = {'HTTP_AUTHORIZATION': 'Bearer token-valido'}
 
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_guardar_ponderaciones_ok(self, mock_validate, mock_materia):
         response = self.client.post(
             '/ponderaciones/10',
@@ -133,8 +140,8 @@ class PonderacionesTests(TestCase):
         mock_validate.assert_called_once_with('token-valido')
         mock_materia.assert_called_once_with(10)
 
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_guardar_ponderaciones_rechaza_suma_invalida(self, mock_validate, mock_materia):
         response = self.client.put(
             '/ponderaciones/10',
@@ -154,8 +161,8 @@ class PonderacionesTests(TestCase):
         self.assertFalse(body['success'])
         self.assertIn('100.00', str(body['errors']))
 
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=99, rol='docente'))
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=99, rol='docente'))
     def test_guardar_ponderaciones_rechaza_docente_distinto(self, mock_validate, mock_materia):
         response = self.client.post(
             '/ponderaciones/10',
@@ -176,8 +183,8 @@ class PonderacionesTests(TestCase):
             def setUp(self):
                 self.auth_headers = {'HTTP_AUTHORIZATION': 'Bearer token-valido'}
 
-            @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-            @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+            @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+            @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
             def test_marcar_imprimir_lista(self, mock_validate, mock_materia):
                 response = self.client.post('/materias/10/imprimir-lista', **self.auth_headers)
                 self.assertEqual(response.status_code, 200)
@@ -189,8 +196,8 @@ class PonderacionesTests(TestCase):
                 mock_materia.assert_called_once_with(10)
         self.assertFalse(response.json()['success'])
 
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_consultar_ponderaciones_ok(self, mock_validate, mock_materia):
         self.client.post(
             '/ponderaciones/10',
@@ -211,8 +218,8 @@ class PonderacionesTests(TestCase):
         self.assertEqual(body['data']['total'], '100.00')
         self.assertEqual(len(body['data']['ponderaciones']), 3)
 
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_importar_ponderaciones_excel_ok(self, mock_validate, mock_materia):
         workbook = Workbook()
         worksheet = workbook.active
@@ -247,9 +254,9 @@ class CalificacionTests(TestCase):
         )
         self.actividad = Actividad.objects.create(ponderacion=self.pond, nombre='Examen Final')
 
-    @patch('apps.core.views.is_alumno_en_materia', return_value=True)
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.is_alumno_en_materia_local', return_value=True)
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_crear_calificacion_ok(self, mock_validate, mock_materia, mock_is_alumno):
         response = self.client.post(
             '/calificaciones',
@@ -269,9 +276,9 @@ class CalificacionTests(TestCase):
         self.assertEqual(body['data']['alumno_id'], 5)
         mock_is_alumno.assert_called_once_with(5, 10)
 
-    @patch('apps.core.views.is_alumno_en_materia', return_value=False)
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.is_alumno_en_materia_local', return_value=False)
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_crear_calificacion_alumno_no_inscrito(self, mock_validate, mock_materia, mock_is_alumno):
         response = self.client.post(
             '/calificaciones',
@@ -289,9 +296,9 @@ class CalificacionTests(TestCase):
         self.assertFalse(body['success'])
         self.assertIn('no está inscrito', body['message'])
 
-    @patch('apps.core.views.is_alumno_en_materia', return_value=True)
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.is_alumno_en_materia_local', return_value=True)
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_upsert_calificacion(self, mock_validate, mock_materia, mock_is_alumno):
         # Crear primera vez
         response1 = self.client.post(
@@ -322,9 +329,9 @@ class CalificacionTests(TestCase):
         body2 = response2.json()
         self.assertEqual(body2['data']['calificacion'], '9.00')
 
-    @patch('apps.core.views.is_alumno_en_materia', return_value=True)
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.is_alumno_en_materia_local', return_value=True)
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_editar_calificacion_bloqueado_si_lista_impresa(self, mock_validate, mock_materia, mock_is_alumno):
         # Crear calificación
         from apps.core.models import Calificacion
@@ -346,9 +353,9 @@ class CalificacionTests(TestCase):
         self.assertFalse(body['success'])
         self.assertIn('lista ya fue impresa', body['message'])
 
-    @patch('apps.core.views.is_alumno_en_materia', return_value=True)
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.is_alumno_en_materia_local', return_value=True)
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_importar_calificaciones_ok(self, mock_validate, mock_materia, mock_is_alumno):
         # Crear una actividad
         from openpyxl import Workbook
@@ -369,9 +376,9 @@ class CalificacionTests(TestCase):
         self.assertTrue(body['success'])
         self.assertEqual(body['data']['importadas'], 2)
 
-    @patch('apps.core.views.is_alumno_en_materia', return_value=True)
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.is_alumno_en_materia_local', return_value=True)
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_importar_calificaciones_acepta_encabezados_con_acentos(self, mock_validate, mock_materia, mock_is_alumno):
         workbook = Workbook()
         ws = workbook.active
@@ -388,9 +395,9 @@ class CalificacionTests(TestCase):
         self.assertTrue(body['success'])
         self.assertEqual(body['data']['importadas'], 1)
 
-    @patch('apps.core.views.is_alumno_en_materia', return_value=True)
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.is_alumno_en_materia_local', return_value=True)
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_importar_calificaciones_bloqueada_si_lista_impresa(self, mock_validate, mock_materia, mock_is_alumno):
         EstadoMateria.objects.create(materia_id=10, lista_impresa=True)
 
@@ -409,9 +416,9 @@ class CalificacionTests(TestCase):
         self.assertFalse(body['success'])
         self.assertIn('lista ya fue impresa', body['message'])
 
-    @patch('apps.core.views.is_alumno_en_materia')
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    @patch('apps.core.views.is_alumno_en_materia_local')
+    @patch('apps.core.views.get_materia_local', return_value=SimpleNamespace(docente_id=7))
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
     def test_importar_calificaciones_con_errores(self, mock_validate, mock_materia, mock_is_alumno):
         # Simular alumno no inscrito en la segunda fila
         mock_is_alumno.side_effect = [True, False]
@@ -485,6 +492,31 @@ class CalculoPromediosTests(TestCase):
 class ConcentradoRestTests(TestCase):
     def setUp(self):
         self.auth_headers = {'HTTP_AUTHORIZATION': 'Bearer token-valido'}
+        MateriaProjection.objects.create(
+            materia_id=10,
+            periodo_id=2,
+            nrc='12345',
+            nombre='Servicios Web',
+            docente_id=7,
+            docente_nombre='Docente',
+            periodo_nombre='2026-1',
+        )
+        AlumnoMateriaProjection.objects.create(
+            alumno_id=5,
+            materia_id=10,
+            matricula='20240001',
+            nombre='Ana Lopez',
+            email='ana@test.local',
+            activa=True,
+        )
+        AlumnoMateriaProjection.objects.create(
+            alumno_id=6,
+            materia_id=10,
+            matricula='20240002',
+            nombre='Luis Perez',
+            email='luis@test.local',
+            activa=True,
+        )
         self.pond_examenes = Ponderacion.objects.create(
             materia_id=10,
             nombre_categoria='Exámenes',
@@ -503,17 +535,8 @@ class ConcentradoRestTests(TestCase):
         Calificacion.objects.create(actividad=self.act_examen_2, alumno_id=5, calificacion='6.00')
         Calificacion.objects.create(actividad=self.act_tarea_1, alumno_id=5, calificacion='10.00')
 
-    @patch('apps.core.views.get_alumnos_by_materia')
-    @patch('apps.core.views.get_materia_by_id', return_value=SimpleNamespace(docente_id=7))
-    @patch('apps.core.views.validate_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
-    def test_concentrado_rest_enriquece_con_alumnos_ms3(self, mock_validate, mock_materia, mock_get_alumnos):
-        mock_get_alumnos.return_value = SimpleNamespace(
-            alumnos=[
-                SimpleNamespace(id=5, matricula='20240001', nombre='Ana Lopez'),
-                SimpleNamespace(id=6, matricula='20240002', nombre='Luis Perez'),
-            ]
-        )
-
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    def test_concentrado_rest_enriquece_con_alumnos_ms3(self, mock_validate):
         response = self.client.get('/concentrado/10', **self.auth_headers)
         self.assertEqual(response.status_code, 200)
         body = response.json()
@@ -536,21 +559,65 @@ class ConcentradoRestTests(TestCase):
 
 
 class CerrarMateriaTests(TestCase):
-    @patch('apps.core.views.send_cierre_materia', return_value=True)
-    def test_cerrar_materia_ok(self, mock_send):
-        response = self.client.post('/materias/10/cerrar')
+    def setUp(self):
+        MateriaProjection.objects.create(
+            materia_id=10,
+            periodo_id=2,
+            nrc='12345',
+            nombre='Servicios Web',
+            docente_id=7,
+            docente_nombre='Docente',
+            periodo_nombre='2026-1',
+        )
+        MateriaProjection.objects.create(
+            materia_id=11,
+            periodo_id=2,
+            nrc='54321',
+            nombre='Redes',
+            docente_id=7,
+            docente_nombre='Docente',
+            periodo_nombre='2026-1',
+        )
+
+    @override_settings(USE_EVENT_BUS=True)
+    @patch('apps.core.views.publish_materia_calificaciones_cerradas')
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    def test_cerrar_materia_ok(self, _mock_auth, mock_publish):
+        response = self.client.post(
+            '/materias/10/cerrar',
+            HTTP_AUTHORIZATION='Bearer token-valido',
+        )
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertTrue(body['success'])
-        self.assertTrue(body['data']['notificacion_enviada'])
-        mock_send.assert_called_once_with(10)
+        self.assertTrue(body['data']['evento_publicado'])
+        mock_publish.assert_called_once()
         estado = EstadoMateria.objects.get(materia_id=10)
         self.assertTrue(estado.cerrada)
         self.assertTrue(estado.notificacion_enviada)
 
-    @patch('apps.core.views.send_cierre_materia', return_value=False)
-    def test_cerrar_materia_ms6_caido_no_aborta(self, mock_send):
-        response = self.client.post('/materias/11/cerrar')
+    @override_settings(USE_EVENT_BUS=False)
+    @patch('apps.core.views.publish_materia_calificaciones_cerradas')
+    @patch('apps.core.views.validate_access_token', return_value=SimpleNamespace(user_id=7, rol='docente'))
+    def test_cerrar_materia_sin_event_bus(self, _mock_auth, mock_publish):
+        response = self.client.post(
+            '/materias/11/cerrar',
+            HTTP_AUTHORIZATION='Bearer token-valido',
+        )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(EstadoMateria.objects.get(materia_id=11).cerrada)
-        self.assertFalse(response.json()['data']['notificacion_enviada'])
+        self.assertFalse(response.json()['data']['evento_publicado'])
+        mock_publish.assert_called_once()
+
+
+class ConsumerBindingsTests(TestCase):
+    def test_ms_calificaciones_handlers_cover_catalog(self):
+        from agm_events.consumer_bindings import missing_handlers
+        from apps.core.event_bus.consumers import HANDLERS
+
+        missing = missing_handlers('ms-calificaciones', HANDLERS)
+        self.assertEqual(
+            missing,
+            [],
+            f'Faltan handlers en MS-4: {missing}. Ver contracts/events/consumer_bindings.json',
+        )

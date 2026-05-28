@@ -22,9 +22,10 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
+import agm_common_pb2 as agm__common__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14notificaciones.proto\x12\x0enotificaciones\"0\n\x0cSendResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"T\n\x15SendBienvenidaRequest\x12\x11\n\talumno_id\x18\x01 \x01(\x05\x12\x12\n\nmateria_id\x18\x02 \x01(\x05\x12\x14\n\x0c\x63lave_acceso\x18\x03 \x01(\t\"L\n\x0fSendBajaRequest\x12\x11\n\talumno_id\x18\x01 \x01(\x05\x12\x12\n\ndocente_id\x18\x02 \x01(\x05\x12\x12\n\nmateria_id\x18\x03 \x01(\x05\".\n\x18SendCierreMateriaRequest\x12\x12\n\nmateria_id\x18\x01 \x01(\x05\"K\n\x18SendResetPasswordRequest\x12\r\n\x05\x65mail\x18\x01 \x01(\t\x12\r\n\x05token\x18\x02 \x01(\t\x12\x11\n\treset_url\x18\x03 \x01(\t2\xf8\x02\n\x15NotificacionesService\x12U\n\x0eSendBienvenida\x12%.notificaciones.SendBienvenidaRequest\x1a\x1c.notificaciones.SendResponse\x12N\n\rSendBajaNotif\x12\x1f.notificaciones.SendBajaRequest\x1a\x1c.notificaciones.SendResponse\x12[\n\x11SendCierreMateria\x12(.notificaciones.SendCierreMateriaRequest\x1a\x1c.notificaciones.SendResponse\x12[\n\x11SendResetPassword\x12(.notificaciones.SendResetPasswordRequest\x1a\x1c.notificaciones.SendResponseB\x1a\n\x16\x63om.agm.notificacionesP\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14notificaciones.proto\x12\x12\x61gm.notificaciones\x1a\x10\x61gm_common.proto\"0\n\x0cSendResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"T\n\x15SendBienvenidaRequest\x12\x11\n\talumno_id\x18\x01 \x01(\x05\x12\x12\n\nmateria_id\x18\x02 \x01(\x05\x12\x14\n\x0c\x63lave_acceso\x18\x03 \x01(\t\"L\n\x0fSendBajaRequest\x12\x11\n\talumno_id\x18\x01 \x01(\x05\x12\x12\n\ndocente_id\x18\x02 \x01(\x05\x12\x12\n\nmateria_id\x18\x03 \x01(\x05\".\n\x18SendCierreMateriaRequest\x12\x12\n\nmateria_id\x18\x01 \x01(\x05\"O\n\x18SendResetPasswordRequest\x12\x33\n\x08\x64\x65livery\x18\x01 \x01(\x0b\x32!.agm.common.PasswordResetDelivery2\x98\x03\n\x15NotificacionesService\x12]\n\x0eSendBienvenida\x12).agm.notificaciones.SendBienvenidaRequest\x1a .agm.notificaciones.SendResponse\x12V\n\rSendBajaNotif\x12#.agm.notificaciones.SendBajaRequest\x1a .agm.notificaciones.SendResponse\x12\x63\n\x11SendCierreMateria\x12,.agm.notificaciones.SendCierreMateriaRequest\x1a .agm.notificaciones.SendResponse\x12\x63\n\x11SendResetPassword\x12,.agm.notificaciones.SendResetPasswordRequest\x1a .agm.notificaciones.SendResponseB\x1a\n\x16\x63om.agm.notificacionesP\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,16 +33,16 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'notificaciones_pb2', _globa
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\026com.agm.notificacionesP\001'
-  _globals['_SENDRESPONSE']._serialized_start=40
-  _globals['_SENDRESPONSE']._serialized_end=88
-  _globals['_SENDBIENVENIDAREQUEST']._serialized_start=90
-  _globals['_SENDBIENVENIDAREQUEST']._serialized_end=174
-  _globals['_SENDBAJAREQUEST']._serialized_start=176
-  _globals['_SENDBAJAREQUEST']._serialized_end=252
-  _globals['_SENDCIERREMATERIAREQUEST']._serialized_start=254
-  _globals['_SENDCIERREMATERIAREQUEST']._serialized_end=300
-  _globals['_SENDRESETPASSWORDREQUEST']._serialized_start=302
-  _globals['_SENDRESETPASSWORDREQUEST']._serialized_end=377
-  _globals['_NOTIFICACIONESSERVICE']._serialized_start=380
-  _globals['_NOTIFICACIONESSERVICE']._serialized_end=756
+  _globals['_SENDRESPONSE']._serialized_start=62
+  _globals['_SENDRESPONSE']._serialized_end=110
+  _globals['_SENDBIENVENIDAREQUEST']._serialized_start=112
+  _globals['_SENDBIENVENIDAREQUEST']._serialized_end=196
+  _globals['_SENDBAJAREQUEST']._serialized_start=198
+  _globals['_SENDBAJAREQUEST']._serialized_end=274
+  _globals['_SENDCIERREMATERIAREQUEST']._serialized_start=276
+  _globals['_SENDCIERREMATERIAREQUEST']._serialized_end=322
+  _globals['_SENDRESETPASSWORDREQUEST']._serialized_start=324
+  _globals['_SENDRESETPASSWORDREQUEST']._serialized_end=403
+  _globals['_NOTIFICACIONESSERVICE']._serialized_start=406
+  _globals['_NOTIFICACIONESSERVICE']._serialized_end=814
 # @@protoc_insertion_point(module_scope)

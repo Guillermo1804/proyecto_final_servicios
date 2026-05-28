@@ -123,7 +123,7 @@ class ResetPasswordView(InternalOrAdminMixin, APIView):
         data = serializer.validated_data
         result = EmailService().send_reset_password(
             data['email'],
-            data['token'],
             data['reset_url'],
+            nombre=data.get('nombre', ''),
         )
         return _response_from_result(result, success_status=status.HTTP_201_CREATED)

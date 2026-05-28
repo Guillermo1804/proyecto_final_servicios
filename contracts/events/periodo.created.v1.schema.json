@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "periodo.created.v1 payload",
+  "type": "object",
+  "required": ["periodo_id", "nombre", "fecha_inicio", "fecha_fin", "activo"],
+  "properties": {
+    "periodo_id": { "type": "integer" },
+    "nombre": { "type": "string" },
+    "fecha_inicio": { "type": "string", "format": "date" },
+    "fecha_fin": { "type": "string", "format": "date" },
+    "plan_estudios": { "type": "string" },
+    "activo": { "type": "boolean" }
+  }
+}

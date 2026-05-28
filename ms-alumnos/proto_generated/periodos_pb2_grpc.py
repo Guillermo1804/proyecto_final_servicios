@@ -27,7 +27,7 @@ if _version_not_supported:
 
 class PeriodosServiceStub(object):
     """=============================================
-    MS-2: Periodos & Materias — Servicio gRPC
+    MS-2: Periodos & Materias — EXPOSICIÓN gRPC
     Puerto: 50052
     =============================================
     Consumido por MS-3, MS-4, MS-6, MS-7 para obtener
@@ -42,25 +42,25 @@ class PeriodosServiceStub(object):
             channel: A grpc.Channel.
         """
         self.GetMateriaById = channel.unary_unary(
-                '/periodos.PeriodosService/GetMateriaById',
+                '/agm.periodos.PeriodosService/GetMateriaById',
                 request_serializer=periodos__pb2.GetMateriaByIdRequest.SerializeToString,
                 response_deserializer=periodos__pb2.MateriaInfo.FromString,
                 _registered_method=True)
         self.GetMateriasByDocente = channel.unary_unary(
-                '/periodos.PeriodosService/GetMateriasByDocente',
+                '/agm.periodos.PeriodosService/GetMateriasByDocente',
                 request_serializer=periodos__pb2.GetMateriasByDocenteRequest.SerializeToString,
                 response_deserializer=periodos__pb2.MateriasListResponse.FromString,
                 _registered_method=True)
         self.GetPeriodoActivo = channel.unary_unary(
-                '/periodos.PeriodosService/GetPeriodoActivo',
-                request_serializer=periodos__pb2.Empty.SerializeToString,
+                '/agm.periodos.PeriodosService/GetPeriodoActivo',
+                request_serializer=periodos__pb2.GetPeriodoActivoRequest.SerializeToString,
                 response_deserializer=periodos__pb2.PeriodoInfo.FromString,
                 _registered_method=True)
 
 
 class PeriodosServiceServicer(object):
     """=============================================
-    MS-2: Periodos & Materias — Servicio gRPC
+    MS-2: Periodos & Materias — EXPOSICIÓN gRPC
     Puerto: 50052
     =============================================
     Consumido por MS-3, MS-4, MS-6, MS-7 para obtener
@@ -104,20 +104,20 @@ def add_PeriodosServiceServicer_to_server(servicer, server):
             ),
             'GetPeriodoActivo': grpc.unary_unary_rpc_method_handler(
                     servicer.GetPeriodoActivo,
-                    request_deserializer=periodos__pb2.Empty.FromString,
+                    request_deserializer=periodos__pb2.GetPeriodoActivoRequest.FromString,
                     response_serializer=periodos__pb2.PeriodoInfo.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'periodos.PeriodosService', rpc_method_handlers)
+            'agm.periodos.PeriodosService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('periodos.PeriodosService', rpc_method_handlers)
+    server.add_registered_method_handlers('agm.periodos.PeriodosService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class PeriodosService(object):
     """=============================================
-    MS-2: Periodos & Materias — Servicio gRPC
+    MS-2: Periodos & Materias — EXPOSICIÓN gRPC
     Puerto: 50052
     =============================================
     Consumido por MS-3, MS-4, MS-6, MS-7 para obtener
@@ -139,7 +139,7 @@ class PeriodosService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/periodos.PeriodosService/GetMateriaById',
+            '/agm.periodos.PeriodosService/GetMateriaById',
             periodos__pb2.GetMateriaByIdRequest.SerializeToString,
             periodos__pb2.MateriaInfo.FromString,
             options,
@@ -166,7 +166,7 @@ class PeriodosService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/periodos.PeriodosService/GetMateriasByDocente',
+            '/agm.periodos.PeriodosService/GetMateriasByDocente',
             periodos__pb2.GetMateriasByDocenteRequest.SerializeToString,
             periodos__pb2.MateriasListResponse.FromString,
             options,
@@ -193,8 +193,8 @@ class PeriodosService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/periodos.PeriodosService/GetPeriodoActivo',
-            periodos__pb2.Empty.SerializeToString,
+            '/agm.periodos.PeriodosService/GetPeriodoActivo',
+            periodos__pb2.GetPeriodoActivoRequest.SerializeToString,
             periodos__pb2.PeriodoInfo.FromString,
             options,
             channel_credentials,

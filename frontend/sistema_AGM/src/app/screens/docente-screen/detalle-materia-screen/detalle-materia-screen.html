@@ -8,13 +8,14 @@
 
       <span class="group-badge">
         <i class="bi bi-people"></i>
-        Grupo: ENG-302
+        NRC: {{ codigoMateria }}
+        <span *ngIf="resumenMateria.grupo"> · {{ resumenMateria.grupo }}</span>
       </span>
 
-      <h2>Cálculo Diferencial</h2>
+      <h2>{{ resumenMateria.materia || 'Cargando materia…' }}</h2>
 
       <p>
-        Lunes, Miércoles y Viernes | 08:00-10:00 AM
+        {{ resumenMateria.horario || 'Sin horario registrado' }}
       </p>
 
 <div class="actions-row">
@@ -26,8 +27,9 @@
   </button>
 
   <button
+    type="button"
     class="import-btn"
-    [routerLink]="['/docente/materias', codigoMateria, 'importar-alumnos']"
+    (click)="irImportarAlumnos()"
   >
     <i class="bi bi-upload"></i>
     Importar Alumnos
@@ -61,22 +63,18 @@
 
       <article class="stat-card">
         <div class="stat-head">
-          <i class="bi bi-graph-up-arrow"></i>
-          <span>+2% vs anterior</span>
+          <i class="bi bi-people"></i>
         </div>
-
-        <p>Promedio Grupal</p>
-        <h3>8.42</h3>
+        <p>Alumnos inscritos</p>
+        <h3>{{ alumnosLoading ? '…' : totalAlumnosInscritos }}</h3>
       </article>
 
       <article class="stat-card">
         <div class="stat-head">
-          <i class="bi bi-calendar-check"></i>
-          <span>96% hoy</span>
+          <i class="bi bi-graph-up-arrow"></i>
         </div>
-
-        <p>Asistencia Total</p>
-        <h3>94.8%</h3>
+        <p>Promedio grupal (MS-4)</p>
+        <h3>{{ promedioGrupal }}</h3>
       </article>
 
     </section>
@@ -101,7 +99,12 @@
 
   <div class="students-header">
 
-    <h3>Estudiantes Matriculados</h3>
+    <div class="students-title-block">
+      <h3>Estudiantes Matriculados</h3>
+      <p class="students-count" *ngIf="!alumnosLoading && alumnos.length">
+        {{ alumnos.length }} inscrito(s) · {{ alumnosPorPagina }} por página
+      </p>
+    </div>
 
     <div class="search-box">
       <i class="bi bi-search"></i>
@@ -116,16 +119,28 @@
 
   </div>
 
-  <div class="students-table">
+  <p class="students-hint" *ngIf="alumnosLoading">Cargando alumnos inscritos…</p>
+  <p class="students-hint students-hint--error" *ngIf="!alumnosLoading && alumnosError">{{ alumnosError }}</p>
+  <p class="students-hint" *ngIf="!alumnosLoading && !alumnosError && !alumnos.length">
+    No hay alumnos inscritos. Usa <strong>Importar alumnos</strong> con el PDF de lista de clase.
+  </p>
 
-    <div class="table-head">
+  <p class="students-scroll-hint" *ngIf="!alumnosLoading && alumnos.length">
+    Desliza horizontalmente si no ves la columna <strong>Correo institucional</strong>.
+  </p>
+
+  <div class="students-table" *ngIf="!alumnosLoading && alumnos.length">
+
+    <div class="table-head students-grid">
       <span>Nombre del Alumno</span>
       <span>Matrícula</span>
-      <span>Asistencia</span>
+      <span>Correo institucional</span>
+      <span>MS-1</span>
+      <span>Promedio</span>
     </div>
 
     <div
-      class="table-row"
+      class="table-row students-grid"
       *ngFor="let alumno of alumnosPaginados"
     >
 
@@ -141,17 +156,58 @@
 
       </div>
 
-      <span>
+      <span class="cell-matricula">
         {{ alumno.matricula }}
       </span>
 
+      <span class="cell-email" [title]="alumno.email">
+        <a *ngIf="alumno.email && alumno.email !== '—'" [href]="'mailto:' + alumno.email" (click)="$event.stopPropagation()">
+          {{ alumno.email }}
+        </a>
+        <span *ngIf="!alumno.email || alumno.email === '—'">—</span>
+        <small class="email-tag placeholder" *ngIf="esEmailPlaceholder(alumno.email)">placeholder</small>
+        <small class="email-tag pending" *ngIf="alumno.usuarioId == null && alumno.email && alumno.email !== '—'">sin usuario MS-1</small>
+      </span>
+
+      <div class="cell-ms1">
+        <button
+          *ngIf="puedeDesactivarAlumno(alumno); else alumnoMs1Pendiente"
+          type="button"
+          class="status-toggle activo clickable"
+          title="Desactivar acceso en MS-1 (dejo de asistir)"
+          [disabled]="procesandoMs1AlumnoId === alumno.alumnoId"
+          (click)="desactivarAlumno(alumno)"
+        >
+          {{ procesandoMs1AlumnoId === alumno.alumnoId ? 'Procesando…' : 'Desactivar' }}
+        </button>
+        <ng-template #alumnoMs1Pendiente>
+          <button
+            *ngIf="puedeActivarAlumno(alumno); else alumnoMs1SinCorreo"
+            type="button"
+            class="status-toggle inactivo clickable"
+            title="MS-1 no disponible al importar; reintentar activacion"
+            [disabled]="procesandoMs1AlumnoId === alumno.alumnoId"
+            (click)="activarAlumno(alumno)"
+          >
+            {{ procesandoMs1AlumnoId === alumno.alumnoId ? 'Procesando…' : 'Activar' }}
+          </button>
+          <ng-template #alumnoMs1SinCorreo>
+            <span class="status-toggle muted" title="Sin correo para vincular MS-1">—</span>
+          </ng-template>
+        </ng-template>
+      </div>
+
       <span>
-        {{ alumno.asistencia }}
+        {{ alumno.promedioRedondeado != null && alumno.promedioRedondeado > 0 ? alumno.promedioRedondeado : '—' }}
       </span>
 
     </div>
 
   </div>
+
+  <p class="students-range" *ngIf="!alumnosLoading && alumnosFiltrados.length">
+    Mostrando {{ alumnosDesdeRegistro }}–{{ alumnosHastaRegistro }} de {{ alumnosFiltrados.length }}
+  </p>
 
   <div class="students-pagination" *ngIf="totalPaginasAlumnos > 1">
 
@@ -497,10 +553,12 @@
           <input
             type="number"
             min="0"
-            [attr.max]="100"
-            step="0.1"
+            max="10"
+            step="0.01"
+            [disabled]="listaImpresa"
             [ngModel]="obtenerCalificacionActividad(actividad, alumno.matricula)"
             (ngModelChange)="setCalificacionActividad(actividad, alumno.matricula, $event)"
+            (blur)="guardarCalificacionEnServidor(actividad, alumno, obtenerCalificacionActividad(actividad, alumno.matricula))"
             (input)="onCalificacionInput($event, actividad, alumno.matricula)"
           >
         </div>

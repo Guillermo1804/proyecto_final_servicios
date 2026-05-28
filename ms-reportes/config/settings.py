@@ -78,3 +78,17 @@ if env_bool('CORS_ALLOW_ALL_ORIGINS', default=True):
 else:
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = cors_allowed_origins_list()
+
+SERVICE_NAME = config('SERVICE_NAME', default='ms-reportes')
+USE_EVENT_BUS = config('USE_EVENT_BUS', default=True, cast=bool)
+EVENT_QUEUE_NAME = config('EVENT_QUEUE_NAME', default='ms-reportes.events')
+EVENT_CONTRACTS_DIR = config(
+    'EVENT_CONTRACTS_DIR',
+    default=str(BASE_DIR.parent.parent / 'contracts' / 'events'),
+)
+
+JWT_JWKS_URL = config(
+    'JWT_JWKS_URL',
+    default='http://ms-auth:8001/.well-known/jwks.json',
+)
+JWT_JWKS_CACHE_TTL_SECONDS = config('JWT_JWKS_CACHE_TTL_SECONDS', default=300, cast=int)

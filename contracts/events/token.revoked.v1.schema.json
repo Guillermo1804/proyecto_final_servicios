@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "token.revoked.v1 payload",
+  "type": "object",
+  "required": ["user_id", "jti", "token_type"],
+  "properties": {
+    "user_id": { "type": "integer" },
+    "jti": { "type": "string" },
+    "token_type": { "type": "string", "enum": ["refresh", "access"] }
+  }
+}

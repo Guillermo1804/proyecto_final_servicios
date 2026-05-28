@@ -122,9 +122,10 @@ class NotificacionesServicer(notificaciones_pb2_grpc.NotificacionesServiceServic
         )
 
     def SendResetPassword(self, request, context):
-        email = (request.email or '').strip()
-        token = (request.token or '').strip()
-        reset_url = (request.reset_url or '').strip()
+        delivery = request.delivery
+        email = (delivery.email if delivery else '').strip()
+        reset_url = (delivery.reset_url if delivery else '').strip()
+        nombre = (delivery.nombre if delivery else '').strip()
         if not email or not reset_url:
             context.abort(
                 grpc.StatusCode.INVALID_ARGUMENT,
@@ -132,7 +133,7 @@ class NotificacionesServicer(notificaciones_pb2_grpc.NotificacionesServiceServic
             )
 
         def _call():
-            return self._email.send_reset_password(email, token, reset_url)
+            return self._email.send_reset_password(email, reset_url, nombre=nombre)
 
         result = _invoke_email(context, _call)
         if not result.get('success'):

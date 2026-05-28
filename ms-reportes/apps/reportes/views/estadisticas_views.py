@@ -6,10 +6,10 @@ from decouple import config
 from rest_framework.decorators import api_view
 
 from apps.reportes.dto.report_dto import AlumnoStatsDTO, StatsPeriodoDTO
-from apps.reportes.services.estadisticas_service import EstadisticasService
 from apps.reportes.views.reportes_views import _authenticate
-from grpc_clients import alumnos_client
-from grpc_clients.exceptions import AlumnoNotFound, ReportesDomainError, UpstreamUnavailable
+from apps.reportes.models import ReporteAlumnoProjection
+from apps.reportes.services.estadisticas_service import EstadisticasService
+from apps.reportes.exceptions import AlumnoNotFound, ReportesDomainError
 from utils.responses import error_response, success_response
 
 DEFAULT_PAGE_LIMIT = 50
@@ -101,13 +101,10 @@ def _check_alumno_access(request, alumno_id: int):
         return None
     if request.user_rol != 'alumno':
         return error_response('Sin permisos para consultar estadísticas de alumno', status=403)
-    try:
-        alumno = alumnos_client.get_alumno_by_id(alumno_id)
-    except AlumnoNotFound:
+    alumno = ReporteAlumnoProjection.objects.filter(alumno_id=alumno_id).first()
+    if alumno is None:
         return error_response('Alumno no encontrado', status=404)
-    except UpstreamUnavailable as exc:
-        return error_response(str(exc), status=503)
-    if alumno.usuario_id != request.user_id:
+    if alumno.usuario_id and alumno.usuario_id != request.user_id:
         return error_response('Solo puede consultar sus propias estadísticas', status=403)
     return None
 
@@ -125,8 +122,6 @@ def estadisticas_docente(request, usuario_id: int):
 
     try:
         periodos = EstadisticasService().historial_docente(usuario_id)
-    except UpstreamUnavailable as exc:
-        return error_response(str(exc), status=503)
     except ReportesDomainError as exc:
         return error_response(str(exc), status=500)
 
@@ -141,7 +136,11 @@ def estadisticas_docente(request, usuario_id: int):
         'periodos': [_stats_periodo_dict(p) for p in paginados],
         'comparativa': _build_comparativa(periodos),
     }
-    return success_response(data, pagination=pagination)
+    return success_response(
+        data,
+        pagination=pagination,
+        data_as_of=EstadisticasService.data_as_of(),
+    )
 
 
 @api_view(['GET'])
@@ -159,8 +158,6 @@ def estadisticas_alumno(request, alumno_id: int):
         stats = EstadisticasService().stats_alumno(alumno_id)
     except AlumnoNotFound:
         return error_response('Alumno no encontrado', status=404)
-    except UpstreamUnavailable as exc:
-        return error_response(str(exc), status=503)
     except ReportesDomainError as exc:
         return error_response(str(exc), status=500)
 
@@ -168,4 +165,8 @@ def estadisticas_alumno(request, alumno_id: int):
     payload = _alumno_stats_dict(stats)
     payload['materias'] = [_materia_alumno_dict(m) for m in materias]
 
-    return success_response(payload, pagination=pagination)
+    return success_response(
+        payload,
+        pagination=pagination,
+        data_as_of=EstadisticasService.data_as_of(),
+    )

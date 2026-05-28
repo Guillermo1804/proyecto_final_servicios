@@ -7,9 +7,9 @@ from rest_framework.decorators import api_view
 from apps.reportes.dto.report_dto import AsistenciasReportDTO, CalificacionesReportDTO
 from apps.reportes.services.report_data_service import ReportDataService
 from apps.reportes.services.report_export import build_report_bytes, normalize_formato
-from grpc_clients.exceptions import MateriaNotFound, ReportesDomainError, UpstreamUnavailable
+from apps.reportes.exceptions import MateriaNotFound, ReportesDomainError
 from utils.auth import validate_token
-from utils.responses import error_response
+from utils.responses import error_response, format_data_as_of
 
 
 def _extract_token(request) -> str:
@@ -30,9 +30,6 @@ def _authenticate(request):
         message = str(exc)
         code = 403 if message == 'Sin permisos' else 401
         return None, error_response(message, status=code)
-    except UpstreamUnavailable:
-        return None, error_response('Auth no disponible', status=503)
-
     request.user_id = auth.user_id
     request.user_rol = auth.rol
     request.user_email = auth.email
@@ -49,13 +46,18 @@ def _check_reporte_access(request, materia_docente_id: int):
     return None
 
 
-def _file_response(buffer, filename: str, content_type: str) -> FileResponse:
-    return FileResponse(
+def _file_response(
+    buffer, filename: str, content_type: str, *, data_as_of=None
+) -> FileResponse:
+    response = FileResponse(
         buffer,
         as_attachment=True,
         filename=filename,
         content_type=content_type,
     )
+    if data_as_of:
+        response['X-AGM-Data-As-Of'] = format_data_as_of(data_as_of)
+    return response
 
 
 def _render_reporte(
@@ -67,7 +69,12 @@ def _render_reporte(
     contenido, filename, content_type = build_report_bytes(dto, prefix=prefix, formato=formato)
     from io import BytesIO
 
-    return _file_response(BytesIO(contenido), filename, content_type)
+    return _file_response(
+        BytesIO(contenido),
+        filename,
+        content_type,
+        data_as_of=getattr(dto, 'data_as_of', None),
+    )
 
 
 @api_view(['GET'])
@@ -86,8 +93,6 @@ def reporte_calificaciones(request, materia_id: int):
         dto = ReportDataService().fetch_calificaciones(materia_id)
     except MateriaNotFound:
         return error_response('Materia no encontrada', status=404)
-    except UpstreamUnavailable as exc:
-        return error_response(str(exc), status=503)
     except ReportesDomainError as exc:
         return error_response(str(exc), status=500)
 
@@ -117,8 +122,6 @@ def reporte_asistencias(request, materia_id: int):
         dto = ReportDataService().fetch_asistencias(materia_id)
     except MateriaNotFound:
         return error_response('Materia no encontrada', status=404)
-    except UpstreamUnavailable as exc:
-        return error_response(str(exc), status=503)
     except ReportesDomainError as exc:
         return error_response(str(exc), status=500)
 

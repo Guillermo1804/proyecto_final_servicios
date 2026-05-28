@@ -458,3 +458,44 @@
   }
 
 }
+
+.asistencia-resumen {
+  margin: 1rem 0 1.25rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+
+  h3 {
+    margin: 0 0 .75rem;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #0f172a;
+  }
+}
+
+.asistencia-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .65rem;
+
+  article {
+    padding: .65rem;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+
+    strong {
+      display: block;
+      font-size: 1.25rem;
+      color: #075fc6;
+    }
+
+    span {
+      font-size: .75rem;
+      color: #64748b;
+      font-weight: 700;
+    }
+  }
+}

@@ -1,19 +1,36 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
+
+import { InscripcionMateriaApiDto } from '../../models/alumnos-api.model';
+import { ConcentradoMateriaDto } from '../../models/calificaciones-api.model';
+import { MateriaApiDto } from '../../models/periodos-api.model';
+import { AlumnosService } from '../alumno-services/alumnos.service';
+import { CalificacionesService } from './calificaciones.service';
+import { buildApiUrl, extractAgmListData, unwrapAgmData } from '../tools/agm-api.helpers';
 
 export interface DetalleMateriaAlumnoItem {
   iniciales: string;
   nombre: string;
   matricula: string;
+  email: string;
   asistencia: string;
+  alumnoId?: number;
+  usuarioId?: number | null;
+  promedioReal?: number;
+  promedioRedondeado?: number;
 }
 
 export interface DetalleMateriaRubroItem {
   nombre: string;
   descripcion: string;
   porcentaje: number;
+  ponderacionId?: number;
 }
 
 export interface DetalleMateriaActividadItem {
+  actividadId?: number;
+  ponderacionId?: number;
   titulo: string;
   descripcion: string;
   rubro: string;
@@ -23,6 +40,12 @@ export interface DetalleMateriaActividadItem {
   tipo: string;
   entregas: number;
   calificaciones: Record<string, number>;
+}
+
+export interface DetalleMateriaEvaluacionBundle {
+  materiaId: number | null;
+  rubros: DetalleMateriaRubroItem[];
+  actividades: DetalleMateriaActividadItem[];
 }
 
 export interface DetalleMateriaResumenItem {
@@ -45,106 +68,277 @@ export interface DetalleMateriaActividadBaseItem {
   providedIn: 'root'
 })
 export class DetalleMateriaDocenteService {
+  private readonly materiasPath = 'materias';
 
-  private readonly resumen: DetalleMateriaResumenItem = {
-    grupo: 'ENG-302',
-    materia: 'Cálculo Diferencial',
-    horario: 'Lunes, Miércoles y Viernes | 08:00-10:00 AM'
-  };
+  constructor(
+    private alumnos: AlumnosService,
+    private calificaciones: CalificacionesService,
+    private http: HttpClient,
+  ) {}
 
-  private readonly alumnos: DetalleMateriaAlumnoItem[] = [
-    { iniciales: 'AG', nombre: 'Alonso García, Roberto', matricula: '202300124', asistencia: '98%' },
-    { iniciales: 'BC', nombre: 'Barrera Cruz, Sofía', matricula: '202300456', asistencia: '85%' },
-    { iniciales: 'DV', nombre: 'Díaz Valdés, Marco', matricula: '202300891', asistencia: '62%' },
-    { iniciales: 'LM', nombre: 'López Mora, Elena', matricula: '202300321', asistencia: '100%' },
-    { iniciales: 'JP', nombre: 'Jiménez Pérez, Diego', matricula: '202300777', asistencia: '91%' },
-    { iniciales: 'RC', nombre: 'Ramírez Castillo, Ana', matricula: '202300884', asistencia: '73%' },
-    { iniciales: 'MT', nombre: 'Morales Trejo, Luis', matricula: '202300915', asistencia: '88%' }
-  ];
+  /** Lista en memoria; use loadAlumnosPorNrc para datos MS-3. */
+  private alumnosCargados: DetalleMateriaAlumnoItem[] = [];
+  private materiaIdActual: number | null = null;
 
-  private readonly rubrosEvaluacion: DetalleMateriaRubroItem[] = [
-    { nombre: 'Tareas', descripcion: 'Actividades y entregas semanales', porcentaje: 30 },
-    { nombre: 'Proyecto', descripcion: 'Proyecto integrador de la materia', porcentaje: 30 },
-    { nombre: 'Examen', descripcion: 'Evaluaciones parciales o finales', porcentaje: 40 }
-  ];
-
-  private readonly actividades: DetalleMateriaActividadItem[] = [
-    {
-      titulo: 'Tarea investigación',
-      descripcion: 'Investigación sobre conceptos principales de la unidad.',
-      rubro: 'Tareas',
-      fechaEntrega: '2024-06-05',
-      valorInterno: 40,
-      estado: 'Abierta',
-      tipo: 'abierta',
-      entregas: 12,
-      calificaciones: {
-        '202300124': 92,
-        '202300456': 85,
-        '202300891': 78,
-        '202300321': 95,
-        '202300777': 88,
-        '202300884': 83,
-        '202300915': 90
-      }
-    },
-    {
-      titulo: 'Wireframes',
-      descripcion: 'Diseño de pantallas principales del sistema.',
-      rubro: 'Proyecto',
-      fechaEntrega: '2024-06-12',
-      valorInterno: 30,
-      estado: 'En revisión',
-      tipo: 'revision',
-      entregas: 8,
-      calificaciones: {
-        '202300124': 88,
-        '202300456': 90,
-        '202300891': 80,
-        '202300321': 94,
-        '202300777': 86,
-        '202300884': 79,
-        '202300915': 92
-      }
-    },
-    {
-      titulo: 'Examen parcial',
-      descripcion: 'Evaluación correspondiente al primer bloque temático.',
-      rubro: 'Examen',
-      fechaEntrega: '2024-06-18',
-      valorInterno: 100,
-      estado: 'Cerrada',
-      tipo: 'cerrada',
-      entregas: 32,
-      calificaciones: {
-        '202300124': 86,
-        '202300456': 91,
-        '202300891': 74,
-        '202300321': 93,
-        '202300777': 89,
-        '202300884': 81,
-        '202300915': 87
-      }
-    }
-  ];
-
-  getResumen(): DetalleMateriaResumenItem {
-    return { ...this.resumen };
+  loadResumenPorNrc(nrc: string): Observable<DetalleMateriaResumenItem> {
+    const params = new HttpParams({ fromObject: { nrc, limit: '1', page: '1' } });
+    return this.http.get<unknown>(buildApiUrl(`${this.materiasPath}/`), { params }).pipe(
+      map((response) => {
+        const data = unwrapAgmData<{ results?: MateriaApiDto[] }>(response);
+        const list = Array.isArray(data?.results)
+          ? data.results
+          : extractAgmListData<MateriaApiDto>(response);
+        const materia = list[0];
+        if (!materia) {
+          return { grupo: nrc, materia: 'Materia no encontrada', horario: '' };
+        }
+        return {
+          grupo: materia.seccion,
+          materia: materia.nombre,
+          horario: String(materia.horario ?? ''),
+        };
+      }),
+    );
   }
 
+  loadAlumnosPorNrc(nrc: string): Observable<DetalleMateriaAlumnoItem[]> {
+    return this.resolveMateriaIdByNrc(nrc).pipe(
+      switchMap((materiaId) => {
+        if (!materiaId) {
+          return of([]);
+        }
+        return this.fetchAllInscripcionesPorMateria(materiaId).pipe(
+          map((inscripciones) => {
+            this.alumnosCargados = this.mapInscripcionesToAlumnos(inscripciones);
+            return this.alumnosCargados;
+          }),
+        );
+      }),
+    );
+  }
+
+  private fetchAllInscripcionesPorMateria(
+    materiaId: number,
+    pageSize = 100,
+  ): Observable<InscripcionMateriaApiDto[]> {
+    return this.alumnos.getAlumnosPorMateria(materiaId, 1, pageSize).pipe(
+      switchMap((firstPage) => {
+        const acumulado = [...firstPage.results];
+        const total = Number(firstPage.count ?? acumulado.length);
+        const totalPaginas = Math.max(1, Math.ceil(total / pageSize));
+
+        if (totalPaginas <= 1) {
+          return of(acumulado);
+        }
+
+        const restantes = Array.from({ length: totalPaginas - 1 }, (_, index) =>
+          this.alumnos.getAlumnosPorMateria(materiaId, index + 2, pageSize),
+        );
+
+        return forkJoin(restantes).pipe(
+          map((paginas) => {
+            for (const pagina of paginas) {
+              acumulado.push(...pagina.results);
+            }
+            return acumulado;
+          }),
+        );
+      }),
+    );
+  }
+
+  private mapInscripcionesToAlumnos(
+    inscripciones: InscripcionMateriaApiDto[],
+  ): DetalleMateriaAlumnoItem[] {
+    return inscripciones.map((inscripcion) => {
+      const alumno = inscripcion.alumno;
+      const nombre = AlumnosService.mapAlumnoNombre(alumno);
+      return {
+        iniciales: AlumnosService.inicialesDesdeNombre(nombre),
+        nombre,
+        matricula: alumno.matricula,
+        email: String(alumno.email ?? '').trim() || '—',
+        alumnoId: alumno.id,
+        usuarioId: alumno.usuario_id ?? null,
+        promedioRedondeado: 0,
+        asistencia: '—',
+      };
+    });
+  }
+
+  /** @deprecated Usar loadAlumnosPorNrc */
   getAlumnos(): DetalleMateriaAlumnoItem[] {
-    return this.alumnos.map((alumno) => ({ ...alumno }));
+    return this.alumnosCargados.map((alumno) => ({ ...alumno }));
   }
 
-  getRubrosEvaluacion(): DetalleMateriaRubroItem[] {
-    return this.rubrosEvaluacion.map((rubro) => ({ ...rubro }));
+  getMateriaIdActual(): number | null {
+    return this.materiaIdActual;
   }
 
-  getActividades(): DetalleMateriaActividadItem[] {
-    return this.actividades.map((actividad) => ({
-      ...actividad,
-      calificaciones: { ...actividad.calificaciones }
-    }));
+  loadEvaluacionPorNrc(nrc: string): Observable<DetalleMateriaEvaluacionBundle> {
+    return this.resolveMateriaIdByNrc(nrc).pipe(
+      switchMap((materiaId) => {
+        if (!materiaId) {
+          return of({ materiaId: null, rubros: [], actividades: [] });
+        }
+        this.materiaIdActual = materiaId;
+        return forkJoin({
+          ponderaciones: this.calificaciones.getPonderaciones(materiaId).pipe(
+            catchError(() => of({ materia_id: materiaId, ponderaciones: [], total: 0 })),
+          ),
+          actividades: this.calificaciones.getActividades(materiaId).pipe(
+            catchError(() => of({ materia_id: materiaId, categorias: [] })),
+          ),
+          concentrado: this.calificaciones.getConcentrado(materiaId).pipe(
+            catchError(() => of(null as ConcentradoMateriaDto | null)),
+          ),
+        }).pipe(
+          map(({ ponderaciones, actividades, concentrado }) => {
+            const rubros = ponderaciones.ponderaciones.map((pond) => ({
+              ponderacionId: pond.id,
+              nombre: pond.nombre_categoria,
+              descripcion: '',
+              porcentaje: Number(pond.porcentaje) || 0,
+            }));
+            const calificacionesPorActividad = this.mapCalificacionesDesdeConcentrado(concentrado);
+            const items = this.mapActividadesDesdeApi(
+              actividades.categorias,
+              calificacionesPorActividad,
+            );
+            this.aplicarPromediosConcentrado(concentrado);
+            this.recalcularValoresInternosTodosRubros(items);
+            return { materiaId, rubros, actividades: items };
+          }),
+        );
+      }),
+    );
+  }
+
+  guardarPlanEvaluacion(
+    materiaId: number,
+    rubros: DetalleMateriaRubroItem[],
+  ): Observable<DetalleMateriaRubroItem[]> {
+    const ponderaciones = rubros
+      .filter((rubro) => rubro.nombre.trim())
+      .map((rubro) => ({
+        nombre_categoria: rubro.nombre.trim(),
+        porcentaje: Number(rubro.porcentaje) || 0,
+      }));
+
+    return this.calificaciones.savePonderaciones(materiaId, ponderaciones).pipe(
+      map((data) =>
+        data.ponderaciones.map((pond) => ({
+          ponderacionId: pond.id,
+          nombre: pond.nombre_categoria,
+          descripcion: '',
+          porcentaje: Number(pond.porcentaje) || 0,
+        })),
+      ),
+    );
+  }
+
+  importarPlanEvaluacionExcel(materiaId: number, archivo: File): Observable<DetalleMateriaRubroItem[]> {
+    return this.calificaciones.importPonderaciones(materiaId, archivo).pipe(
+      map((data) =>
+        data.ponderaciones.map((pond) => ({
+          ponderacionId: pond.id,
+          nombre: pond.nombre_categoria,
+          descripcion: '',
+          porcentaje: Number(pond.porcentaje) || 0,
+        })),
+      ),
+    );
+  }
+
+  crearActividadRemota(
+    rubros: DetalleMateriaRubroItem[],
+    actividadBase: DetalleMateriaActividadBaseItem,
+    alumnos: DetalleMateriaAlumnoItem[],
+  ): Observable<DetalleMateriaActividadItem> {
+    const rubro = rubros.find((item) => item.nombre === actividadBase.rubro);
+    if (!rubro?.ponderacionId) {
+      throw new Error('Guarda el plan de evaluacion antes de crear actividades en ese rubro.');
+    }
+
+    return this.calificaciones
+      .createActividad({
+        ponderacion_id: rubro.ponderacionId,
+        nombre: actividadBase.titulo.trim(),
+        descripcion: actividadBase.descripcion?.trim() || '',
+        fecha: actividadBase.fechaEntrega || null,
+      })
+      .pipe(
+        map((dto) => {
+          const item: DetalleMateriaActividadItem = {
+            actividadId: dto.id,
+            ponderacionId: dto.ponderacion_id,
+            titulo: dto.nombre,
+            descripcion: dto.descripcion || '',
+            rubro: dto.categoria_nombre,
+            fechaEntrega: dto.fecha || '',
+            valorInterno: 0,
+            estado: actividadBase.estado,
+            tipo: actividadBase.tipo,
+            entregas: 0,
+            calificaciones: alumnos.reduce(
+              (acc, alumno) => {
+                acc[alumno.matricula] = 0;
+                return acc;
+              },
+              {} as Record<string, number>,
+            ),
+          };
+          return item;
+        }),
+      );
+  }
+
+  persistirCalificacion(
+    actividad: DetalleMateriaActividadItem,
+    alumno: DetalleMateriaAlumnoItem,
+    valor: number | string,
+  ): Observable<number> {
+    if (!actividad.actividadId || !alumno.alumnoId) {
+      throw new Error('Faltan ids de actividad o alumno para guardar la calificacion.');
+    }
+    const calificacion = this.setCalificacionActividad(actividad, alumno.matricula, valor);
+    return this.calificaciones
+      .upsertCalificacion(actividad.actividadId, alumno.alumnoId, calificacion)
+      .pipe(map(() => calificacion));
+  }
+
+  importarCalificacionesExcel(materiaId: number, archivo: File) {
+    return this.calificaciones.importCalificaciones(materiaId, archivo);
+  }
+
+  cerrarMateriaCalificaciones(materiaId: number) {
+    return this.calificaciones.cerrarMateria(materiaId);
+  }
+
+  marcarListaImpresa(materiaId: number) {
+    return this.calificaciones.imprimirLista(materiaId);
+  }
+
+  recargarConcentrado(materiaId: number): Observable<DetalleMateriaAlumnoItem[]> {
+    return this.calificaciones.getConcentrado(materiaId).pipe(
+      map((concentrado) => {
+        this.aplicarPromediosConcentrado(concentrado);
+        return [...this.alumnosCargados];
+      }),
+    );
+  }
+
+  private resolveMateriaIdByNrc(nrc: string): Observable<number | null> {
+    const params = new HttpParams({ fromObject: { nrc, limit: '1', page: '1' } });
+    return this.http.get<unknown>(buildApiUrl(`${this.materiasPath}/`), { params }).pipe(
+      map((response) => {
+        const data = unwrapAgmData<{ results?: MateriaApiDto[] }>(response);
+        const list = Array.isArray(data?.results)
+          ? data.results
+          : extractAgmListData<MateriaApiDto>(response);
+        return list[0] ? Number(list[0].id) : null;
+      }),
+    );
   }
 
   crearActividadBase(): DetalleMateriaActividadBaseItem {
@@ -167,7 +361,7 @@ export class DetalleMateriaDocenteService {
     }
 
     return alumnos.filter((alumno) =>
-      [alumno.nombre, alumno.matricula, alumno.iniciales, alumno.asistencia]
+      [alumno.nombre, alumno.matricula, alumno.email, alumno.iniciales, alumno.asistencia]
         .join(' ')
         .toLowerCase()
         .includes(filtro)
@@ -188,6 +382,27 @@ export class DetalleMateriaDocenteService {
 
   generarPaginas(totalPaginas: number): number[] {
     return Array.from({ length: Math.max(1, totalPaginas) }, (_, index) => index + 1);
+  }
+
+  generarPaginasVentana(
+    totalPaginas: number,
+    paginaActual: number,
+    maxVisible = 5,
+  ): number[] {
+    const total = Math.max(1, totalPaginas);
+    if (total <= maxVisible) {
+      return this.generarPaginas(total);
+    }
+
+    let inicio = Math.max(1, paginaActual - Math.floor(maxVisible / 2));
+    let fin = inicio + maxVisible - 1;
+
+    if (fin > total) {
+      fin = total;
+      inicio = fin - maxVisible + 1;
+    }
+
+    return Array.from({ length: fin - inicio + 1 }, (_, index) => inicio + index);
   }
 
   getValorTotalRubros(rubros: DetalleMateriaRubroItem[]): number {
@@ -285,10 +500,85 @@ export class DetalleMateriaDocenteService {
 
   setCalificacionActividad(actividad: { calificaciones: Record<string, number> }, matricula: string, valor: number | string): number {
     const numero = Number(valor);
-    const calificacion = Number.isNaN(numero) ? 0 : Math.round(Math.min(100, Math.max(0, numero)) * 100) / 100;
+    const calificacion = Number.isNaN(numero)
+      ? 0
+      : Math.round(Math.min(10, Math.max(0, numero)) * 100) / 100;
     actividad.calificaciones[matricula] = calificacion;
 
     return calificacion;
+  }
+
+  private mapCalificacionesDesdeConcentrado(
+    concentrado: ConcentradoMateriaDto | null,
+  ): Record<number, Record<string, number>> {
+    const map: Record<number, Record<string, number>> = {};
+    if (!concentrado?.alumnos) {
+      return map;
+    }
+    for (const alumno of concentrado.alumnos) {
+      for (const item of alumno.calificaciones || []) {
+        const actividadId = Number(item.actividad_id);
+        if (!map[actividadId]) {
+          map[actividadId] = {};
+        }
+        map[actividadId][alumno.matricula] = Number(item.calificacion) || 0;
+      }
+    }
+    return map;
+  }
+
+  private mapActividadesDesdeApi(
+    categorias: Array<{
+      categoria_nombre: string;
+      actividades: Array<{
+        id: number;
+        ponderacion_id: number;
+        nombre: string;
+        descripcion?: string;
+        fecha?: string | null;
+      }>;
+    }>,
+    calificacionesPorActividad: Record<number, Record<string, number>>,
+  ): DetalleMateriaActividadItem[] {
+    const items: DetalleMateriaActividadItem[] = [];
+    for (const categoria of categorias) {
+      for (const actividad of categoria.actividades || []) {
+        items.push({
+          actividadId: actividad.id,
+          ponderacionId: actividad.ponderacion_id,
+          titulo: actividad.nombre,
+          descripcion: actividad.descripcion || '',
+          rubro: categoria.categoria_nombre,
+          fechaEntrega: actividad.fecha || '',
+          valorInterno: 0,
+          estado: 'Abierta',
+          tipo: 'abierta',
+          entregas: 0,
+          calificaciones: { ...(calificacionesPorActividad[actividad.id] || {}) },
+        });
+      }
+    }
+    return items;
+  }
+
+  private aplicarPromediosConcentrado(concentrado: ConcentradoMateriaDto | null): void {
+    if (!concentrado?.alumnos?.length) {
+      return;
+    }
+    const porMatricula = new Map(
+      concentrado.alumnos.map((alumno) => [alumno.matricula, alumno]),
+    );
+    this.alumnosCargados = this.alumnosCargados.map((alumno) => {
+      const row = porMatricula.get(alumno.matricula);
+      if (!row) {
+        return alumno;
+      }
+      return {
+        ...alumno,
+        promedioReal: Number(row.promedio_real) || 0,
+        promedioRedondeado: Number(row.promedio_redondeado) || 0,
+      };
+    });
   }
 
   calcularPromedioAlumno(
@@ -364,11 +654,19 @@ export class DetalleMateriaDocenteService {
     actividades: DetalleMateriaActividadItem[],
     rubros: DetalleMateriaRubroItem[]
   ): Array<DetalleMateriaAlumnoItem & { promedioReal: number; promedioRedondeado: number }> {
-    return alumnos.map((alumno) => ({
-      ...alumno,
-      promedioReal: this.calcularPromedioAlumno(alumno.matricula, actividades, rubros),
-      promedioRedondeado: Math.floor(this.calcularPromedioAlumno(alumno.matricula, actividades, rubros) + 0.5)
-    }));
+    return alumnos.map((alumno) => {
+      const promedioReal =
+        alumno.promedioReal ??
+        this.calcularPromedioAlumno(alumno.matricula, actividades, rubros);
+      const promedioRedondeado =
+        alumno.promedioRedondeado ??
+        Math.floor(promedioReal + 0.5);
+      return {
+        ...alumno,
+        promedioReal,
+        promedioRedondeado,
+      };
+    });
   }
 
   getPlanEvaluacionValido(rubros: DetalleMateriaRubroItem[]): boolean {

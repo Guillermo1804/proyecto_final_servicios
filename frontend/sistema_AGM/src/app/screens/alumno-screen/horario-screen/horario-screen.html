@@ -30,9 +30,10 @@
         class="schedule-item"
         *ngFor="let item of horariosDelDia"
         [ngClass]="item.color"
+        [class.no-hour]="!item.hora"
       >
 
-        <div class="hour">
+        <div class="hour" *ngIf="item.hora">
           {{ item.hora }}
         </div>
 
@@ -42,7 +43,7 @@
 
             <h3>{{ item.materia }}</h3>
 
-            <span class="room-badge">
+            <span class="room-badge" *ngIf="item.aula">
               {{ item.aula }}
             </span>
 

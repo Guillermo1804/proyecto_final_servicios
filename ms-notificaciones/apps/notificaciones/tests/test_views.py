@@ -57,7 +57,6 @@ class NotificacionesViewsTests(TestCase):
             '/notificaciones/reset-password',
             {
                 'email': 'user@test.local',
-                'token': 'abc',
                 'reset_url': 'http://localhost:4200/reset?token=abc',
             },
             format='json',

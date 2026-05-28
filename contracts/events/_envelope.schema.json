@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agm.buap.local/contracts/events/_envelope.schema.json",
+  "title": "AGM Event Envelope",
+  "description": "Sobre comun para todos los eventos de dominio publicados en el bus AGM.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_name",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "source_service",
+    "correlation_id",
+    "causation_id",
+    "occurred_at",
+    "payload"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identificador unico del evento (idempotencia)."
+    },
+    "event_name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+\\.v[0-9]+$",
+      "description": "Nombre versionado, ej. health.ping.v1"
+    },
+    "event_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "aggregate_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "aggregate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_service": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Microservicio productor, ej. ms-smoke-test"
+    },
+    "correlation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "causation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Instante ISO-8601 UTC del hecho de negocio."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Datos especificos del evento segun contrato del event_name."
+    }
+  }
+}

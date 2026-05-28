@@ -1,48 +1,446 @@
-# Plan de accion - Bus de eventos y desacoplo entre microservicios AGM
+# Plan de acción — Bus de eventos y desacoplo (trabajo por fases)
 
-**Objetivo general:** transformar la comunicacion entre microservicios AGM desde un esquema de llamadas directas sincrónicas a una arquitectura orientada a eventos con bus de mensajeria, tolerante a fallos, asincrona y sin dependencias estrictas entre servicios.
-
-**Alcance:** MS-1 Auth & Users, MS-2 Periodos & Materias, MS-3 Docentes & Alumnos, MS-4 Calificaciones, MS-5 Asistencias QR, MS-6 Notificaciones, MS-7 Reportes & Stats, mas la infraestructura transversal del proyecto.
-
-**Contexto arquitectonico actual:** el repositorio define gRPC como medio inter-MS, pero en la practica eso sigue siendo RPC sincrono request/response. Ese modelo protege parcialmente los requests con timeouts y fallbacks, pero no garantiza desacoplo ni entrega durable cuando un servicio cae. Este plan corrige esa limitacion.
+**Versión:** 3.0 — ejecución **tú + asistente (Cursor)**, un microservicio por fase de dominio.  
+**Objetivo final:** los 7 MS operan de forma autónoma; la integración entre dominios es por **RabbitMQ** (eventos + outbox/inbox), sin gRPC en flujos de negocio.
 
 ---
 
-## 1. Meta tecnica
+## Cómo vamos a trabajar (obligatorio)
 
-### 1.1 Problema a resolver
+Este plan está pensado para que **lo implementes tú** con ayuda del asistente. Reglas de trabajo:
 
-Hoy varios flujos dependen de respuestas inmediatas de otros MS:
-- validacion de JWT contra MS-1 en tiempo de request;
-- notificaciones disparadas desde MS-3 y MS-4 hacia MS-6;
-- reportes que consultan datos de MS-2, MS-3, MS-4 y MS-5 en caliente;
-- lectura de datos de otros servicios para completar operaciones de negocio.
+1. **Una fase a la vez.** No se empieza la fase N+1 hasta tu confirmación explícita (“continúa”, “aprobado”, etc.).
+2. **Al terminar cada fase**, el asistente debe:
+   - listar **archivos creados o modificados**;
+   - resumir **qué quedó funcionando**;
+   - indicar **cómo probar solo esa fase** (comandos `docker compose`, curls, tests);
+   - mostrar el **checklist de la fase** marcado;
+   - **preguntar:** *“¿Confirmas que la Fase X está OK para pasar a la Fase Y?”*
+3. **Pruebas por microservicio:** en cada fase de MS solo levantamos lo necesario (ver “Compose mínimo” por fase) para no mezclar errores de otros servicios.
+4. **Feature flag:** `USE_EVENT_BUS=true` por defecto en todo el monorepo (Fase 9). Solo `false` para rollback local documentado.
 
-Eso crea dependencias encadenadas. Si un MS cae, otros degradan o fallan.
+### Registro de avance (rellenar tú)
 
-### 1.2 Objetivo de diseño
+| Fase | Nombre | Estado | Fecha | Confirmado por ti |
+|------|--------|--------|-------|-------------------|
+| 1 | Infraestructura + librería común | ✅ Completada | 2026-05-22 | Sí |
+| 2 | MS-1 Auth & Users | ✅ Completada | 2026-05-23 | Sí |
+| 3 | MS-2 Periodos & Materias | ✅ Completada | 2026-05-23 | Sí |
+| 4 | MS-3 Docentes & Alumnos | ✅ Completada | 2026-05-23 | Sí |
+| 5 | MS-6 Notificaciones | ✅ Completada | 2026-05-23 | Sí |
+| 6 | MS-4 Calificaciones | ✅ Completada | 2026-05-23 | Sí |
+| 7 | MS-5 Asistencias QR | ✅ Completada | 2026-05-23 | Sí |
+| 8 | MS-7 Reportes & Stats | ✅ Completada | 2026-05-23 | Sí |
+| 9 | Cierre: retiro gRPC + docs + sistema completo | ✅ Completada | 2026-05-23 | Pendiente confirmación |
 
-1. Cada microservicio debe ser capaz de completar su propia transaccion local sin bloquearse por disponibilidad de otros.
-2. Las integraciones entre servicios deben ocurrir por eventos publicados en un bus durable.
-3. Los consumidores deben ser idempotentes, reintentables y con cola de errores.
-4. Las consultas puntuales que realmente requieran respuesta inmediata pueden seguir por gRPC, pero no deben formar parte del flujo critico de negocio.
-5. Ningun microservicio debe leer la base de datos de otro.
+---
 
-### 1.3 Bus recomendado
+## Mapa rápido de fases
 
-**Recomendacion:** `RabbitMQ` como bus de eventos del sistema.
+| Fase | Alcance (de → hasta) | Microservicio / ámbito |
+|------|----------------------|-------------------------|
+| **1** | Repo sin bus → bus operativo + librería + prueba humo | Transversal (sin lógica de negocio en 7 MS) |
+| **2** | MS-1 acoplado por gRPC → MS-1 autónomo + JWKS + eventos identidad | **MS-1** |
+| **3** | MS-2 con ValidateToken gRPC → JWT local + publica eventos periodo/materia | **MS-2** |
+| **4** | MS-3 con gRPC a MS-1/MS-6 → publica eventos alumnos; sin gRPC a MS-6 | **MS-3** |
+| **5** | MS-6 invocado por gRPC → MS-6 solo consume bus; correos async | **MS-6** (+ prueba integrada con MS-3) |
+| **6** | MS-4 con gRPC MS-2/3/6 → proyecciones + eventos calificaciones | **MS-4** |
+| **7** | MS-5 con gRPC MS-1/3 → proyecciones + eventos asistencia | **MS-5** |
+| **8** | MS-7 agregador gRPC → proyecciones + reportes locales | **MS-7** |
+| **9** | Sistema híbrido → gRPC de negocio retirado; docs al día; prueba E2E | Todo el monorepo |
 
-Motivos:
-- encaja bien con Django y Python;
-- permite `topic exchanges`, colas durables, `ack`, `nack`, reintentos, `dead-letter queues` y `TTL`;
-- es mas simple de operar que Kafka para este tamano de proyecto;
-- permite evolucionar a un modelo de eventos con muy poca friccion.
+**Orden MS-5 y MS-6:** MS-6 antes que MS-4 porque desacopla correos pronto (Fase 5) y valida el bus con un solo consumidor; MS-4 y MS-5 consumen eventos de MS-2/MS-3 ya publicados en fases 3–4.
 
-**Uso de Celery:** solo para ejecucion de workers y tareas asíncronas internas si el equipo ya lo domina. No debe confundirse con el bus de dominio.
+---
 
-### 1.4 Contrato de evento
+# FASE 1 — Infraestructura y librería común
 
-Todo evento deberia usar un sobre comun versionado.
+## Alcance
+
+**Desde:** repositorio actual sin RabbitMQ ni `agm_events`.  
+**Hasta:** RabbitMQ en Docker, carpeta de contratos, librería Python compartida, **prueba humo** publicar/consumir (puede ser script o MS mínimo temporal).
+
+**No incluye:** cambiar lógica de negocio de MS-1…MS-7; JWT local; retirar gRPC.
+
+## Compose mínimo para probar
+
+```text
+rabbitmq
+db-auth (solo si el humo usa Django en ms-auth; alternativa: script Python en shared/)
+```
+
+Opcional: ningún MS REST; solo `rabbitmq` + comando `python -m agm_events.smoke_test`.
+
+## Tareas (checklist)
+
+- [ ] Servicio `rabbitmq` en `docker-compose.yml` (volumen, healthcheck, red `agm-network`).
+- [ ] Variables documentadas en `.env.example` raíz y referencia en plan.
+- [ ] Exchange `agm.domain` (topic), política de colas retry/DLQ documentada en `contracts/events/README.md`.
+- [ ] Carpeta `contracts/events/` con `_envelope.schema.json` y `CATALOG.md` (vacío o con `health.ping.v1` solo).
+- [ ] Paquete `packages/agm_events/` (o `shared/agm_events/`): envelope, publisher, consumer base, outbox/inbox helpers.
+- [ ] Comando o test de humo: publica `health.ping.v1` → consumidor guarda en inbox (BD SQLite temporal o `db-auth` de prueba).
+- [ ] Prueba duplicado: mismo `event_id` dos veces → un solo registro inbox.
+- [ ] Prueba broker caído: outbox pendiente → al subir rabbit, se publica.
+
+## Criterio de “fase terminada”
+
+Puedes ejecutar humo local sin levantar los 7 microservicios.
+
+## Al cerrar la fase — el asistente te muestra
+
+1. Diff de `docker-compose.yml` y estructura `packages/agm_events/`, `contracts/events/`.
+2. Salida del smoke test (logs con `event_id`, `correlation_id`).
+3. Checklist anterior completado.
+
+**Pregunta de confirmación:** *¿Confirmas Fase 1 OK para iniciar Fase 2 (MS-1 Auth)?*
+
+---
+
+# FASE 2 — MS-1 Auth & Users
+
+## Alcance
+
+**Desde:** MS-1 solo como servicio REST/gRPC actual.  
+**Hasta:** MS-1 con **outbox**, publicación de eventos de identidad, endpoint **JWKS** (o clave pública), workers `run_event_outbox` / (si consume) `run_event_consumer` para `user.create_requested.v1`. MS-1 **no depende** de otros MS para operar login/registro.
+
+**No incluye:** quitar `ValidateToken` en MS-2…MS-7 (eso va fase por fase en cada MS); MS-3 publicando alumnos.
+
+## Compose mínimo para probar
+
+```text
+rabbitmq, db-auth, ms-auth
+ms-auth-worker-outbox (o proceso en entrypoint)
+```
+
+## Tareas (checklist)
+
+- [ ] Migración Django: tabla `event_outbox` (y `event_inbox` si MS-1 consume).
+- [ ] Integrar `agm_events` en `ms-auth`.
+- [ ] Publicar tras commit: `user.created.v1`, `user.updated.v1`, `user.deactivated.v1`, `user.role_changed.v1`, `token.revoked.v1` (según existan esos flujos en código).
+- [ ] Endpoint JWKS o ruta documentada para clave pública JWT.
+- [ ] Consumidor opcional: `user.create_requested.v1` → crea usuario → `user.created.v1`.
+- [ ] `USE_EVENT_BUS=true` solo en `ms-auth` para eventos.
+- [ ] Tests: registro/login con **solo** MS-1 + MySQL + Rabbit levantados.
+- [ ] Test: parar Rabbit → crear usuario → outbox `pending` → levantar Rabbit → evento `published`.
+
+## Prueba individual MS-1
+
+| # | Acción | Resultado esperado |
+|---|--------|-------------------|
+| 1 | `POST /auth/login/` (o ruta existente) | 200 + JWT |
+| 2 | Crear usuario | Fila en outbox → mensaje en cola Rabbit |
+| 3 | `GET` JWKS | Clave usable para validar JWT offline |
+| 4 | `docker stop` otros MS | Login sigue funcionando |
+
+## Al cerrar la fase
+
+1. Lista de eventos MS-1 en `contracts/events/CATALOG.md`.
+2. Comandos exactos que usaste.
+3. Captura o log de un evento en Rabbit Management (si UI habilitada).
+
+**Pregunta:** *¿Confirmas Fase 2 OK para Fase 3 (MS-2)?*
+
+---
+
+# FASE 3 — MS-2 Periodos & Materias
+
+## Alcance
+
+**Desde:** MS-2 llama `ValidateToken` a MS-1 por gRPC en requests.  
+**Hasta:** MS-2 valida **JWT localmente** (JWKS MS-1); publica eventos de periodo/materia con outbox; **no llama a ningún otro MS** en su CRUD principal.
+
+**No incluye:** consumidores en MS-4/MS-7; MS-3.
+
+## Compose mínimo
+
+```text
+rabbitmq, db-auth, ms-auth (solo JWKS; puede estar caído el gRPC si JWT ya en cache)
+db-periodos, ms-periodos, ms-periodos-worker-outbox
+```
+
+## Tareas (checklist)
+
+- [ ] Outbox/inbox en `ms-periodos`.
+- [ ] Middleware/auth: JWT local; **eliminar** llamada gRPC `ValidateToken` en hot path.
+- [ ] Publicar: `periodo.created.v1`, `periodo.updated.v1`, `periodo.activated.v1`, `periodo.closed.v1`, `materia.created.v1`, `materia.updated.v1`, `materia.assigned_teacher.v1`, `materia.closed.v1`.
+- [ ] Schemas JSON en `contracts/events/` para cada evento publicado.
+- [ ] `USE_EVENT_BUS=true` en ms-periodos.
+- [ ] Tests REST de periodos/materias sin levantar MS-3…MS-7.
+
+## Prueba individual MS-2
+
+| # | Acción | Resultado esperado |
+|---|--------|-------------------|
+| 1 | Login en MS-1, llamar API MS-2 con JWT | 200 sin gRPC runtime a MS-1 |
+| 2 | Crear/cerrar materia | Evento en Rabbit + outbox `published` |
+| 3 | `docker stop ms-auth` (tras JWT emitido) | Endpoints MS-2 con token válido siguen OK |
+
+## Al cerrar la fase
+
+Entregables + checklist + comandos.
+
+**Pregunta:** *¿Confirmas Fase 3 OK para Fase 4 (MS-3)?*
+
+---
+
+# FASE 4 — MS-3 Docentes & Alumnos
+
+## Alcance
+
+**Desde:** MS-3 llama MS-6 (`SendBienvenida`, `SendBajaNotif`) y MS-1 (crear usuario) de forma sincrónica.  
+**Hasta:** MS-3 publica `alumno.imported.v1`, `alumno.updated.v1`, `alumno.withdrawn.v1`, `docente.imported.v1`, etc.; **payload completo** para correos; flujo usuario vía `user.create_requested.v1` (outbox); **sin gRPC a MS-6**.
+
+**No incluye:** MS-6 consumiendo (Fase 5); read models en MS-4/MS-5.
+
+## Compose mínimo
+
+```text
+rabbitmq, db-auth, ms-auth, db-alumnos, ms-alumnos, ms-alumnos-worker-outbox
+```
+
+(MS-1 necesario si pruebas creación usuario async; para solo importar alumno y ver evento, puede bastar outbox.)
+
+## Tareas (checklist)
+
+- [ ] Outbox en `ms-alumnos`.
+- [ ] JWT local (igual que MS-2).
+- [ ] Sustituir llamadas MS-6 por publicación de eventos (flag `USE_EVENT_BUS`).
+- [ ] Tabla `pending_user_creation` + `user.create_requested.v1` hacia bus (MS-1 consumirá en Fase 2 si ya está; si no, dejar evento documentado).
+- [ ] Payload mínimo `alumno.imported.v1`: ids, email, nombre, matricula, materia_id, docente_email, periodo_id.
+- [ ] Importación: outbox por lotes si import masivo.
+- [ ] Tests: importar alumno / baja **sin** levantar MS-6.
+
+## Prueba individual MS-3
+
+| # | Acción | Resultado esperado |
+|---|--------|-------------------|
+| 1 | Importar alumno (demo) | 200/202 API; outbox → Rabbit `alumno.imported.v1` |
+| 2 | Baja alumno | Evento `alumno.withdrawn.v1`; **no** error si MS-6 apagado |
+| 3 | Duplicar publicación mismo `event_id` | Un mensaje lógico (outbox idempotente) |
+
+## Al cerrar la fase
+
+Mostrar mensaje JSON de ejemplo en cola; CATALOG actualizado.
+
+**Pregunta:** *¿Confirmas Fase 4 OK para Fase 5 (MS-6)?*
+
+---
+
+# FASE 5 — MS-6 Notificaciones
+
+## Alcance
+
+**Desde:** MS-6 expuesto por gRPC y llamado por MS-3/MS-4; consulta MS-2/MS-3 por datos.  
+**Hasta:** MS-6 **solo consume** eventos; envía correo en worker interno; inbox + `HistorialCorreo` con `event_id`; **no gRPC entrante de negocio** desde MS-3/MS-4.
+
+**Incluye prueba integrada:** MS-3 + MS-6 + Rabbit (primer flujo punta a punta de negocio).
+
+**No incluye:** MS-4 cierre materia por evento (puede quedar para Fase 6 si MS-4 aún no publica).
+
+## Compose mínimo
+
+```text
+rabbitmq, db-alumnos, ms-alumnos (+ worker outbox)
+db-notificaciones, ms-notificaciones, ms-notificaciones-worker-consumer
+db-auth, ms-auth (JWKS para API MS-6 si tiene REST protegido)
+```
+
+## Tareas (checklist)
+
+- [ ] Cola `ms-notificaciones.events` + bindings `alumno.*`, `materia.closed.v1`, `password.reset_requested.v1`.
+- [ ] Inbox + handlers: bienvenida, baja, reset password.
+- [ ] Worker SMTP separado del ack del bus.
+- [ ] Eliminar (o desactivar con flag) clientes gRPC desde MS-3 hacia MS-6.
+- [ ] Retirar gRPC MS-6 → MS-2/MS-3 para plantillas (datos vienen en payload).
+- [ ] DLQ + estados en historial: sent, failed, retrying, dead_letter.
+- [ ] `USE_EVENT_BUS=true` en ms-alumnos y ms-notificaciones.
+
+## Prueba MS-6 (+ MS-3)
+
+| # | Acción | Resultado esperado |
+|---|--------|-------------------|
+| 1 | Importar alumno en MS-3 | Correo encolado/enviado en MS-6; historial con `event_id` |
+| 2 | `docker stop ms-alumnos` y replay manual o mensaje en cola | MS-6 procesa sin llamar MS-3 |
+| 3 | SMTP caído | Consumidor sigue; reintentos; API MS-3 no falló |
+| 4 | Mismo evento dos veces | Un correo (inbox) |
+
+## Al cerrar la fase
+
+Logs historial + evidencia correo (o mock SMTP).
+
+**Pregunta:** *¿Confirmas Fase 5 OK para Fase 6 (MS-4)?*
+
+---
+
+# FASE 6 — MS-4 Calificaciones
+
+## Alcance
+
+**Desde:** MS-4 usa gRPC a MS-1, MS-2, MS-3, MS-6.  
+**Hasta:** JWT local; tablas **proyección** materia/alumno; consume eventos MS-2/MS-3/MS-1; publica eventos calificaciones; notificaciones de cierre vía bus (MS-6 consume `materia.calificaciones_cerradas.v1` o `materia.closed.v1`).
+
+**No incluye:** MS-5 ni MS-7.
+
+## Compose mínimo
+
+```text
+rabbitmq, db-auth, ms-auth, db-periodos, ms-periodos, db-alumnos, ms-alumnos
+db-calificaciones, ms-calificaciones, workers outbox+consumer
+db-notificaciones, ms-notificaciones (solo si pruebas correo cierre)
+```
+
+## Tareas (checklist)
+
+- [ ] Modelos `MateriaProjection`, `AlumnoMateriaProjection` (+ migraciones).
+- [ ] Consumidores eventos upstream; inbox.
+- [ ] Backfill inicial (comando único): cargar proyección desde datos ya existentes en BD MS-4 o snapshot documentado.
+- [ ] Publicar: `actividad.created.v1`, `calificacion.updated.v1`, `concentrado.calculado.v1`, `materia.calificaciones_cerradas.v1`.
+- [ ] Quitar gRPC validación alumno/materia en views.
+- [ ] Quitar gRPC a MS-6 en cierre.
+- [ ] Tests calificar/cerrar con MS-2/MS-3 **apagados** (proyección ya poblada).
+
+## Prueba individual MS-4
+
+| # | Acción | Resultado esperado |
+|---|--------|-------------------|
+| 1 | Tras backfill, listar/calificar | OK sin gRPC MS-2/MS-3 |
+| 2 | Cerrar materia | Evento en bus; MS-6 opcional envía correo |
+| 3 | Apagar MS-6 | Cierre en MS-4 igualmente 200 |
+
+## Al cerrar la fase
+
+Estado proyección + ejemplo evento publicado.
+
+**Pregunta:** *¿Confirmas Fase 6 OK para Fase 7 (MS-5)?*
+
+---
+
+# FASE 7 — MS-5 Asistencias QR
+
+## Alcance
+
+**Desde:** MS-5 valida con gRPC MS-1 y MS-3 en cada escaneo.  
+**Hasta:** JWT local; proyección alumno/materia/periodo; publica eventos asistencia; Redis solo anti-replay/TTL.
+
+**No incluye:** MS-7.
+
+## Compose mínimo
+
+```text
+rabbitmq, redis, db-asistencias, ms-asistencias, workers
+(+ MS-2/MS-3 solo para emitir eventos de prueba o backfill proyección)
+```
+
+## Tareas (checklist)
+
+- [ ] Proyecciones + consumidores eventos MS-2/MS-3.
+- [ ] Backfill proyección (comando documentado).
+- [ ] Publicar: `asistencia.registered.v1`, `asistencia.rejected.v1`, `qr.session.created.v1`, etc.
+- [ ] Outbox si publicación tras registrar asistencia.
+- [ ] Cola local opcional si broker caído (mismo patrón outbox).
+- [ ] Eliminar gRPC MS-3 en escaneo.
+
+## Prueba individual MS-5
+
+| # | Acción | Resultado esperado |
+|---|--------|-------------------|
+| 1 | Escanear QR válido | Asistencia guardada; evento en Rabbit |
+| 2 | Materia cerrada en proyección | Rechazo + `asistencia.rejected.v1` |
+| 3 | MS-3 apagado | Escaneo OK si proyección actualizada |
+
+## Al cerrar la fase
+
+**Pregunta:** *¿Confirmas Fase 7 OK para Fase 8 (MS-7)?*
+
+---
+
+# FASE 8 — MS-7 Reportes & Stats
+
+## Alcance
+
+**Desde:** MS-7 agrega por gRPC a MS-2, MS-3, MS-4, MS-5.  
+**Hasta:** Proyecciones locales alimentadas por eventos; Excel/PDF desde BD MS-7; respuesta API con `data_as_of`; comando `rebuild_projections`.
+
+**No incluye:** retirar código gRPC muerto del repo (Fase 9).
+
+## Compose mínimo
+
+```text
+rabbitmq + todos los productores de eventos relevantes O replay de eventos desde archivo de prueba
+db-reportes, ms-reportes, ms-reportes-worker-consumer
+```
+
+## Tareas (checklist)
+
+- [ ] Esquema proyecciones (materias, alumnos, calificaciones, asistencia).
+- [ ] Consumidores todos los eventos del CATALOG que apliquen.
+- [ ] Backfill / rebuild desde cero.
+- [ ] Refactor `report_data_service` sin gRPC.
+- [ ] JWT local.
+- [ ] Tests: generar reporte con MS-4 y MS-5 apagados.
+
+## Prueba individual MS-7
+
+| # | Acción | Resultado esperado |
+|---|--------|-------------------|
+| 1 | Tras eventos de prueba, GET reporte | Archivo/metadata OK |
+| 2 | `data_as_of` presente | Timestamp coherente |
+| 3 | Apagar MS-2…MS-5 | Reporte sigue con proyección local |
+
+## Al cerrar la fase
+
+**Pregunta:** *¿Confirmas Fase 8 OK para Fase 9 (cierre)?*
+
+---
+
+# FASE 9 — Cierre: retiro gRPC, documentación y sistema completo
+
+## Alcance
+
+**Desde:** sistema híbrido (flags, gRPC legacy).  
+**Hasta:** `USE_EVENT_BUS=true` por defecto; sin llamadas gRPC de negocio; `CONTEXTO_GLOBAL_PROYECTO.md` con reglas R1–R8; prueba E2E documentada.
+
+## Tareas (checklist)
+
+- [ ] Buscar y eliminar o marcar `@deprecated` clientes gRPC de negocio en MS-2…MS-7.
+- [ ] Actualizar diagrama arquitectura (Nginx + 7 MS + RabbitMQ).
+- [ ] `docs/runbooks/EVENT_BUS_OPERATIONS.md` (DLQ, replay, lag).
+- [ ] CI: servicio Rabbit + test integración mínimo.
+- [ ] Prueba E2E manual documentada (flujo: login → materia → alumno → calificación → asistencia → reporte → correo).
+- [ ] Tabla registro de avance al inicio del doc: todas las fases ✅.
+
+## Prueba sistema completo
+
+```text
+docker compose up (perfil full)
+```
+
+Escenario único documentado en `docs/EVIDENCIA_BUS_E2E.md` (crear si no existe).
+
+## Al cerrar la fase
+
+Resumen final + lista de gRPC eliminados.
+
+**Pregunta:** *¿Confirmas migración bus de eventos COMPLETA?*
+
+---
+
+# Referencia técnica (no es una fase; consulta durante implementación)
+
+## Reglas arquitectónicas finales (R1–R8)
+
+| Regla | Descripción |
+|-------|-------------|
+| R1 | Una BD MySQL por MS; sin acceso cruzado |
+| R2 | Cliente → REST vía Nginx |
+| R3 | Integración entre dominios = eventos RabbitMQ + outbox |
+| R4 | Sin gRPC en negocio ni efectos secundarios |
+| R5 | gRPC solo admin/soporte si queda documentado |
+| R6 | JWT validado localmente en cada MS |
+| R7 | Consumidores idempotentes (inbox) |
+| R8 | Productores con outbox (at-least-once sin pérdida post-commit) |
+
+## Sobre de evento
 
 ```json
 {
@@ -50,7 +448,7 @@ Todo evento deberia usar un sobre comun versionado.
   "event_name": "alumno.importado.v1",
   "event_version": 1,
   "aggregate_type": "alumno",
-  "aggregate_id": "123",
+  "aggregate_id": "12345",
   "source_service": "ms-alumnos",
   "correlation_id": "uuid",
   "causation_id": "uuid",
@@ -59,495 +457,39 @@ Todo evento deberia usar un sobre comun versionado.
 }
 ```
 
-### 1.5 Reglas de mensajeria
+## Tablas outbox / inbox
 
-- Publicar solo despues de confirmar la transaccion local.
-- Persistir eventos en una tabla `outbox` dentro de la misma BD del servicio productor.
-- Consumir con `inbox` o tabla de idempotencia para evitar duplicados.
-- Reintentar con backoff exponencial.
-- Enviar a `DLQ` despues de N fallos.
-- Incluir `correlation_id` y `causation_id` en todos los mensajes.
-- Versionar contratos de evento como `*.v1`, `*.v2`, etc.
+Ver SQL en versiones anteriores del plan (sección outbox/inbox); mismas tablas en cada MS que publique o consuma.
 
----
+## Inventario gRPC a eliminar (por fase)
 
-## 2. Cambios transversales a nivel proyecto
+| Fase | Elimina |
+|------|---------|
+| 3 | MS-2 → MS-1 ValidateToken |
+| 4 | MS-3 → MS-6; reduce MS-3 → MS-1 sync |
+| 5 | MS-6 ← MS-3/MS-4 llamadas; MS-6 → MS-2/MS-3 |
+| 6 | MS-4 → MS-1/2/3/6 negocio |
+| 7 | MS-5 → MS-1/3 |
+| 8 | MS-7 → MS-2/3/4/5 |
+| 9 | Limpieza restos y protos si aplica |
 
-### Fase G0 - Fundacion del bus y estandar comun
+## Anti-patrones
 
-**Objetivo:** dejar lista la infraestructura y los contratos compartidos antes de mover logica de negocio.
+- Publicar antes del commit.
+- Bloquear HTTP esperando correo o consumidor.
+- gRPC “rápido” en lugar de proyección.
+- Ack del bus solo después de SMTP (MS-6).
 
-#### G0.1 Infraestructura
+## Criterios de aceptación global (Fase 9)
 
-- Agregar un servicio `rabbitmq` al `docker-compose.yml` con volumen persistente, healthcheck y red interna.
-- Configurar credenciales y vhost propios para AGM.
-- Definir colas durables por dominio y colas de reintento/DLQ.
-- Documentar variables de entorno comunes:
-  - `RABBITMQ_HOST`
-  - `RABBITMQ_PORT`
-  - `RABBITMQ_USER`
-  - `RABBITMQ_PASSWORD`
-  - `RABBITMQ_VHOST`
-  - `EVENT_PUBLISH_RETRIES`
-  - `EVENT_PUBLISH_BACKOFF_SECONDS`
-
-#### G0.2 Carpeta de contratos
-
-- Crear una carpeta de contratos de eventos, por ejemplo `events/` o `contracts/events/`.
-- Definir el esquema base para cada evento.
-- Documentar naming convention de `routing key`.
-
-#### G0.3 Libreria comun
-
-- Crear una capa compartida para:
-  - publicar eventos;
-  - serializar/deserializar payloads;
-  - trazabilidad con `correlation_id`;
-  - manejo de `ack/nack`;
-  - reintentos y DLQ;
-  - logging estructurado.
-
-#### G0.4 Observabilidad
-
-- Agregar trazas de evento en logs JSON.
-- Estandarizar `event_id`, `correlation_id` y `source_service` en logs.
-- Exponer metricas de:
-  - eventos publicados;
-  - eventos consumidos;
-  - reintentos;
-  - eventos muertos en DLQ;
-  - latencia de procesamiento.
-
-#### G0.5 Seguridad
-
-- Separar autenticacion de usuario de autenticacion de servicio.
-- Para consumo interno, usar credenciales del broker o mTLS si la plataforma lo permite.
-- Para auth de usuario, dejar de depender del gRPC de MS-1 en cada request y validar tokens localmente con clave publica/JWKS.
-
-#### G0.6 Criterio de salida
-
-- Un microservicio de prueba publica un evento y otro lo consume desde RabbitMQ.
-- El evento sobrevive a reinicio del consumidor.
-- Un evento duplicado no genera efectos duplicados.
+- [ ] Cada MS opera su API principal con otros MS caídos (según tabla de prueba de su fase).
+- [ ] Notificaciones y reportes asíncronos con SLA documentado.
+- [ ] Sin BD cruzada; duplicados sin doble efecto; trazabilidad `correlation_id`.
 
 ---
 
-## 3. Estrategia de migracion
+## Para el asistente (Cursor)
 
-### Fase G1 - Inventario de dependencias y corte por prioridad
+Al iniciar una sesión de trabajo, preguntar: **“¿En qué fase estamos?”** y leer el checklist de esa fase solamente. Al terminar, **no avanzar** sin confirmación del usuario. Actualizar la tabla “Registro de avance” cuando el usuario confirme.
 
-**Objetivo:** identificar y clasificar todas las dependencias sincrónicas actuales.
-
-#### Actividades
-
-- Catalogar llamadas gRPC entre servicios.
-- Marcar las que son estrictamente de consulta y las que son efectos secundarios.
-- Mantener temporalmente las consultas inevitables, pero retirar primero notificaciones, reportes y sincronizaciones.
-- Definir una matriz `evento -> productor -> consumidores`.
-
-#### Prioridad de migracion
-
-1. Notificaciones.
-2. Reportes y estadisticas.
-3. Baja/importacion de alumnos y docentes.
-4. Calificaciones y cierres de materia.
-5. Validacion de auth en request path.
-
-### Fase G2 - Migracion hibrida
-
-**Objetivo:** convivir con RPC y eventos mientras se corta la dependencia directa.
-
-- Los servicios siguen respondiendo por REST/gRPC hacia el cliente.
-- Los efectos secundarios pasan al bus.
-- Los consumidores van rellenando read models locales.
-- Se dejan `feature flags` como `USE_EVENT_BUS=true/false` por servicio.
-
-### Fase G3 - Corte definitivo
-
-**Objetivo:** eliminar gRPC entre servicios en los flujos de negocio que ya tengan cobertura por eventos.
-
-- Retirar llamadas directas a MS-6 desde MS-3 y MS-4.
-- Retirar consultas en caliente para reportes si el read model ya es suficiente.
-- Retirar validaciones gRPC de auth en runtime si ya existe validacion local de JWT.
-
----
-
-## 4. Plan por microservicio
-
----
-
-## 4.1 MS-1 Auth & Users
-
-### Objetivo de migracion
-
-MS-1 debe seguir siendo la autoridad de identidad, pero dejar de ser dependencia sincrona para cada request de los demas MS. Su responsabilidad principal sera emitir tokens, publicar cambios de identidad y proveer llaves publicas para validacion local.
-
-### Dependencias a eliminar
-
-- Evitar que MS-2 a MS-7 llamen a `ValidateToken` por gRPC en cada request.
-- Evitar que otros servicios dependan de `GetUserById` para completar flujos normales.
-
-### Fase M1-1 - Publicacion de eventos de identidad
-
-- Publicar `user.created.v1`.
-- Publicar `user.updated.v1`.
-- Publicar `user.deactivated.v1`.
-- Publicar `user.role_changed.v1`.
-- Publicar `password.reset_requested.v1` y `password.reset_completed.v1` si el flujo lo requiere.
-- Publicar `token.revoked.v1` para invalidacion de refresh tokens o blacklists.
-
-### Fase M1-2 - Validacion local de JWT en otros servicios
-
-- Exponer un mecanismo estable para claves publicas.
-- Documentar rotacion de llaves.
-- Eliminar la dependencia gRPC de `ValidateToken` en la ruta critica de MS-2 a MS-7.
-- Mantener `ValidateToken` solo para casos internos de administracion o compatibilidad transitoria.
-
-### Fase M1-3 - Outbox e idempotencia
-
-- Escribir `outbox` en la misma transaccion que el cambio de usuario.
-- Publicar los eventos con un worker separado.
-- Registrar `event_id` procesados para evitar reenvio accidental.
-
-### Fase M1-4 - Consumidores internos
-
-- Consumir eventos de cambios de usuario para invalidar cache local si existe.
-- Consumir eventos de roles si otros servicios mantienen read models de autorizacion.
-
-### Fase M1-5 - Pruebas y salida
-
-- Pruebas de publicacion con `RabbitMQ` detenido y reanudado.
-- Pruebas de duplicados de eventos.
-- Pruebas de rotacion de llaves.
-- Asegurar que login siga funcionando aunque otros MS esten caidos.
-
----
-
-## 4.2 MS-2 Periodos & Materias
-
-### Objetivo de migracion
-
-MS-2 debe ser fuente de verdad de periodos y materias, publicar cambios al bus y dejar de depender de servicios remotos para operar su propio CRUD.
-
-### Dependencias a eliminar
-
-- Quitar la validacion gRPC de auth en la ruta critica y reemplazarla por JWT local.
-- Evitar que otros servicios consulten MS-2 para datos que pueden persistirse en su propio read model.
-
-### Fase M2-1 - Eventos de dominio
-
-- Publicar `periodo.created.v1`.
-- Publicar `periodo.updated.v1`.
-- Publicar `periodo.activated.v1`.
-- Publicar `periodo.closed.v1`.
-- Publicar `materia.created.v1`.
-- Publicar `materia.updated.v1`.
-- Publicar `materia.assigned_teacher.v1`.
-- Publicar `materia.closed.v1`.
-
-### Fase M2-2 - Read models locales
-
-- Mantener una vista local de datos que consumen otros MS si es necesario.
-- Permitir que MS-4, MS-6 y MS-7 lean de sus propias proyecciones, no de MS-2 en caliente.
-
-### Fase M2-3 - Outbox y reintentos
-
-- Persistir los eventos de materia/periodo en outbox.
-- Reintentar publicaciones fallidas.
-- Usar `DLQ` cuando el consumidor falle por datos invalidos.
-
-### Fase M2-4 - Pruebas
-
-- Crear/editar/cerrar materia sin dependencia de otros MS.
-- Verificar que el cierre emita un evento y que el sistema siga operativo aunque no exista consumidor.
-
----
-
-## 4.3 MS-3 Docentes & Alumnos
-
-### Objetivo de migracion
-
-MS-3 suele ser el mayor productor de eventos. Debe importar datos, publicar hechos del dominio y dejar de disparar notificaciones o integraciones directas en el camino principal.
-
-### Dependencias a eliminar
-
-- Eliminar llamadas directas a MS-6 para enviar correos como efecto inmediato.
-- Reducir llamadas directas a MS-1 para creacion de usuarios a un flujo asincrono de evento o comando compensado.
-
-### Fase M3-1 - Eventos de importacion y cambios de estado
-
-- Publicar `docente.imported.v1`.
-- Publicar `alumno.imported.v1`.
-- Publicar `alumno.updated.v1`.
-- Publicar `alumno.withdrawn.v1`.
-- Publicar `docente.assigned.v1` si aplica.
-
-### Fase M3-2 - Integracion con MS-1 sin acoplar runtime
-
-- Cuando se requiera crear un usuario, usar un flujo asíncrono:
-  - MS-3 persiste la intencion local;
-  - publica `user.create_requested.v1`;
-  - MS-1 consume y crea la cuenta;
-  - MS-1 responde con `user.created.v1`.
-- En caso de error, dejar registro de estado pendiente y reintento.
-
-### Fase M3-3 - Integracion con MS-6 por eventos
-
-- Reemplazar `SendBienvenida` y `SendBajaNotif` directos por:
-  - `alumno.imported.v1` -> MS-6 genera bienvenida;
-  - `alumno.withdrawn.v1` -> MS-6 genera baja.
-
-### Fase M3-4 - Read model local
-
-- Mantener datos necesarios para operar sin consultar a otros MS.
-- Si un alumno se importa o cambia, actualizar las proyecciones locales.
-
-### Fase M3-5 - Pruebas
-
-- Importacion masiva con broker caido y reanudado.
-- Duplicacion de evento de importacion sin duplicar usuario o correo.
-- Baja de alumno sin depender de disponibilidad de MS-6.
-
----
-
-## 4.4 MS-4 Calificaciones
-
-### Objetivo de migracion
-
-MS-4 debe dejar de depender en tiempo real de MS-2 y MS-3 para operar. Debe consumir eventos de materias, alumnos y usuarios y mantener sus propias proyecciones de trabajo.
-
-### Dependencias a eliminar
-
-- Retirar consultas sincrónicas a MS-3 para validar alumnos en la ruta critica.
-- Retirar consultas sincrónicas a MS-2 para validar materias o docentes si la informacion puede quedar proyectada localmente.
-- Retirar el envio directo de notificaciones a MS-6 desde la logica principal.
-
-### Fase M4-1 - Eventos de calificaciones
-
-- Publicar `actividad.created.v1`.
-- Publicar `actividad.updated.v1`.
-- Publicar `calificacion.updated.v1`.
-- Publicar `concentrado.calculado.v1`.
-- Publicar `materia.calificaciones_cerradas.v1`.
-
-### Fase M4-2 - Consumo de eventos upstream
-
-- Consumir `materia.created.v1`, `materia.updated.v1`, `materia.closed.v1` desde MS-2.
-- Consumir `alumno.imported.v1`, `alumno.withdrawn.v1` desde MS-3.
-- Consumir `user.role_changed.v1` desde MS-1 si afecta permisos.
-
-### Fase M4-3 - Read models locales
-
-- Mantener una tabla o vista proyectada de materias, alumnos y docentes necesarios para calificaciones.
-- Basar validaciones del servicio en su propia proyeccion, no en gRPC.
-
-### Fase M4-4 - Notificaciones por evento
-
-- Reemplazar `SendCierreMateria` por un evento `materia.closed.v1`.
-- MS-6 consume ese evento y gestiona correos en segundo plano.
-
-### Fase M4-5 - Pruebas
-
-- Calcular, guardar y publicar calificaciones sin contacto con otros MS.
-- Cerrar una materia aunque MS-6 no este disponible.
-- Reproducir un evento duplicado sin duplicar el efecto.
-
----
-
-## 4.5 MS-5 Asistencias QR
-
-### Objetivo de migracion
-
-MS-5 debe operar con sus propias sesiones y Redis, usando datos proyectados de alumnos y materias, sin bloquearse por consultas remotas al registrar asistencia.
-
-### Dependencias a eliminar
-
-- Eliminar dependencia gRPC a MS-3 para validacion en cada escaneo.
-- Eliminar dependencia sincrona a MS-1 en cada request si el JWT se valida localmente.
-
-### Fase M5-1 - Consumo de eventos de base
-
-- Consumir `alumno.imported.v1`, `alumno.withdrawn.v1`, `materia.created.v1`, `materia.closed.v1`, `periodo.activated.v1`.
-- Mantener un read model local para saber si una materia y alumno son elegibles.
-
-### Fase M5-2 - Eventos de asistencia
-
-- Publicar `qr.session.created.v1`.
-- Publicar `qr.session.expired.v1`.
-- Publicar `asistencia.registered.v1`.
-- Publicar `asistencia.rejected.v1`.
-- Publicar `session.closed.v1`.
-
-### Fase M5-3 - Redis como cache y anti-replay, no como bus
-
-- Mantener Redis solo para TTL y anti-replay local.
-- No usar Redis como reemplazo del bus de eventos.
-
-### Fase M5-4 - Tolerancia a fallos
-
-- Si el bus esta caido, registrar la asistencia localmente en una cola pendiente y publicar cuando el broker vuelva.
-- Si una proyeccion esta desactualizada, marcar el caso para reprocesamiento y no bloquear toda la operacion.
-
-### Fase M5-5 - Pruebas
-
-- Registro de asistencia con broker caido y reintento posterior.
-- Escaneo duplicado no debe duplicar la asistencia.
-- Escaneo cuando la materia ya cerro debe rechazarse con evento de auditoria.
-
----
-
-## 4.6 MS-6 Notificaciones
-
-### Objetivo de migracion
-
-MS-6 debe convertirse en consumidor principal de eventos de negocio y no en dependencia invocada directamente por otros servicios. Su rol es orquestar el envio de correos desde el bus, con reintentos y auditoria.
-
-### Dependencias a eliminar
-
-- Retirar las invocaciones gRPC directas desde MS-3 y MS-4 como camino principal.
-- Evitar que el sistema dependa de disponibilidad de MS-6 para completar transacciones de otros servicios.
-
-### Fase M6-1 - Consumidor de eventos
-
-- Consumir `alumno.imported.v1` -> bienvenida.
-- Consumir `alumno.withdrawn.v1` -> baja al docente.
-- Consumir `materia.closed.v1` -> cierre a alumnos.
-- Consumir `password.reset_requested.v1` -> correo de reseteo.
-
-### Fase M6-2 - Servicio de envio asíncrono
-
-- El envio de correos debe procesarse por workers internos.
-- Usar pool de trabajo y `retry` por correo fallido.
-- No bloquear el consumo del bus por un correo puntual fallido.
-
-### Fase M6-3 - Auditoria y trazabilidad
-
-- Registrar cada intento en `HistorialCorreo`.
-- Guardar `event_id` y `correlation_id` asociados al correo.
-- Diferenciar `sent`, `failed`, `retrying`, `dead_letter`.
-
-### Fase M6-4 - Reintentos y DLQ
-
-- Reintentar correos transitoriamente fallidos.
-- Enviar a DLQ si el error es permanente.
-- Permitir reproceso manual desde DLQ o panel de admin.
-
-### Fase M6-5 - Pruebas
-
-- Matar el broker o el SMTP y comprobar que el resto del sistema sigue funcionando.
-- Verificar que el correo puede reintentarse sin duplicar audit logs.
-- Validar que el consumo de eventos no se detiene por un mensaje invalido.
-
----
-
-## 4.7 MS-7 Reportes & Stats
-
-### Objetivo de migracion
-
-MS-7 debe dejar de ser un agregador en caliente que consulta a otros servicios por gRPC cada vez que se pide un reporte. Debe operar sobre proyecciones y snapshots alimentados por eventos.
-
-### Dependencias a eliminar
-
-- Reducir al minimo o eliminar consultas sincrónicas a MS-2, MS-3, MS-4 y MS-5 en la generacion de reportes.
-- Eliminar el fallo en cascada cuando un upstream no responde.
-
-### Fase M7-1 - Proyecciones locales
-
-- Consumir eventos de MS-2, MS-3, MS-4 y MS-5.
-- Mantener modelos locales para:
-  - materias y periodos;
-  - alumnos por materia;
-  - calificaciones y concentrados;
-  - estadisticas de asistencia.
-
-### Fase M7-2 - Generacion de reportes desde snapshot
-
-- Generar Excel y PDF desde la BD/proyeccion local.
-- No depender de llamadas gRPC en tiempo real para obtener los datos base.
-- Si un evento llega fuera de orden, reordenar por `occurred_at` y version de agregado.
-
-### Fase M7-3 - Cache y reconstruccion
-
-- Mantener cache de reportes si el volumen lo amerita.
-- Permitir reconstruir una proyeccion desde el stream de eventos.
-
-### Fase M7-4 - Consistencia eventual
-
-- Documentar que reportes y estadisticas trabajan con consistencia eventual.
-- Definir SLA de frescura de datos.
-- Si falta un evento, el servicio debe reintentar o marcar el reporte como incompleto, no bloquear todo el sistema.
-
-### Fase M7-5 - Pruebas
-
-- Generar reportes con otros MS caidos.
-- Reproducir proyecciones desde cero.
-- Validar que los reportes siguen saliendo aunque el broker este temporalmente sin consumidores.
-
----
-
-## 5. Orden recomendado de implementacion
-
-### Fase 1 - Base de bus y contratos
-
-1. RabbitMQ en `docker-compose`.
-2. Contratos de eventos versionados.
-3. Libreria comun de publicacion/consumo.
-4. Observabilidad y DLQ.
-
-### Fase 2 - Productores principales
-
-1. MS-1 publica eventos de identidad.
-2. MS-2 publica periodos y materias.
-3. MS-3 publica alumnos y docentes.
-
-### Fase 3 - Consumidores de alto impacto
-
-1. MS-6 consume eventos y envia correos.
-2. MS-4 consume eventos para calificaciones.
-3. MS-5 consume eventos para asistencia.
-
-### Fase 4 - Desacoplo fuerte
-
-1. MS-7 deja de consultar en caliente.
-2. MS-2 a MS-7 validan JWT localmente.
-3. Se retiran calls gRPC de efectos secundarios.
-
-### Fase 5 - Hardening
-
-1. Idempotencia completa.
-2. Reintentos y backoff.
-3. DLQ operativa.
-4. Pruebas de caida y recovery.
-
----
-
-## 6. Criterios de aceptacion globales
-
-El cambio puede considerarse correcto solo si se cumplen todos estos puntos:
-
-- Un microservicio puede caer sin impedir que los demas sigan operando sus funciones basicas.
-- Las notificaciones se procesan de forma asíncrona y durable.
-- Los reportes no se rompen por la indisponibilidad temporal de otro MS.
-- No existen consultas a bases de datos de otros servicios.
-- Los consumidores soportan mensajes duplicados sin corromper datos.
-- Cada evento tiene trazabilidad completa desde productor hasta consumidor.
-- Los flujos criticos no dependen de RPC sincrono entre servicios.
-
----
-
-## 7. Riesgos y mitigaciones
-
-| Riesgo | Impacto | Mitigacion |
-|--------|---------|------------|
-| Duplicacion de eventos | Alto | Idempotencia por `event_id` e `inbox` |
-| Perdida entre commit y publish | Alto | Patron `outbox` |
-| Caida del broker | Alto | Reintento, buffer local temporal, observabilidad |
-| Mensajes invalidos | Medio | Validacion de esquema y DLQ |
-| Consistencia eventual visible al usuario | Medio | Definir SLA de frescura y mensajes claros |
-| Migracion parcial inconsistente | Alto | Feature flags y corte por fases |
-
----
-
-## 8. Resultado esperado
-
-Al terminar este plan, AGM dejara de comportarse como un monolito distribuido. Cada MS publicara hechos de negocio en el bus, otros servicios reaccionaran a esos eventos de forma asíncrona y la caida de un servicio no detendra el flujo de los demas. gRPC quedara solo para consultas puntuales o compatibilidad temporal, no como eje de acoplamiento del sistema.
+**Siguiente paso cuando el usuario diga “empezar”:** ejecutar **solo Fase 1**.

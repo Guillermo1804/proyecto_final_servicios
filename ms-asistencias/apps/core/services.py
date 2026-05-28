@@ -10,6 +10,8 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 
 from apps.core.models import SesionAsistencia
+from apps.core.projection_access import ProjectionRejection
+from apps.core.event_bus.publishers import publish_qr_session_created
 from apps.core.utils import (
     store_sesion_in_redis,
     get_sesion_from_redis,
@@ -91,7 +93,14 @@ class SesionAsistenciaService:
         
         # Initialize stats
         initialize_stats(sesion.id)
-        
+
+        publish_qr_session_created(
+            sesion_id=sesion.id,
+            materia_id=materia_id,
+            docente_id=docente_id,
+            fecha_fin_teorica=fecha_fin.isoformat(),
+        )
+
         return sesion, f"Sesión {sesion.id} iniciada para materia {materia_id}"
     
     @staticmethod
@@ -145,10 +154,11 @@ class SesionAsistenciaService:
         except SesionAsistencia.DoesNotExist:
             return False, f"Sesión {sesion_id} no encontrada"
 
-        if not sesion.activa:
-            if sesion.estado == 'confirmada':
-                return False, f"Sesión {sesion_id} ya estaba confirmada"
-            return False, f"Sesión {sesion_id} no está activa"
+        if sesion.estado == 'confirmada':
+            return False, f"Sesión {sesion_id} ya estaba confirmada"
+
+        if sesion.estado not in ('activa', 'cerrada'):
+            return False, f"Sesión {sesion_id} no se puede confirmar (estado: {sesion.estado})"
 
         sesion.estado = 'confirmada'
         sesion.activa = False
@@ -173,7 +183,7 @@ class SesionAsistenciaService:
         except SesionAsistencia.DoesNotExist:
             return False, f"Sesión {sesion_id} no encontrada"
 
-        if sesion.activa:
+        if sesion.estado != 'confirmada':
             sesion.estado = 'cerrada'
             sesion.activa = False
             sesion.save(update_fields=['estado', 'activa', 'updated_at'])
@@ -184,6 +194,23 @@ class SesionAsistenciaService:
             f"para materia {sesion.materia_id}"
         )
     
+    @staticmethod
+    def obtener_sesion_pendiente_confirmacion(materia_id: int) -> SesionAsistencia | None:
+        """
+        Latest session for today that is not yet confirmed (activa or cerrada).
+        Used to resume the list after closing the scanner without confirming.
+        """
+        today = timezone.now().date()
+        return (
+            SesionAsistencia.objects.filter(
+                materia_id=materia_id,
+                fecha_inicio__date=today,
+                estado__in=['activa', 'cerrada'],
+            )
+            .order_by('-fecha_inicio')
+            .first()
+        )
+
     @staticmethod
     def obtener_sesion_activa(materia_id: int) -> SesionAsistencia | None:
         """

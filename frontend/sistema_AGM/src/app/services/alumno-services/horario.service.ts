@@ -1,4 +1,9 @@
 import { Injectable } from '@angular/core';
+import { Observable, map } from 'rxjs';
+
+import { InscripcionMateriaApiDto } from '../../models/alumnos-api.model';
+import { AlumnosService } from './alumnos.service';
+import { DIAS_SEMANA_LAB, extractHoraParaDia, parseDiasDesdeHorario } from './horario-dias.util';
 
 export interface HorarioDia {
   dia: string;
@@ -23,149 +28,100 @@ export interface HorarioResumen {
   profesores: number;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+const DIAS_SEMANA = DIAS_SEMANA_LAB;
+const COLORES_MATERIA = ['azul', 'naranja', 'morado', 'gris'] as const;
+
+@Injectable({ providedIn: 'root' })
 export class HorarioService {
+  private horarios: HorarioMateria[] = [];
+  private loaded = false;
 
-  private readonly diasBase: HorarioDia[] = [
-    { dia: 'LUN', numero: 15, activo: true },
-    { dia: 'MAR', numero: 16, activo: false },
-    { dia: 'MIÉ', numero: 17, activo: false },
-    { dia: 'JUE', numero: 18, activo: false },
-    { dia: 'VIE', numero: 19, activo: false }
-  ];
+  constructor(private alumnos: AlumnosService) {}
 
-  private readonly horariosBase: HorarioMateria[] = [
-    {
-      hora: '08:00',
-      materia: 'Cálculo Diferencial',
-      docente: 'Dr. Alberto Rodríguez',
-      aula: 'Aula 402',
-      horario: '08:00 - 09:30',
-      color: 'azul',
-      icono: 'bi-clock',
-      dia: 'LUN'
-    },
-    {
-      hora: '10:00',
-      materia: 'Física Cuántica I',
-      docente: 'Dra. Elena Martínez',
-      aula: 'Lab Gamma',
-      horario: '10:00 - 11:30',
-      color: 'naranja',
-      icono: 'bi-clock',
-      dia: 'LUN'
-    },
-    {
-      hora: '12:00',
-      materia: 'Receso / Almuerzo',
-      docente: '',
-      aula: 'Cafetería Central',
-      horario: '12:00 - 13:00',
-      color: 'gris',
-      icono: 'bi-cup-hot',
-      dia: 'LUN'
-    },
-    {
-      hora: '13:00',
-      materia: 'Sistemas Operativos',
-      docente: 'Mtro. Javier Solís',
-      aula: 'Aula de Cómputo B',
-      horario: '13:00 - 14:30',
-      color: 'azul',
-      icono: 'bi-clock',
-      dia: 'MAR'
-    },
-    {
-      hora: '15:00',
-      materia: 'Ingeniería de Software',
-      docente: 'Dra. Martha Gomez',
-      aula: 'Aula 201',
-      horario: '15:00 - 16:30',
-      color: 'rojo',
-      icono: 'bi-clock',
-      dia: 'MIÉ'
-    },
-    {
-      hora: '08:00',
-      materia: 'Metodología de la Investigación',
-      docente: 'Dra. Laura Pérez',
-      aula: 'Aula 103',
-      horario: '08:00 - 09:30',
-      color: 'azul',
-      icono: 'bi-clock',
-      dia: 'JUE'
-    },
-    {
-      hora: '11:00',
-      materia: 'Base de Datos',
-      docente: 'Ing. Carlos Ruiz',
-      aula: 'Lab SQL',
-      horario: '11:00 - 12:30',
-      color: 'naranja',
-      icono: 'bi-clock',
-      dia: 'VIE'
-    }
-  ];
-
-  private readonly resumen: HorarioResumen = {
-    horasLectivasTotales: 18,
-    proyectos: 4,
-    profesores: 6
-  };
-
-  getDias(): HorarioDia[] {
-    return this.diasBase.map((dia) => ({ ...dia }));
+  loadHorarios(): Observable<HorarioMateria[]> {
+    return this.alumnos.getMeMaterias(1, 100).pipe(
+      map((page) => {
+        this.horarios = page.results.flatMap((item) => this.mapInscripcion(item));
+        this.loaded = true;
+        return this.horarios;
+      }),
+    );
   }
 
-  getHorarios(): HorarioMateria[] {
-    return this.horariosBase.map((horario) => ({ ...horario }));
-  }
-
-  getResumen(): HorarioResumen {
-    return { ...this.resumen };
-  }
-
-  getDiaActivo(diaSeleccionado: string): HorarioDia[] {
-    return this.getDias().map((dia) => ({
-      ...dia,
-      activo: dia.dia === diaSeleccionado
+  getDiaActivo(diaSeleccionado?: string): HorarioDia[] {
+    const hoy = new Date().getDate();
+    return DIAS_SEMANA.map((dia, index) => ({
+      dia,
+      numero: hoy + index,
+      activo: dia === (diaSeleccionado ?? 'LUN'),
     }));
   }
 
+  getHorarios(): HorarioMateria[] {
+    return this.horarios;
+  }
+
+  getResumen(): HorarioResumen {
+    const materias = new Set(this.horarios.map((h) => h.materia));
+    const docentes = new Set(this.horarios.map((h) => h.docente).filter(Boolean));
+    return {
+      horasLectivasTotales: this.horarios.length,
+      proyectos: materias.size,
+      profesores: docentes.size,
+    };
+  }
+
   getHorariosDelDia(diaSeleccionado: string): HorarioMateria[] {
-    return this.getHorarios().filter((horario) => horario.dia === diaSeleccionado);
+    return this.horarios.filter((item) => item.dia === diaSeleccionado);
   }
 
-  getHorasLectivasPorDia(diaSeleccionado: string): number {
-    return this.getHorariosDelDia(diaSeleccionado).reduce((total, horario) => {
-      const [inicio, fin] = horario.horario.split(' - ');
-      const minutosInicio = this.parseHora(inicio);
-      const minutosFin = this.parseHora(fin);
-
-      if (minutosInicio === null || minutosFin === null || minutosFin <= minutosInicio) {
-        return total;
-      }
-
-      return total + ((minutosFin - minutosInicio) / 60);
-    }, 0);
+  isLoaded(): boolean {
+    return this.loaded;
   }
 
-  private parseHora(valorHora: string): number | null {
-    const partes = valorHora.trim().split(':');
+  private mapInscripcion(item: InscripcionMateriaApiDto): HorarioMateria[] {
+    const detail = item.materia_detail as Record<string, unknown> | undefined;
+    const horarioTexto = String(item.horario ?? detail?.['horario'] ?? '').trim();
+    const materia = String(item.nombre_materia ?? detail?.['nombre'] ?? 'Materia');
+    const docente = String(item.docente_nombre ?? detail?.['docente_nombre'] ?? '');
+    const aula = String(detail?.['salon'] ?? detail?.['aula'] ?? '').trim();
+    const dias = this.parseDias(horarioTexto);
+    const color = this.colorParaMateria(item);
 
-    if (partes.length !== 2) {
-      return null;
+    if (!dias.length) {
+      return [
+        {
+          hora: extractHoraParaDia(horarioTexto, 'LUN'),
+          materia,
+          docente,
+          aula,
+          horario: horarioTexto || 'Sin horario',
+          color,
+          icono: 'bi-clock',
+          dia: 'LUN',
+        },
+      ];
     }
 
-    const horas = Number(partes[0]);
-    const minutos = Number(partes[1]);
+    return dias.map((dia) => ({
+      hora: extractHoraParaDia(horarioTexto, dia),
+      materia,
+      docente,
+      aula,
+      horario: horarioTexto,
+      color,
+      icono: 'bi-clock',
+      dia,
+    }));
+  }
 
-    if (!Number.isFinite(horas) || !Number.isFinite(minutos)) {
-      return null;
-    }
+  private colorParaMateria(item: InscripcionMateriaApiDto): string {
+    const id = Number(item.materia_id ?? 0);
+    const key = id > 0 ? id : String(item.nrc ?? item.nombre_materia ?? '').length;
+    return COLORES_MATERIA[Math.abs(key) % COLORES_MATERIA.length];
+  }
 
-    return horas * 60 + minutos;
+  private parseDias(horario: string): string[] {
+    return parseDiasDesdeHorario(horario);
   }
 }

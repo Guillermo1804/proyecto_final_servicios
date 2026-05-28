@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter, finalize, forkJoin, map, of, switchMap } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { BottomNavbarAdmin } from '../../../partials/bottom-navbar-admin/bottom-navbar-admin';
 import { TopbarAdmin } from '../../../partials/topbar-admin/topbar-admin';
+import { MateriasService } from '../../../services/admin-services/materias.service';
 import { PeriodoFormValue, PeriodoItem, PeriodoTemporada, PeriodosService } from '../../../services/admin-services/periodos.service';
 
 type TemporadaFiltro = PeriodoTemporada | 'Todos';
@@ -22,7 +25,7 @@ interface PeriodoFormModel {
   templateUrl: './periodos-screen.html',
   styleUrl: './periodos-screen.scss'
 })
-export class PeriodosScreen implements OnInit {
+export class PeriodosScreen implements OnInit, OnDestroy {
 
   periodos: PeriodoItem[] = [];
   periodoActivoActual: PeriodoItem | null = null;
@@ -46,10 +49,26 @@ export class PeriodosScreen implements OnInit {
   nuevoPeriodo = this.crearPeriodoVacio();
 
   private readonly periodosService = inject(PeriodosService);
+  private readonly materiasService = inject(MateriasService);
+  private readonly router = inject(Router);
+  private routerSub?: Subscription;
 
   ngOnInit(): void {
     this.loadPeriodos();
     this.loadPeriodoActivo();
+    this.routerSub = this.router.events
+      .pipe(filter((e) => e instanceof NavigationEnd))
+      .subscribe((e) => {
+        const url = (e as NavigationEnd).urlAfterRedirects;
+        if (url.includes('/admin/periodos')) {
+          this.loadPeriodos();
+          this.loadPeriodoActivo();
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.routerSub?.unsubscribe();
   }
 
   abrirFormulario(): void {
@@ -108,12 +127,11 @@ export class PeriodosScreen implements OnInit {
     request.subscribe({
       next: () => {
         this.cancelarFormulario();
-        this.loadPeriodos();
-        this.loadPeriodoActivo();
+        this.afterMutation();
       },
-      error: () => {
-        alert('No se pudo guardar el periodo.');
-      }
+      error: (err) => {
+        alert(PeriodosService.extractError(err, 'No se pudo guardar el periodo.'));
+      },
     });
   }
 
@@ -128,10 +146,13 @@ export class PeriodosScreen implements OnInit {
     this.mostrarFormulario = true;
   }
 
-  eliminarPeriodo(periodoId: number): void {
-    const periodo = this.periodos.find((item) => item.id === periodoId);
-
-    if (!periodo) {
+  eliminarPeriodo(periodo: PeriodoItem): void {
+    if (periodo.materiasCount > 0) {
+      alert(
+        `El periodo "${periodo.nombre}" todavía tiene ${periodo.materiasCount} materia(s) en la base de datos.\n\n` +
+          'Ve a Administración → Materias, elige ese periodo en el selector y bórralas todas. ' +
+          'La pantalla de Materias antes solo mostraba el periodo activo.',
+      );
       return;
     }
 
@@ -141,24 +162,27 @@ export class PeriodosScreen implements OnInit {
       return;
     }
 
-    this.periodosService.deletePeriodo(periodoId).subscribe({
-      next: () => {
-        this.afterMutation();
+    this.periodosService.deletePeriodo(periodo.id).subscribe({
+      next: () => this.afterMutation(),
+      error: (err) => {
+        alert(PeriodosService.extractError(err, 'No se pudo eliminar el periodo.'));
       },
-      error: () => {
-        this.afterMutation();
-      }
     });
   }
 
   cambiarEstado(periodo: PeriodoItem): void {
-    const request = periodo.activo
-      ? this.periodosService.desactivarPeriodo(periodo.id)
-      : this.periodosService.activarPeriodo(periodo.id);
+    if (periodo.activo) {
+      alert(
+        'Para desactivar este periodo, active otro periodo desde la lista. El backend solo permite un periodo activo.',
+      );
+      return;
+    }
 
-    request.subscribe({
+    this.periodosService.activarPeriodo(periodo.id).subscribe({
       next: () => this.afterMutation(),
-      error: () => this.afterMutation()
+      error: (err) => {
+        alert(PeriodosService.extractError(err, 'No se pudo activar el periodo.'));
+      },
     });
   }
 
@@ -187,14 +211,22 @@ export class PeriodosScreen implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.periodosService.getPeriodos({
-      search: this.searchTerm.trim(),
-      temporada: this.temporadaSeleccionada,
-      page: this.currentPage,
-      pageSize: this.pageSize
-    }).pipe(finalize(() => {
-      this.isLoading = false;
-    })).subscribe({
+    this.periodosService
+      .getPeriodos({
+        search: this.searchTerm.trim(),
+        temporada: this.temporadaSeleccionada,
+        page: this.currentPage,
+        pageSize: this.pageSize,
+      })
+      .pipe(
+        switchMap((response) => this.enriquecerConteoMaterias(response.results).pipe(
+          map((results) => ({ ...response, results })),
+        )),
+        finalize(() => {
+          this.isLoading = false;
+        }),
+      )
+      .subscribe({
       next: (response) => {
         this.periodos = response.results;
         this.totalItems = response.count;
@@ -202,12 +234,15 @@ export class PeriodosScreen implements OnInit {
         this.currentPage = response.page;
         this.pageSize = response.pageSize;
       },
-      error: () => {
-        this.errorMessage = 'No se pudo cargar el catálogo de periodos.';
+      error: (err) => {
+        this.errorMessage = PeriodosService.extractError(
+          err,
+          'No se pudo cargar el catalogo de periodos.',
+        );
         this.periodos = [];
         this.totalItems = 0;
         this.totalPages = 1;
-      }
+      },
     });
   }
 
@@ -220,6 +255,23 @@ export class PeriodosScreen implements OnInit {
         this.periodoActivoActual = null;
       }
     });
+  }
+
+  private enriquecerConteoMaterias(periodos: PeriodoItem[]) {
+    if (!periodos.length) {
+      return of([] as PeriodoItem[]);
+    }
+
+    return forkJoin(
+      periodos.map((periodo) =>
+        this.materiasService.countByPeriodo(periodo.id).pipe(
+          map((count) => ({
+            ...periodo,
+            materiasCount: count,
+          })),
+        ),
+      ),
+    );
   }
 
   private crearPeriodoVacio(): PeriodoFormModel {

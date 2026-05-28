@@ -12,20 +12,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-# Copiar requirements desde el contexto raíz (build context debe ser la raíz del repo)
+
+# Libreria compartida de eventos (contexto de build = raiz del monorepo)
+COPY packages/agm_events /packages/agm_events
+COPY contracts/events /contracts/events
+ENV EVENT_CONTRACTS_DIR=/contracts/events
+RUN pip install --no-cache-dir /packages/agm_events
+
 COPY ms-auth/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar proto y código del servicio
 COPY proto /proto
 COPY ms-auth /app
 
-# Generar stubs gRPC durante el build: instalar grpcio-tools temporalmente
 RUN pip install --no-cache-dir grpcio-tools \
  && bash /app/generate_proto.sh \
  && pip uninstall -y grpcio-tools || true
 
-# Windows: entrypoint.sh suele tener CRLF; en Linux rompe el shebang ("no such file or directory")
 RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 WORKDIR /app

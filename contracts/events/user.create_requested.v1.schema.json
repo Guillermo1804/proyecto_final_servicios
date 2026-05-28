@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "user.create_requested.v1 payload",
+  "type": "object",
+  "required": ["email", "nombre", "rol", "password"],
+  "properties": {
+    "email": { "type": "string", "format": "email" },
+    "nombre": { "type": "string" },
+    "rol": { "type": "string", "enum": ["admin", "docente", "alumno"] },
+    "password": { "type": "string" },
+    "temporary_password": { "type": "string" },
+    "activo": { "type": "boolean" }
+  }
+}

@@ -15,6 +15,36 @@
   background: #f7f7fb;
 }
 
+.load-hint,
+.load-error {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.load-error {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.class-card {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.class-meta {
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  color: #0057c2;
+  font-weight: 600;
+}
+
+.summary-row {
+  text-decoration: none;
+  color: inherit;
+}
+
 /* TOPBAR */
 
 .topbar {

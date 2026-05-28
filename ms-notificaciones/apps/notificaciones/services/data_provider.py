@@ -92,9 +92,16 @@ class PlaceholderDataProvider(NotificacionesDataProvider):
 
 
 class GrpcDataProvider(NotificacionesDataProvider):
-    """Datos reales vía gRPC a MS-2 y MS-3 (Fase C)."""
+    """
+    DEPRECATED (Fase 9): datos via gRPC a MS-2/MS-3.
+
+    Con USE_EVENT_BUS=true MS-6 usa payloads de eventos (EmailPayloadService).
+    """
 
     def get_alumno(self, alumno_id: int) -> Optional[AlumnoData]:
+        from agm_events.grpc_legacy import block_business_grpc
+
+        block_business_grpc('GrpcDataProvider.get_alumno')
         if alumno_id <= 0:
             return None
         info = alumnos_client.get_alumno_by_id(alumno_id)
@@ -108,6 +115,9 @@ class GrpcDataProvider(NotificacionesDataProvider):
         )
 
     def get_materia(self, materia_id: int) -> Optional[MateriaData]:
+        from agm_events.grpc_legacy import block_business_grpc
+
+        block_business_grpc('GrpcDataProvider.get_materia')
         if materia_id <= 0:
             return None
         info = periodos_client.get_materia_by_id(materia_id)
@@ -122,6 +132,9 @@ class GrpcDataProvider(NotificacionesDataProvider):
         )
 
     def get_docente_by_usuario_id(self, usuario_id: int) -> Optional[DocenteData]:
+        from agm_events.grpc_legacy import block_business_grpc
+
+        block_business_grpc('GrpcDataProvider.get_docente_by_usuario_id')
         if usuario_id <= 0:
             return None
         info = alumnos_client.get_docente_by_usuario_id(usuario_id)
@@ -135,6 +148,9 @@ class GrpcDataProvider(NotificacionesDataProvider):
         )
 
     def get_alumnos_by_materia(self, materia_id: int) -> List[AlumnoData]:
+        from agm_events.grpc_legacy import block_business_grpc
+
+        block_business_grpc('GrpcDataProvider.get_alumnos_by_materia')
         if materia_id <= 0:
             return []
         response = alumnos_client.get_alumnos_by_materia(materia_id)

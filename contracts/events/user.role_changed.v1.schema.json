@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "user.role_changed.v1 payload",
+  "type": "object",
+  "required": ["user_id", "previous_rol", "new_rol", "rol"],
+  "properties": {
+    "user_id": { "type": "integer" },
+    "email": { "type": "string" },
+    "nombre": { "type": "string" },
+    "rol": { "type": "string" },
+    "previous_rol": { "type": "string" },
+    "new_rol": { "type": "string" },
+    "activo": { "type": "boolean" }
+  }
+}

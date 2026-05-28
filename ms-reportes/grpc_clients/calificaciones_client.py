@@ -6,6 +6,9 @@ from grpc_clients.exceptions import map_rpc_error
 from grpc_clients.mocks import mock_concentrado
 from proto_generated import calificaciones_pb2, calificaciones_pb2_grpc
 
+"""DEPRECATED (Fase 9): cliente gRPC de negocio. Bloqueado con USE_EVENT_BUS=true."""
+from agm_events.grpc_legacy import block_business_grpc
+
 _SERVICE = 'ms-calificaciones'
 
 _FALLBACK_CODES = frozenset(
@@ -42,6 +45,7 @@ def _mock_estadisticas_materia(materia_id: int) -> calificaciones_pb2.Estadistic
 
 
 def get_calificaciones_stub() -> calificaciones_pb2_grpc.CalificacionesServiceStub:
+    block_business_grpc('calificaciones_client.py.get_calificaciones_stub')
     channel = get_channel(
         'calificaciones',
         'MS_CALIFICACIONES_GRPC_HOST',
@@ -53,6 +57,7 @@ def get_calificaciones_stub() -> calificaciones_pb2_grpc.CalificacionesServiceSt
 
 
 def get_concentrado(materia_id: int) -> calificaciones_pb2.ConcentradoResponse:
+    block_business_grpc('calificaciones_client.py.get_concentrado')
     """GetConcentrado con fallback a mock si USE_MOCK_DATA o MS-4 no responde."""
     if use_mock_data():
         return mock_concentrado(materia_id)
@@ -68,6 +73,7 @@ def get_concentrado(materia_id: int) -> calificaciones_pb2.ConcentradoResponse:
 
 
 def get_estadisticas_materia(materia_id: int) -> calificaciones_pb2.EstadisticasMateriaResponse:
+    block_business_grpc('calificaciones_client.py.get_estadisticas_materia')
     if use_mock_data():
         return _mock_estadisticas_materia(materia_id)
     try:
@@ -82,6 +88,7 @@ def get_estadisticas_materia(materia_id: int) -> calificaciones_pb2.Estadisticas
 
 
 def get_promedio_alumno(alumno_id: int, materia_id: int) -> calificaciones_pb2.PromedioResponse:
+    block_business_grpc('calificaciones_client.py.get_promedio_alumno')
     if use_mock_data():
         concentrado = mock_concentrado(materia_id)
         for alumno in concentrado.alumnos:

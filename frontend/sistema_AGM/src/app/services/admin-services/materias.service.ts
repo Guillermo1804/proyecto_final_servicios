@@ -1,8 +1,16 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { catchError, map, Observable, of } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
-import { environment } from '../../../environments/environment';
+import { MateriaApiDto } from '../../models/periodos-api.model';
+import {
+  AgmListPage,
+  buildApiUrl,
+  buildListPage,
+  extractAgmListData,
+  extractApiErrorMessage,
+  unwrapAgmData,
+} from '../tools/agm-api.helpers';
 
 export interface MateriaHorario {
   dia: string;
@@ -11,6 +19,7 @@ export interface MateriaHorario {
 
 export interface MateriaItem {
   id: number;
+  periodoId: number;
   nrc: string;
   clave: string;
   nombre: string;
@@ -24,270 +33,170 @@ export interface MateriasQuery {
   search?: string;
   page?: number;
   pageSize?: number;
+  periodoId?: number;
 }
 
-export interface MateriasPage {
-  results: MateriaItem[];
-  count: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-}
+export type MateriasPage = AgmListPage<MateriaItem>;
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class MateriasService {
-
-  private readonly materiasApiUrl = '/materias/';
-  private readonly materiasCache: MateriaItem[] = [
-    {
-      id: 1,
-      nrc: '50030',
-      clave: 'CCOS 260',
-      nombre: 'Redes de Computadoras',
-      seccion: '001',
-      docente: 'TREVINO - SANCHEZ DANIEL',
-      horarios: [
-        { dia: 'L', hora: '10:00 - 10:59' },
-        { dia: 'A', hora: '09:00 - 10:59' },
-        { dia: 'M', hora: '09:00 - 10:59' }
-      ],
-      salon: '1CCO4/305'
-    },
-    {
-      id: 2,
-      nrc: '50031',
-      clave: 'CCOS 261',
-      nombre: 'Sistemas Operativos',
-      seccion: '001',
-      docente: 'TREVIÑO - SANCHEZ DANIEL',
-      horarios: [
-        { dia: 'L', hora: '11:00 - 11:59' },
-        { dia: 'M', hora: '10:00 - 11:59' },
-        { dia: 'J', hora: '10:00 - 11:59' }
-      ],
-      salon: '1CCO4/302'
-    },
-    {
-      id: 3,
-      nrc: '50112',
-      clave: 'CCOS 262',
-      nombre: 'Estructura de Datos',
-      seccion: '002',
-      docente: 'MTRA. ARIAS LOPEZ KARLA',
-      horarios: [
-        { dia: 'L', hora: '09:00 - 09:59' },
-        { dia: 'A', hora: '09:00 - 10:59' },
-        { dia: 'V', hora: '09:00 - 10:59' }
-      ],
-      salon: '1CCO4/210'
-    },
-    {
-      id: 4,
-      nrc: '50113',
-      clave: 'MAT 205',
-      nombre: 'Cálculo Diferencial',
-      seccion: '002',
-      docente: 'DR. LUIS GARCIA',
-      horarios: [
-        { dia: 'M', hora: '10:00 - 11:59' },
-        { dia: 'J', hora: '10:00 - 11:59' }
-      ],
-      salon: 'B-110'
-    },
-    {
-      id: 5,
-      nrc: '50224',
-      clave: 'FIS 102',
-      nombre: 'Física General II',
-      seccion: '001',
-      docente: 'ING. CARLA RUIZ',
-      horarios: [
-        { dia: 'L', hora: '12:00 - 12:59' },
-        { dia: 'M', hora: '12:00 - 12:59' },
-        { dia: 'V', hora: '12:00 - 12:59' }
-      ],
-      salon: 'Laboratorio 3'
-    },
-    {
-      id: 6,
-      nrc: '50225',
-      clave: 'HIS 301',
-      nombre: 'Historia Universal Moderna',
-      seccion: '003',
-      docente: 'LIC. SOFÍA RAMÍREZ',
-      horarios: [
-        { dia: 'S', hora: '09:00 - 11:00' }
-      ],
-      salon: 'C-018'
-    },
-    {
-      id: 7,
-      nrc: '50310',
-      clave: 'ADM 110',
-      nombre: 'Administración General',
-      seccion: '001',
-      docente: 'MTRO. RENÉ SALAZAR',
-      horarios: [
-        { dia: 'L', hora: '08:00 - 09:59' },
-        { dia: 'J', hora: '08:00 - 09:59' }
-      ],
-      salon: 'D-101'
-    },
-    {
-      id: 8,
-      nrc: '50311',
-      clave: 'ING 220',
-      nombre: 'Inglés Intermedio',
-      seccion: '004',
-      docente: 'MTRA. ELENA TORRES',
-      horarios: [
-        { dia: 'M', hora: '13:00 - 14:59' },
-        { dia: 'V', hora: '13:00 - 14:59' }
-      ],
-      salon: 'A-009'
-    },
-    {
-      id: 9,
-      nrc: '50312',
-      clave: 'PRO 330',
-      nombre: 'Programación Web',
-      seccion: '002',
-      docente: 'ING. JORGE MORALES',
-      horarios: [
-        { dia: 'L', hora: '16:00 - 17:59' },
-        { dia: 'M', hora: '16:00 - 17:59' },
-        { dia: 'J', hora: '16:00 - 17:59' }
-      ],
-      salon: 'Lab. 2'
-    },
-    {
-      id: 10,
-      nrc: '50313',
-      clave: 'DBA 410',
-      nombre: 'Bases de Datos',
-      seccion: '001',
-      docente: 'MTRO. ARTURO NAVA',
-      horarios: [
-        { dia: 'A', hora: '18:00 - 19:59' },
-        { dia: 'J', hora: '18:00 - 19:59' }
-      ],
-      salon: 'Lab. 4'
-    }
-  ];
+  private readonly basePath = 'materias';
 
   constructor(private http: HttpClient) {}
 
-  getMaterias(query: MateriasQuery = {}): Observable<MateriasPage> {
-    const normalizedQuery = this.normalizeQuery(query);
-    const httpParams = new HttpParams({
-      fromObject: {
-        search: normalizedQuery.search,
-        page: String(normalizedQuery.page),
-        page_size: String(normalizedQuery.pageSize)
-      }
-    });
-
-    return this.http.get<unknown>(this.buildApiUrl(this.materiasApiUrl), { params: httpParams }).pipe(
-      map((response) => this.normalizeResponse(response, normalizedQuery)),
-      catchError(() => of(this.getLocalPage(normalizedQuery)))
+  countByPeriodo(periodoId: number): Observable<number> {
+    return this.getMaterias({ periodoId, page: 1, pageSize: 1 }).pipe(
+      map((page) => page.count),
     );
   }
 
-  private buildApiUrl(path: string): string {
-    const baseUrl = environment.apiBaseUrl || environment.url_api || '';
-
-    return `${baseUrl.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+  deleteMateria(materiaId: number): Observable<void> {
+    return this.http.delete<unknown>(buildApiUrl(`${this.basePath}/${materiaId}/`)).pipe(
+      map((response) => {
+        if (response && typeof response === 'object' && 'success' in response) {
+          const envelope = response as { success?: boolean; message?: string };
+          if (envelope.success === false) {
+            throw new Error(envelope.message || 'No se pudo eliminar la materia');
+          }
+        }
+        return undefined;
+      }),
+    );
   }
 
-  private normalizeQuery(query: MateriasQuery): Required<MateriasQuery> {
+  static extractError(error: unknown, fallback: string): string {
+    return extractApiErrorMessage(error, fallback);
+  }
+
+  getMaterias(query: MateriasQuery = {}): Observable<MateriasPage> {
+    const normalized = this.normalizeQuery(query);
+    const search = normalized.search.trim();
+    const needsClientFilter = Boolean(search);
+
+    const params: Record<string, string> = {
+      page: String(needsClientFilter ? 1 : normalized.page),
+      limit: String(needsClientFilter ? 200 : normalized.pageSize),
+    };
+
+    if (normalized.periodoId) {
+      params['periodo_id'] = String(normalized.periodoId);
+    }
+
+    const httpParams = new HttpParams({ fromObject: params });
+
+    return this.http.get<unknown>(buildApiUrl(`${this.basePath}/`), { params: httpParams }).pipe(
+      map((response) => {
+        const data = unwrapAgmData<{
+          count?: number;
+          results?: MateriaApiDto[];
+        }>(response);
+
+        const rawList = Array.isArray(data?.results)
+          ? data.results
+          : extractAgmListData<MateriaApiDto>(response);
+
+        let items = rawList.map((dto) => this.mapMateria(dto));
+
+        if (needsClientFilter) {
+          items = this.filterMateriasPorNrcONombre(items, search);
+          return this.paginateLocally(items, normalized.page, normalized.pageSize);
+        }
+
+        const count = Number(data?.count ?? items.length);
+        return buildListPage(
+          items,
+          normalized.page,
+          normalized.pageSize,
+          count,
+        );
+      }),
+    );
+  }
+
+  private mapMateria(dto: MateriaApiDto): MateriaItem {
+    const { horarios, salon } = this.parseHorario(String(dto.horario ?? ''));
+
     return {
-      search: (query.search ?? '').trim(),
+      id: Number(dto.id),
+      periodoId: Number(dto.periodo),
+      nrc: String(dto.nrc ?? ''),
+      clave: String(dto.clave ?? ''),
+      nombre: String(dto.nombre ?? ''),
+      seccion: String(dto.seccion ?? ''),
+      docente: String(dto.docente_nombre ?? '').trim() || 'Sin asignar',
+      horarios,
+      salon,
+    };
+  }
+
+  private parseHorario(horario: string): { horarios: MateriaHorario[]; salon: string } {
+    const raw = horario.trim();
+    if (!raw) {
+      return { horarios: [], salon: '—' };
+    }
+
+    const segments = raw.split(/[,;|]/).map((part) => part.trim()).filter(Boolean);
+    const horarios: MateriaHorario[] = [];
+    let salon = '—';
+
+    for (const segment of segments) {
+      const salonMatch = segment.match(/\b(\d[A-Z]{2,}\d?\/\d{2,}|[A-Z]-\d{2,}|Lab\.?\s*\d+)\b/i);
+      if (salonMatch && salon === '—') {
+        salon = salonMatch[1];
+      }
+
+      const dayHour = segment.match(/^([LMAJVSD]+)\s+(.+)$/i);
+      if (dayHour) {
+        horarios.push({ dia: dayHour[1].toUpperCase(), hora: dayHour[2].trim() });
+        continue;
+      }
+
+      horarios.push({ dia: '—', hora: segment });
+    }
+
+    if (!horarios.length) {
+      horarios.push({ dia: '—', hora: raw });
+    }
+
+    return { horarios, salon };
+  }
+
+  private filterMateriasPorNrcONombre(items: MateriaItem[], search: string): MateriaItem[] {
+    const term = search.trim().toLowerCase();
+    if (!term) {
+      return items;
+    }
+
+    return items.filter(
+      (materia) =>
+        materia.nrc.toLowerCase().includes(term) ||
+        materia.nombre.toLowerCase().includes(term),
+    );
+  }
+
+  private paginateLocally(
+    items: MateriaItem[],
+    page: number,
+    pageSize: number,
+  ): MateriasPage {
+    const count = items.length;
+    const totalPages = Math.max(1, Math.ceil(count / pageSize));
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    return buildListPage(items.slice(start, start + pageSize), safePage, pageSize, count);
+  }
+
+  private normalizeQuery(query: MateriasQuery): {
+    search: string;
+    page: number;
+    pageSize: number;
+    periodoId?: number;
+  } {
+    return {
+      search: query.search ?? '',
       page: Math.max(1, query.page ?? 1),
-      pageSize: Math.max(1, query.pageSize ?? 5)
+      pageSize: Math.max(1, query.pageSize ?? 5),
+      ...(query.periodoId !== undefined ? { periodoId: query.periodoId } : {}),
     };
   }
-
-  private normalizeResponse(response: unknown, query: Required<MateriasQuery>): MateriasPage {
-    if (Array.isArray(response)) {
-      return this.buildPage(response as MateriaItem[], query);
-    }
-
-    if (response && typeof response === 'object') {
-      const payload = response as Record<string, any>;
-      const nestedResults = this.extractResults(payload);
-
-      if (nestedResults) {
-        return this.buildPage(nestedResults, {
-          search: query.search,
-          page: Number(payload['page'] ?? query.page) || query.page,
-          pageSize: Number(payload['pageSize'] ?? payload['page_size'] ?? query.pageSize) || query.pageSize
-        }, Number(payload['count'] ?? payload['total'] ?? nestedResults.length) || nestedResults.length, false);
-      }
-    }
-
-    return this.getLocalPage(query);
-  }
-
-  private extractResults(payload: Record<string, any>): MateriaItem[] | null {
-    const candidates = [payload['results'], payload['data'], payload['items'], payload['materias']];
-
-    for (const candidate of candidates) {
-      if (Array.isArray(candidate)) {
-        return candidate as MateriaItem[];
-      }
-
-      if (candidate && typeof candidate === 'object' && Array.isArray(candidate.results)) {
-        return candidate.results as MateriaItem[];
-      }
-    }
-
-    return null;
-  }
-
-  private getLocalPage(query: Required<MateriasQuery>): MateriasPage {
-    const filtered = this.filterLocalMaterias(query.search);
-    return this.buildPage(filtered, query, filtered.length, true);
-  }
-
-  private buildPage(items: MateriaItem[], query: Required<MateriasQuery>, totalOverride?: number, shouldSlice = true): MateriasPage {
-    const count = totalOverride ?? items.length;
-    const totalPages = Math.max(1, Math.ceil(count / query.pageSize));
-    const page = Math.min(query.page, totalPages);
-    const results = shouldSlice
-      ? items.slice((page - 1) * query.pageSize, (page - 1) * query.pageSize + query.pageSize)
-      : items;
-
-    return {
-      results,
-      count,
-      page,
-      pageSize: query.pageSize,
-      totalPages
-    };
-  }
-
-  private filterLocalMaterias(search: string): MateriaItem[] {
-    if (!search) {
-      return [...this.materiasCache];
-    }
-
-    const normalizedSearch = search.toLowerCase();
-
-    return this.materiasCache.filter((materia) => {
-      const haystack = [
-        materia.nrc,
-        materia.clave,
-        materia.nombre,
-        materia.seccion,
-        materia.docente,
-        materia.salon,
-        materia.horarios.map((item) => `${item.dia} ${item.hora}`).join(' ')
-      ].join(' ').toLowerCase();
-
-      return haystack.includes(normalizedSearch);
-    });
-  }
-
 }

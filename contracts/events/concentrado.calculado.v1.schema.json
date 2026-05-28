@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "concentrado.calculado.v1 payload",
+  "type": "object",
+  "required": ["materia_id", "total_alumnos"],
+  "properties": {
+    "materia_id": { "type": "integer" },
+    "total_alumnos": { "type": "integer" },
+    "promedio_grupal": { "type": "number" },
+    "nrc": { "type": "string" },
+    "materia_nombre": { "type": "string" }
+  }
+}

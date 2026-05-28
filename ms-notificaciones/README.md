@@ -70,7 +70,7 @@ Prefijo: `/notificaciones/` (todos **POST**, requieren `X-Internal-Api-Key` o JW
 | `bienvenida` | `alumno_id`, `materia_id`, `clave_acceso` |
 | `baja` | `alumno_id`, `docente_id`, `materia_id` |
 | `cierre-materia` | `materia_id` |
-| `reset-password` | `email`, `token`, `reset_url` |
+| `reset-password` | `email`, `reset_url` (token en query de la URL; ver `password.reset_requested.v1`) |
 
 Respuesta envelope AGM: `{ "success", "data", "message", "errors" }`.
 
