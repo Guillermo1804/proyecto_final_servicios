@@ -1,0 +1,10 @@
+# TLS automático (Let's Encrypt) en 80/443 del host.
+# DNS de AGM_DOMAIN debe apuntar a este servidor antes del primer arranque.
+
+{
+	email {$ACME_EMAIL:}
+}
+
+{$AGM_DOMAIN:agm.aurelyte.iokoia.com} {
+	reverse_proxy nginx:80
+}

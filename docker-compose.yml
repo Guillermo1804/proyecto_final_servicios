@@ -26,7 +26,7 @@
 #   db-auth → localhost:13307 … db-reportes → localhost:13313
 #
 # API Gateway + Frontend Angular en servicio `nginx` (imagen multi-stage).
-# Sin puertos en el host aquí: desarrollo → docker-compose.dev.yml (:8080); Coolify/prod → docker-compose.prod.yml.
+# Sin puertos en el host aquí: desarrollo → docker-compose.dev.yml (:8080); prod → docker-compose.prod.yml (Caddy :80/:443 → nginx:80).
 #
 # Requisito: cada ./ms-* incluye Dockerfile + entrypoint.sh; copiar ms-*/.env desde .env.example.
 # Healthcheck REST: GET /health/ en cada MS (Epic 1).
@@ -663,7 +663,7 @@ services:
       context: .
       dockerfile: docker/nginx/Dockerfile
     container_name: agm-nginx-gateway
-    # No publicar 80/8080 en el host desde el compose base (Coolify/Caddy usa 80/443 del host).
+    # Sin puertos en el host en el compose base; prod: Caddy publica 80/443 y enruta aquí.
     depends_on:
       ms-auth:
         condition: service_healthy

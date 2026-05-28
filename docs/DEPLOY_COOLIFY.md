@@ -19,7 +19,7 @@ El archivo `docker-compose.ms1-4.yml` (solo MS-1…4) **ya no se usa** en despli
 - Docker Engine 24+ y plugin Compose V2 (`docker compose version`)
 - Git
 - Mínimo **4 GB RAM** recomendado (7 MySQL + workers)
-- **No** publiques el puerto 80 del host en Compose: Coolify enruta al puerto **80 interno** del contenedor `nginx` (ver `docker-compose.prod.yml`)
+- El host expone **80/443** solo en el servicio **caddy** (`docker-compose.prod.yml`); Caddy hace TLS y reenvía a `nginx:80`
 
 ---
 
@@ -72,7 +72,7 @@ docker compose exec ms-reportes python manage.py migrate
 Verifica:
 
 - Desde el servidor (red Docker): `docker compose exec nginx wget -qO- http://127.0.0.1/health`
-- En el navegador: `https://<tu-dominio>/` (Coolify + SSL)
+- En el navegador: `https://agm.aurelyte.iokoia.com/` (o el valor de `AGM_DOMAIN` en `.env`; certificado vía Caddy/Let's Encrypt)
 - El front en producción usa `apiBaseUrl: ''` (mismo origen que el gateway)
 
 ---
@@ -84,8 +84,8 @@ Verifica:
 3. **Compose file**: `docker-compose.yml`
 4. **Additional compose file** (si Coolify lo permite): `docker-compose.prod.yml`
 5. Variables de entorno: copia `.env` raíz y las de cada `ms-*` (o un `.env` por servicio en la UI)
-6. Dominio → servicio **nginx**, puerto del contenedor **80** (no mapees `80:80` en el host; `docker-compose.prod.yml` ya deja `nginx.ports: []`)
-7. SSL: Let's Encrypt en Coolify (recomendado)
+6. Si usas el **Caddy del stack** (`docker-compose.prod.yml`), no configures proxy SSL en Coolify: el dominio `AGM_DOMAIN` debe resolver al servidor y Caddy ocupará 80/443.
+7. Alternativa sin Caddy en el stack: dominio → servicio **nginx**, puerto **80**, SSL en Coolify (deja comentado o no levantes el servicio `caddy`).
 
 En el firewall no expongas 13307–13313, 8001–8007 ni 5672/15672.
 
@@ -117,7 +117,7 @@ docker compose down -v   # borra volúmenes (BD)
 
 ## Arquitectura de red
 
-Todo en `agm-network`. El navegador solo habla con **nginx**. Nginx:
+Todo en `agm-network`. En producción con Caddy: navegador → **caddy** (443) → **nginx** (80 interno). Nginx:
 
 - Sirve el build de `frontend/sistema_AGM`
 - Enruta `/auth`, `/materias`, `/calificaciones`, etc. a cada MS
