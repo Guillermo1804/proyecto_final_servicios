@@ -765,6 +765,17 @@ services:
     networks:
       - agm-network
 
+  cloudflared:
+    image: cloudflare/cloudflared
+    container_name: agm-cloudflared
+    restart: unless-stopped
+    command: tunnel run --token eyJhIjoiZmE2OGM1ODJiOTgxZmZhODM2MWU4ZDFjZWI4NDI4MDAiLCJ0IjoiMjBkNzc1MjktMjA4Ny00MmM3LWFhOTItMzc1NjQ2MDBjYzY4IiwicyI6IlpqaG1aRFZrTkdNdE5UUTBaaTAwWVRoaExUaGpaRFl0T1dJMk5qWm1aRFJsTWpSaSJ9
+    depends_on:
+      nginx:
+        condition: service_healthy
+    networks:
+      - agm-network
+
 # ============================================
 # VOLUMES & NETWORKS
 # ============================================
