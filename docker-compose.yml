@@ -1,10 +1,10 @@
 # =============================================
-# AGM — docker-compose.yml (perfil completo / produccion local)
+# AGM — docker-compose.yml (stack unico)
 #
 # Stack coordinado (docker compose up --build):
 #   Infra: rabbitmq, redis, 7x MySQL (db-auth ... db-reportes)
 #   API: ms-auth, ms-periodos, ms-alumnos, ms-calificaciones, ms-asistencias,
-#        ms-notificaciones, ms-reportes, nginx (gateway :8080)
+#        ms-notificaciones, ms-reportes, nginx (interno), caddy (publico :80/:443)
 #   Outbox workers (5): ms-auth-outbox-worker, ms-periodos-outbox-worker,
 #        ms-alumnos-outbox-worker, ms-calificaciones-worker-outbox,
 #        ms-asistencias-worker-outbox
@@ -27,7 +27,7 @@
 #   db-auth → localhost:13307 … db-reportes → localhost:13313
 #
 # API Gateway + Frontend Angular en servicio `nginx` (imagen multi-stage).
-# Sin puertos en el host aquí: desarrollo → docker-compose.dev.yml (:8080); prod → docker-compose.prod.yml (Caddy :80/:443 → nginx:80).
+# Entrada publica por Caddy en 80/443 del host; Caddy reenvia a nginx:80 interno.
 #
 # Requisito: cada ./ms-* incluye Dockerfile + entrypoint.sh; copiar ms-*/.env desde .env.example.
 # Healthcheck REST: GET /health/ en cada MS (Epic 1).
@@ -740,10 +740,7 @@ services:
       context: .
       dockerfile: docker/nginx/Dockerfile
     container_name: agm-nginx-gateway
-    # Compose base usable de inmediato: localhost:8080 -> nginx:80.
-    # En prod overlay se sobreescribe a puertos [] porque Caddy publica 80/443.
-    ports:
-      - "${AGM_HTTP_PORT:-8080}:80"
+    # Solo trafico interno desde Caddy.
     depends_on:
       ms-auth:
         condition: service_healthy
@@ -768,6 +765,27 @@ services:
     networks:
       - agm-network
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: agm-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      AGM_DOMAIN: ${AGM_DOMAIN:-agm.aurelyte.iokoia.com}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      nginx:
+        condition: service_healthy
+    networks:
+      - agm-network
+
 # ============================================
 # VOLUMES & NETWORKS
 # ============================================
@@ -782,6 +800,8 @@ volumes:
   db_reportes_data:
   redis_data:
   rabbitmq_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   agm-network:
