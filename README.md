@@ -35,7 +35,7 @@ AGM es una plataforma académica digital que permite a la Facultad de Ciencias d
 | Frontend | Angular 20 |
 | Contenedores | Docker + Docker Compose |
 | Servidor WSGI | Gunicorn |
-| Despliegue | Railway |
+| Despliegue | Docker en Ubuntu / [Coolify](docs/DEPLOY_COOLIFY.md) |
 
 ---
 
@@ -68,9 +68,13 @@ proyecto_final_servicios/
 ├── frontend/
 ├── docker/
 │   └── nginx/
-│       └── default.conf      # API Gateway: prefijos → microservicios
+│       ├── Dockerfile        # Build: Angular + gateway Nginx
+│       └── default.conf      # API + SPA en el mismo puerto
 ├── docs/
-├── docker-compose.yml
+│   └── DEPLOY_COOLIFY.md     # Guía despliegue Ubuntu / Coolify
+├── docker-compose.yml        # Stack completo (sin puertos nginx en el host)
+├── docker-compose.dev.yml    # Overlay local: gateway en :8080
+├── docker-compose.prod.yml   # Overlay prod/Coolify: sin exponer puertos al host
 ├── .gitignore
 └── README.md
 ```
@@ -119,16 +123,16 @@ done
 
 # 3. Revisar / completar variables en cada .env (JWT, SMTP, hosts gRPC, etc.)
 
-# 4. Levantar todo (Compose V2)
-docker compose up --build
-# equivalente legacy: docker-compose up --build
+# 4. Levantar todo (Compose V2) — overlay dev publica :8080
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
 **PowerShell (Windows)**
 
 ```powershell
 .\scripts\copy-env.ps1
-docker compose up --build
+.\scripts\start-full-stack.ps1
+# o: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
 Si ya tienes `.env` y solo agregaste variables nuevas (p. ej. CORS), copia manualmente las líneas `SERVICE_NAME`, `CORS_*` desde cada `.env.example`.
@@ -136,8 +140,15 @@ Si ya tienes `.env` y solo agregaste variables nuevas (p. ej. CORS), copia manua
 ### Arranque y dependencias entre MS
 `depends_on` garantiza que cada MS espere **su** MySQL (y MS-5 además a Redis). **No** ordena el arranque entre microservicios que se llaman por gRPC: si un servicio falla al inicio porque otro aún no escucha en gRPC, suele bastar un reinicio del contenedor afectado o añadir reintentos en el cliente gRPC (recomendado en producción).
 
-### API Gateway (Nginx)
-Tras `docker compose up`, el **punto de entrada único** para REST es **http://localhost:8080** (servicio `nginx`, mapeo `8080:80`). La configuración vive en `docker/nginx/default.conf`.
+### Gateway (Nginx + Frontend)
+Tras `docker compose up --build`, el **punto de entrada único** es **http://localhost:8080**:
+
+- **Interfaz Angular** en `/`
+- **API REST** en los mismos prefijos (`/auth`, `/materias`, …)
+
+La imagen `nginx` se construye con `docker/nginx/Dockerfile` (build del front + `default.conf`).
+
+**Producción (servidor):** ver [docs/DEPLOY_COOLIFY.md](docs/DEPLOY_COOLIFY.md) — `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build`
 
 | Prefijo gateway | Microservicio | Notas |
 |-----------------|---------------|--------|

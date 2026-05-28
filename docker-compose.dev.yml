@@ -1,0 +1,9 @@
+# Overlay desarrollo local — publica el gateway en el host (sin tocar el puerto 80 del host).
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+#   .\scripts\start-full-stack.ps1
+
+services:
+  nginx:
+    ports:
+      - "${AGM_HTTP_PORT:-8080}:80"

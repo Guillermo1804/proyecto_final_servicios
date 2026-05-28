@@ -4,7 +4,7 @@ $ErrorActionPreference = "Continue"
 $Repo = Split-Path -Parent $PSScriptRoot
 Set-Location $Repo
 
-$Compose = @("-f", "docker-compose.yml", "-f", "docker-compose.ms1-4.yml")
+$Compose = @("-f", "docker-compose.yml")
 
 $stopServices = @(
     "nginx",
@@ -39,5 +39,5 @@ if (-not $volumes) {
     }
 }
 
-Write-Host "`nListo. Ejecuta: .\scripts\start-ms1-4-stack.ps1" -ForegroundColor Green
+Write-Host "`nListo. Ejecuta: .\scripts\start-full-stack.ps1" -ForegroundColor Green
 Write-Host "Admin (tras arranque): admin@agm.buap.mx / admin123 (ms-auth/.env)" -ForegroundColor Cyan

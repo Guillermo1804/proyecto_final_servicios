@@ -25,7 +25,8 @@
 # MySQL expuesto al host (depuración; dentro de Docker usar DB_HOST y puerto 3306):
 #   db-auth → localhost:13307 … db-reportes → localhost:13313
 #
-# API Gateway Nginx en servicio `nginx` (puerto host 8080 → 80).
+# API Gateway + Frontend Angular en servicio `nginx` (imagen multi-stage).
+# Sin puertos en el host aquí: desarrollo → docker-compose.dev.yml (:8080); Coolify/prod → docker-compose.prod.yml.
 #
 # Requisito: cada ./ms-* incluye Dockerfile + entrypoint.sh; copiar ms-*/.env desde .env.example.
 # Healthcheck REST: GET /health/ en cada MS (Epic 1).
@@ -658,12 +659,11 @@ services:
       - agm-network
 
   nginx:
-    image: nginx:1.25-alpine
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
     container_name: agm-nginx-gateway
-    ports:
-      - "8080:80"
-    volumes:
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    # No publicar 80/8080 en el host desde el compose base (Coolify/Caddy usa 80/443 del host).
     depends_on:
       ms-auth:
         condition: service_healthy
