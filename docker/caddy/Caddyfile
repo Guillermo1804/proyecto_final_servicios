@@ -1,6 +1,5 @@
-# TLS automático (Let's Encrypt) en 80/443 del host.
-# DNS de agm.aurelyte.iokoia.com debe apuntar a este servidor antes del primer arranque.
-
-agm.aurelyte.iokoia.com {
+# Temporal: forzar HTTP mientras Let's Encrypt está rate-limited.
+# Restaurar a dominio sin scheme cuando se recupere HTTPS.
+http://agm.aurelyte.iokoia.com {
 	reverse_proxy nginx:80
 }

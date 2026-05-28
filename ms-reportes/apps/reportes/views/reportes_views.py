@@ -38,7 +38,13 @@ def _authenticate(request):
     return auth, None
 
 
-def _check_reporte_access(request, materia_id: int):
+def _check_reporte_access(
+    request,
+    materia_id: int,
+    *,
+    docente_id_materia: int | None = None,
+    docente_nombre_materia: str = '',
+):
     if request.user_rol == 'admin':
         return None
     if request.user_rol != 'docente':
@@ -48,12 +54,19 @@ def _check_reporte_access(request, materia_id: int):
     if materia is None:
         return error_response('Materia no encontrada', status=404)
 
+    effective_docente_id = (
+        docente_id_materia if docente_id_materia is not None else materia.docente_id
+    )
+    effective_docente_nombre = (
+        docente_nombre_materia.strip() if docente_nombre_materia else materia.docente_nombre
+    )
+
     if not usuario_puede_gestionar_materia(
         usuario_id=request.user_id,
         usuario_email=getattr(request, 'user_email', ''),
         usuario_rol=request.user_rol,
-        docente_id_materia=materia.docente_id,
-        docente_nombre_materia=materia.docente_nombre,
+        docente_id_materia=effective_docente_id,
+        docente_nombre_materia=effective_docente_nombre,
     ):
         return error_response('No es el docente titular de la materia', status=403)
     return None
@@ -109,7 +122,12 @@ def reporte_calificaciones(request, materia_id: int):
     except ReportesDomainError as exc:
         return error_response(str(exc), status=500)
 
-    denied = _check_reporte_access(request, materia_id)
+    denied = _check_reporte_access(
+        request,
+        materia_id,
+        docente_id_materia=dto.materia.docente_id,
+        docente_nombre_materia=dto.materia.docente_nombre,
+    )
     if denied:
         return denied
 
@@ -138,7 +156,12 @@ def reporte_asistencias(request, materia_id: int):
     except ReportesDomainError as exc:
         return error_response(str(exc), status=500)
 
-    denied = _check_reporte_access(request, materia_id)
+    denied = _check_reporte_access(
+        request,
+        materia_id,
+        docente_id_materia=dto.materia.docente_id,
+        docente_nombre_materia=dto.materia.docente_nombre,
+    )
     if denied:
         return denied
 
