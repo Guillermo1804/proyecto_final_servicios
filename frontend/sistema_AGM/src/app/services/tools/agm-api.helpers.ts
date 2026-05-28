@@ -41,7 +41,13 @@ export function buildApiUrl(path: string): string {
   const normalizedPath = path.replace(/^\//, '');
   const baseUrl = resolveApiBaseUrl();
 
-  // Sin base URL: ng serve + proxy.conf.json (mismo comportamiento en cualquier máquina).
+  // En produccion (apiBaseUrl=''): forzar mismo origen (Nginx/Caddy).
+  // Evita fugas a localhost del cliente cuando el front corre en internet.
+  if (environment.production && !baseUrl) {
+    return `/${normalizedPath}`;
+  }
+
+  // Desarrollo sin base URL: resolver servicios locales por puerto.
   if (!baseUrl) {
     const localBaseUrl = resolveLocalServiceBaseUrl(normalizedPath);
     if (localBaseUrl) {
